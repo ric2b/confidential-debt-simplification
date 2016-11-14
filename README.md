@@ -1,1 +1,1 @@
-# confidential-mutual-debt-simplification
+# confidential-debt-simplification
