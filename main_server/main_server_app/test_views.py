@@ -16,16 +16,7 @@ class GroupTests(TestCase):
     pass
 
 
-class CheckUnconfirmedUOMesTests(TestCase):
-    pass
-
-
-class ConfirmUOMeTests(TestCase):
-    pass
-
-
-class CheckTotalsTests(TestCase):
-
+class AddUOMeTests(TestCase):
     def setUp(self):
         group = Group(name='test', owner='test')
         group.save()
@@ -35,6 +26,61 @@ class CheckTotalsTests(TestCase):
         lender.save()
 
         self.group, self.borrower, self.lender = group, borrower, lender
+
+
+    def test_add_first_uome(self):
+        raw_response = self.client.post(reverse('main_server_app:add_uome'), 
+                                                {
+                                                'group_uuid': self.group.uuid, 
+                                                'user_id':self.lender.user_id,
+                                                'borrower':self.borrower.user_id,
+                                                'value': 10,
+                                                'description': 'test'
+                                                })
+
+        self.assertEqual(raw_response.content.decode('utf-8'), 'UOMe added')
+
+
+class CheckUnconfirmedUOMesTests(TestCase):
+    def setUp(self):
+        group = Group(name='test', owner='test')
+        group.save()
+        borrower = User(group=group, user_id='signature_key1', encryption_key='encryption_key1')
+        borrower.save()
+        lender = User(group=group, user_id='signature_key2', encryption_key='encryption_key2')
+        lender.save()
+
+        self.group, self.borrower, self.lender = group, borrower, lender
+
+
+    def test_one_unconfirmed_uome(self):
+        uome = UOMe(group=self.group, borrower=self.borrower, lender=self.lender, value=10, description="test")
+        uome.save()
+
+        raw_response = self.client.post(reverse('main_server_app:get_unconfirmed_uomes'), 
+                                                {'group_uuid': self.group.uuid, 
+                                                 'user_id':self.borrower.user_id})
+
+        # https://docs.djangoproject.com/en/1.10/topics/serialization/
+        response = serializers.deserialize('json', raw_response.content)
+        self.assertEqual([item.object for item in response], [uome])
+
+
+class ConfirmUOMeTests(TestCase):
+    pass
+
+
+class CheckTotalsTests(TestCase):
+    def setUp(self):
+        group = Group(name='test', owner='test')
+        group.save()
+        borrower = User(group=group, user_id='signature_key1', encryption_key='encryption_key1')
+        borrower.save()
+        lender = User(group=group, user_id='signature_key2', encryption_key='encryption_key2')
+        lender.save()
+
+        self.group, self.borrower, self.lender = group, borrower, lender
+
 
     def test_check_totals_no_uome(self):
         raw_response = self.client.post(reverse('main_server_app:total_debt'), 
@@ -47,16 +93,7 @@ class CheckTotalsTests(TestCase):
 
 
     def test_check_totals_one_unconfirmed_uome(self):
-        uome = UOMe(group=self.group, borrower=self.borrower, lender=self.lender, value=10, description="test")
-        uome.save()
-
-        raw_response = self.client.post(reverse('main_server_app:get_unconfirmed_uomes'), 
-                                                {'group_uuid': self.group.uuid, 
-                                                 'user_id':self.borrower.user_id})
-
-        # https://docs.djangoproject.com/en/1.10/topics/serialization/
-        response = serializers.deserialize('json', raw_response.content)
-        self.assertEqual([item.object for item in response], [uome])
+        return
 
 
     def test_check_totals_one_confirmed_uome(self):

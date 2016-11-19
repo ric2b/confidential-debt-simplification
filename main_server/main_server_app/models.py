@@ -24,6 +24,9 @@ class User(models.Model):
     # if the user, after simplification, is a borrower
     is_net_borrower = models.NullBooleanField(default=None)
 
+    def __str__(self):
+        return self.user_id
+
 class UOMe(models.Model):
     class Meta:
         verbose_name_plural = "UOMe's"  # for the Django Admin panel
@@ -41,8 +44,7 @@ class UOMe(models.Model):
     confirmed = models.BooleanField(default=False)
 
     def __str__(self):
-        string_representation = "%i€ from %s to %s: %s"
-        return string_representation % self.value*100, self.borrower, self.lender
+        return "%i€ from %s to %s: %s" % (self.value*100, self.borrower, self.lender, self.description)
 
 
 class UserDebt(models.Model):
