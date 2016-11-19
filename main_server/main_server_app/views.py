@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.core import serializers
+from django.core.serializers import serialize
 from django.http import HttpResponse
 import json
 from base64 import b64encode
@@ -7,7 +7,7 @@ from os import urandom  # the secrets package is only for python 3.6 :'(
 
 from .models import Group, User, UOMe, UserDebt
 # Create your views here.
-
+# TODO: cripto stuff!
 
 def add_uome(request):
     group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
@@ -23,25 +23,30 @@ def add_uome(request):
 
 
 def get_unconfirmed_uomes(request):
-    group = Group.objects.filter(uuid=request.POST['group_uuid'])
+    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
     user = User.objects.filter(user_id=request.POST['user_id']).first()
 
     unconfirmed_uomes = UOMe.objects.filter(group=group, borrower=user, confirmed=False)
 
-    return HttpResponse(serializers.serialize('json', unconfirmed_uomes), content_type='application/json')
+    return HttpResponse(serialize('json', unconfirmed_uomes), content_type='application/json')
 
 
 def confirm_uome(request):
-    raise NotImplementedError
-    group = Group.objects.filter(uuid=request.POST['group_uuid'])
-    previous_totals = UserDebt.objects.filter(group=group)
+    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
+    uome = UOMe.objects.filter(group=group, uuid=request.POST['uome_uuid']).first()
+    uome.confirmed = True
+    uome.save()
+
+    #previous_totals = UserDebt.objects.filter(group=group)
+    # TODO: update totals
     # TODO: convert previous_totals to defaultdict
-    new_totals = simplify_debt.compute_totals(previous_totals, [new_uome])
+    #new_totals = simplify_debt.compute_totals(previous_totals, [new_uome])
+
+    return HttpResponse('UOMe confirmed')
 
 
 def get_total_debt(request):
-    # TODO: cripto stuff!
-    group = Group.objects.filter(uuid=request.POST['group_uuid'])
+    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
     user = User.objects.filter(user_id=request.POST['user_id']).first()
     is_borrower = user.is_net_borrower
     

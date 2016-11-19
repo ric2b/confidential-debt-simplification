@@ -12,9 +12,6 @@ from .models import Group, User, UOMe, UserDebt
 # - a separate test method for each set of conditions you want to test
 # - test method names that describe their function
 
-class GroupTests(TestCase):
-    pass
-
 
 class AddUOMeTests(TestCase):
     def setUp(self):
@@ -54,7 +51,8 @@ class CheckUnconfirmedUOMesTests(TestCase):
 
 
     def test_one_unconfirmed_uome(self):
-        uome = UOMe(group=self.group, borrower=self.borrower, lender=self.lender, value=10, description="test")
+        uome = UOMe(group=self.group, borrower=self.borrower, lender=self.lender,
+                    value=10, description="test")
         uome.save()
 
         raw_response = self.client.post(reverse('main_server_app:get_unconfirmed_uomes'), 
@@ -67,7 +65,29 @@ class CheckUnconfirmedUOMesTests(TestCase):
 
 
 class ConfirmUOMeTests(TestCase):
-    pass
+    def setUp(self):
+        group = Group(name='test', owner='test')
+        group.save()
+        borrower = User(group=group, user_id='signature_key1', encryption_key='encryption_key1')
+        borrower.save()
+        lender = User(group=group, user_id='signature_key2', encryption_key='encryption_key2')
+        lender.save()
+
+        self.group, self.borrower, self.lender = group, borrower, lender
+
+    def test_confirm_first_uome(self):
+        uome = UOMe(group=self.group, borrower=self.borrower, lender=self.lender,
+                    value=10, description="test")
+        uome.save()
+        self.assertIs(uome.confirmed, False)
+
+        raw_response = self.client.post(reverse('main_server_app:confirm_uome'), 
+                                                {'group_uuid': self.group.uuid,
+                                                 'uome_uuid': uome.uuid,
+                                                 'user_id':self.borrower.user_id})
+
+        self.assertEqual(raw_response.content.decode('utf-8'), 'UOMe confirmed')
+        self.assertIs(UOMe.objects.filter(group=self.group, uuid=uome.uuid).first().confirmed, True)
 
 
 class CheckTotalsTests(TestCase):
@@ -94,17 +114,12 @@ class CheckTotalsTests(TestCase):
 
     def test_check_totals_one_unconfirmed_uome(self):
         return
+        raise NotImplementedError
 
 
     def test_check_totals_one_confirmed_uome(self):
         return
         raise NotImplementedError
-        group = Group(name='test', owner='test')
-        group.save()
-        borrower = User(group=group, user_id='signature_key1', encryption_key='encryption_key1')
-        borrower.save()
-        lender = User(group=group, user_id='signature_key2', encryption_key='encryption_key2')
-        lender.save()
         uome = UOMe(group=group, borrower=borrower, lender=lender, value=10, description="test").save()
 
         raw_response = self.client.post(reverse('main_server_app:total_debt'), 
