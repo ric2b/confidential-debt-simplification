@@ -20,7 +20,26 @@ class PublicKey:
         self._public_key = public_key
 
     def encrypt(self, plain_text: bytes) -> bytes:
-        pass
+        """
+        Encrypts the given plain text, generating a cypher text in base 64
+        format that can only be decrypted by the private key corresponding to
+        this public key.
+
+        :param plain_text: text to encrypt in usual bytes format.
+        :return: cypher text in base64 format.
+        """
+        # Padding is done using the recommended OAEP scheme and not
+        # legacy PKCS1v15
+        cypher_text = self._public_key.encrypt(
+            plain_text,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA1()),
+                algorithm=hashes.SHA1(),
+                label=None
+            )
+        )
+
+        return base64.b64encode(cypher_text)
 
     def verify(self, data: bytes, signature: bytes) -> bool:
         """

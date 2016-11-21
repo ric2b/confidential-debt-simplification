@@ -20,7 +20,28 @@ class PrivateKey:
         self._private_key = private_key
 
     def decrypt(self, cypher_text: bytes) -> bytes:
-        pass
+        """
+        Decrypts the given cypher text, extracting the plain text in bytes
+        format.
+
+        :param cypher_text: cypher text to decrypt in base64 format.
+        :return: cypher text in the usual bytes format.
+        """
+        # The cypher text is expected in base 64 and must be decoded
+        cypher_text = base64.b64decode(cypher_text)
+
+        # Padding is done using the recommended OAEP scheme and not
+        # legacy PKCS1v15
+        plain_text = self._private_key.decrypt(
+            cypher_text,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA1()),
+                algorithm=hashes.SHA1(),
+                label=None
+            )
+        )
+
+        return plain_text
 
     def sign(self, data: bytes) -> bytes:
         """
