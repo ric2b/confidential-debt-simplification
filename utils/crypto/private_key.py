@@ -2,6 +2,7 @@ import base64
 
 
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
@@ -69,3 +70,20 @@ class PrivateKey:
         signature = signer.finalize()
 
         return base64.b64encode(signature)
+
+    def dump(self, key_filepath):
+        """
+        Dumps the key into a file in PEM format.
+
+        :param key_filepath: path to key file to store key on.
+        """
+        # Question: Should the private key be stored encrypted?
+
+        pem = self._private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+
+        with open(key_filepath, "w") as key_file:
+            key_file.writelines(pem.splitlines())

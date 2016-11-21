@@ -2,6 +2,7 @@ import base64
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
@@ -74,3 +75,17 @@ class PublicKey:
         except InvalidSignature:
             # verification failed
             return False
+
+    def dump(self, key_filepath):
+        """
+        Dumps the key into a file in PEM format.
+
+        :param key_filepath: path to key file to store key on.
+        """
+        pem = self._public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+
+        with open(key_filepath, "w") as key_file:
+            key_file.writelines(pem.splitlines())
