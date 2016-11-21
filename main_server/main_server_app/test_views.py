@@ -108,7 +108,7 @@ class CheckTotalsTests(TestCase):
                                                  'user_id':self.borrower.user_id})
 
         response = json.loads(raw_response.content.decode("utf-8"))
-        self.assertIs(response['is_borrower'], None)
+        self.assertIs(response['balance'], 0)
         self.assertEqual(response['user_debt'], {})
 
 

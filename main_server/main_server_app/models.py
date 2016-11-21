@@ -1,6 +1,7 @@
 from django.db import models
 import uuid
 
+
 description_length = 80
 key_length = 400  # 2048 bit key in base 64? I don't know what I'm doing :) 
 # Create your models here.
@@ -22,7 +23,8 @@ class User(models.Model):
     encryption_key = models.CharField(max_length=key_length)
 
     # if the user, after simplification, is a borrower
-    is_net_borrower = models.NullBooleanField(default=None)
+    # TODO: Check for race conditions all over the place, or something :)
+    balance = models.IntegerField(default=0)
 
     def __str__(self):
         return self.user_id
@@ -55,7 +57,3 @@ class UserDebt(models.Model):
     lender = models.ForeignKey(User, on_delete=models.PROTECT, related_name='debt_lender')
 
     value = models.PositiveIntegerField()  # In cents!
-
-
-
-
