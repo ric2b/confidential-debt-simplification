@@ -2,6 +2,7 @@ from django.test import TestCase  # TODO: check out pytest
 from django.urls import reverse
 from django.core import serializers
 import json
+from collections import defaultdict
 
 from .models import Group, User, UOMe, UserDebt
 # Create your tests here.
@@ -86,8 +87,23 @@ class ConfirmUOMeTests(TestCase):
                                                  'uome_uuid': uome.uuid,
                                                  'user_id':self.borrower.user_id})
 
+        # Confirm uome is marked as confirmed
         self.assertEqual(raw_response.content.decode('utf-8'), 'UOMe confirmed')
         self.assertIs(UOMe.objects.filter(group=self.group, uuid=uome.uuid).first().confirmed, True)
+
+        # Confirm totals
+        totals = {}
+        for user in User.objects.filter(group=self.group):
+            totals[user] = user.balance
+
+        self.assertEqual(totals, {self.borrower: -uome.value, self.lender: uome.value})
+
+        # Confirm simplified debt
+        simplified_debt = defaultdict(dict)
+        for user_debt in UserDebt.objects.filter(group=self.group):
+            simplified_debt[user_debt.borrower][user_debt.lender] = user_debt.value
+
+        self.assertEqual(simplified_debt, {self.borrower: {self.lender: uome.value}})
 
 
 class CheckTotalsTests(TestCase):

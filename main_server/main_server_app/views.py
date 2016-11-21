@@ -43,13 +43,15 @@ def confirm_uome(request):
 
     totals = defaultdict(int)
     for user in group_users:
-        totals[user.user_id] = user.balance
+        totals[user] = user.balance
 
     new_uome = [uome.borrower, uome.lender, uome.value]
     new_totals, new_simplified_debt = simplify_debt.update_total_debt(totals, [new_uome])
 
     for user in group_users:
-        user.balance = new_totals[user.user_id]
+        user.balance = new_totals[user]
+        user.save()
+
 
     # drop the previous user debt for this group
     UserDebt.objects.filter(group=group).delete()
