@@ -1,3 +1,6 @@
+# Directory where some code is put with small experiments
+experiments/
+
 # PyCharm
 .idea/
 
