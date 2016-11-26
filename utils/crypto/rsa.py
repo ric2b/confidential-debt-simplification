@@ -16,8 +16,7 @@ def generate_keys():
     """
     raw_private_key = rsa.generate_private_key(
         # do not change this value! cryptography suggests this value for
-        # the public exponent, stating that "65537 should almost
-        # always be used"
+        # the public exponent, stating that "65537 should almost always be used"
         public_exponent=65537,
         key_size=2048,
         backend=default_backend()
@@ -58,8 +57,8 @@ def verify(encoded_public_key: bytes, data: bytes, signature: bytes):
 
     public_key = serialization.load_pem_private_key(
         encoded_public_key,
-        password = None,
-        backend = default_backend()
+        password=None,
+        backend=default_backend()
     )
 
     return PublicKey(public_key).verify(data, signature)
