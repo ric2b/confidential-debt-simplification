@@ -48,3 +48,11 @@ class TestCrypto:
 
         assert privkey.decrypt(encrypted_text) == plain_text
 
+    def test_str(self):
+        privkey, pubkey = rsa.generate_keys()
+
+        print(privkey)
+        print(bytes(pubkey))
+
+        pubkey.dump("test_pubkey.pem")
+

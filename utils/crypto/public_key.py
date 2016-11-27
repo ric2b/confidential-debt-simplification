@@ -125,4 +125,4 @@ class PublicKey:
         )
 
         with open(key_filepath, "w") as key_file:
-            key_file.writelines(pem.splitlines())
+            key_file.write(pem.decode())
