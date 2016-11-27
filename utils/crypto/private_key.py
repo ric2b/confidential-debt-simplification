@@ -44,11 +44,13 @@ class PrivateKey:
 
         return plain_text
 
-    def sign(self, data: bytes) -> bytes:
+    def sign(self, *data: bytes) -> bytes:
         """
         Takes a some data in bytes format and signs it. The returned signature
         can only be verified. It is not possible to decrypt the signature to
         obtain the signed data. The signature is returned in base64 format.
+        Data may be constituted by multiple parts, in that case, the data is
+        concatenated before signing.
 
         :param data: data to sign in the usual bytes format.
         :returns: signature for the given data in base64 format.
@@ -66,7 +68,7 @@ class PrivateKey:
             hashes.SHA256()
         )
 
-        signer.update(data)
+        signer.update(b"".join(data))
         signature = signer.finalize()
 
         return base64.b64encode(signature)
