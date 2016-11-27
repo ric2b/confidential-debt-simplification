@@ -1,8 +1,6 @@
 import json
 from json import JSONDecodeError
 
-from client.requester import Requester
-
 
 class RequestDecodeError(Exception):
     """ Raised to indicate that there was an error while decoding a request. """
@@ -19,9 +17,6 @@ class Request:
     model. For instance, when a client want to invite someone it goes to the URL
     proxy-server.com/invite. "invite" is the method of the request.
 
-    A request is always associated with a requester that signs the request.
-    All request's bodies must be signed by the requester.
-
     Request is only the base class, and does not have a complete
     implementation. Each subclass must provide the implementation for the
     method and parameters getters. Those are use to perform the actual
@@ -29,14 +24,6 @@ class Request:
     signed. Therefore, all subclasses should just implement the previously
     mentioned getter methods.
     """
-
-    def __init__(self, requester: Requester):
-        """
-        Initializes a request, associating it with the requester.
-
-        :param requester: requester making th request.
-        """
-        self.requester = requester
 
     @staticmethod
     def load_request(request_body: bytes):

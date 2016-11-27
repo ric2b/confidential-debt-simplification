@@ -1,5 +1,4 @@
 from client.request import Request, RequestDecodeError
-from client.requester import Requester
 
 
 class InviteRequest(Request):
@@ -12,10 +11,11 @@ class InviteRequest(Request):
         - invite signed by the inviter
     """
 
-    def __init__(self, inviter: Requester, invitee_id, invitee_email):
-        super().__init__(inviter)
+    def __init__(self, inviter_id, invitee_id, invitee_email, inviter_signature):
+        self.inviter_id = inviter_id
         self.invitee_id = invitee_id
         self.invitee_email = invitee_email
+        self.inviter_signature = inviter_signature
 
     @staticmethod
     def load_request(request_body: bytes):
@@ -23,9 +23,10 @@ class InviteRequest(Request):
 
         try:
             return InviteRequest(
-                inviter=Requester(str(parameters['inviter'])),
-                invitee_id=str(parameters['invitee_id']),
+                inviter_id=str(parameters['inviter']),
+                invitee_id=str(parameters['invitee']),
                 invitee_email=str(parameters['invitee_email']),
+                inviter_signature=str(parameters['inviter_signature'])
             )
 
         except KeyError:
@@ -39,11 +40,9 @@ class InviteRequest(Request):
     @property
     def parameters(self) -> dict:
         return {
-            "inviter": self.requester.id,
+            "inviter": self.inviter_id,
             "invitee": self.invitee_id,
             "invitee_email": self.invitee_email,
-            "inviter_signature": self.requester.sign(self.requester.id,
-                                                     self.invitee_id,
-                                                     self.invitee_email)
+            "inviter_signature": self.inviter_signature
         }
 
