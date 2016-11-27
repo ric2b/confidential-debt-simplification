@@ -5,10 +5,13 @@ class Requester:
     to be issued.
     """
 
+    def __init__(self, requester_id: str):
+        self.requester_id = requester_id
+
     @property
     def id(self) -> str:
         """ Returns the ID of the requester """
-        return ""
+        return self.requester_id
 
     def sign(self, data: bytes) -> bytes:
         """ Takes data in bytes and returns a signature for it in base 64 """
