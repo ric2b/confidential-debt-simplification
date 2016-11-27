@@ -42,14 +42,15 @@ class PublicKey:
 
         return base64.b64encode(cypher_text)
 
-    def verify(self, data: bytes, signature: bytes) -> bool:
+    def verify(self, signature: bytes, *data: bytes) -> bool:
         """
         Takes the original data and its signature and verifies if the
         signature is valid for the private key corresponding to this public
-        key.
+        key. Data may be constituted by multiple parts, in that case,
+        the data is concatenated before verification.
 
-        :param data: original data in the usual bytes format.
         :param signature: signed data in base64 format.
+        :param data: original data in the usual bytes format.
         :return: True if the signature is verified and False if otherwise.
         """
         # The signature is expected in base 64 and must be decoded
@@ -66,7 +67,9 @@ class PublicKey:
             hashes.SHA256()
         )
 
-        verifier.update(data)
+        # data must be concatenated before verifying
+        concatenated_data = b"".join(data)
+        verifier.update(concatenated_data)
 
         try:
             verifier.verify()

@@ -26,7 +26,7 @@ class TestCrypto:
         privkey, pubkey = rsa.generate_keys()
         valid_signature = privkey.sign(plain_text)
 
-        assert pubkey.verify(plain_text, valid_signature)
+        assert pubkey.verify(valid_signature, plain_text)
 
     def test_Verify_SomeTextSignedWithIncorrectPrivateKey_Fails(self):
         plain_text = b"some text"

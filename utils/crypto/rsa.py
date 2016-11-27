@@ -42,14 +42,15 @@ def load_keys(key_filepath):
     return PrivateKey(raw_private_key), PublicKey(raw_private_key.public_key())
 
 
-def verify(encoded_public_key: bytes, data: bytes, signature: bytes):
+def verify(encoded_public_key: bytes, signature: bytes, *data: bytes):
     """
     Using an encoded public key it verifies if the given signature is valid
-    for this data.
+    for this data. Data may be constituted by multiple parts, in that case,
+    the data is concatenated before verification.
 
     :param encoded_public_key: public key in base64 format.
-    :param data: data in the usual bytes format.
     :param signature: signature to check in base64 format.
+    :param data: data in the usual bytes format.
     :return: True if the signature is valid and False if otherwise.
     """
     # decode public key to the usual bytes format
@@ -61,4 +62,4 @@ def verify(encoded_public_key: bytes, data: bytes, signature: bytes):
         backend=default_backend()
     )
 
-    return PublicKey(public_key).verify(data, signature)
+    return PublicKey(public_key).verify(signature, data)
