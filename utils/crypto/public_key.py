@@ -1,10 +1,14 @@
 import base64
 
 from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey, \
+    RSAPublicNumbers
+
+from utils.crypto import rsa
 
 
 class PublicKey:
@@ -19,6 +23,36 @@ class PublicKey:
         should not be directly instantiated by the user.
         """
         self._public_key = public_key
+
+    @staticmethod
+    def from_bytes(public_bytes: bytes):
+        """
+        Expects a key in bytes format and returns public key object for it.
+        The expected format can be obtain by calling the __bytes__ method for a
+        public key. This methods expects the input to follow that exact
+        format! Otherwise the result is undefined.
+
+        :param public_bytes: public encoded in bytes.
+        :return: public key object.
+        """
+        public_base64 = base64.b64decode(public_bytes)
+
+        public_key = default_backend().load_rsa_public_numbers(RSAPublicNumbers(
+            e=rsa.PUBLIC_EXPONENT,
+            n=int(public_base64.decode())
+        ))
+
+        return PublicKey(public_key)
+
+    def __bytes__(self):
+        key_number = self._public_key.public_numbers().n
+        # convert key number to bytes
+        public_base64 = str(key_number).encode()
+        return base64.b64encode(public_base64)
+
+    def __str__(self):
+        """ Returns a base 64 string representation of the key """
+        return bytes(self).decode()
 
     def encrypt(self, plain_text: bytes) -> bytes:
         """

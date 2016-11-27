@@ -1,4 +1,5 @@
 from utils.crypto import rsa
+from utils.crypto.public_key import PublicKey
 
 
 class TestCrypto:
@@ -36,4 +37,14 @@ class TestCrypto:
         invalid_signature = privkey_1.sign(plain_text)
 
         assert not pubkey_2.verify(plain_text, invalid_signature)
+
+    def test_bytes_DecryptUsingPublicLoadedFromBytes_GeneratesOriginalText(self):
+        plain_text = b"original text"
+        privkey, pubkey = rsa.generate_keys()
+        pubkey_bytes = bytes(pubkey)
+
+        pubkey = PublicKey.from_bytes(pubkey_bytes)
+        encrypted_text = pubkey.encrypt(plain_text)
+
+        assert privkey.decrypt(encrypted_text) == plain_text
 
