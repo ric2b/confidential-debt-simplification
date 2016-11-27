@@ -1,6 +1,11 @@
 import json
+from json import JSONDecodeError
 
 from client.requester import Requester
+
+
+class RequestDecodeError(Exception):
+    """ Raised to indicate that there was an error while decoding a request. """
 
 
 class Request:
@@ -32,6 +37,19 @@ class Request:
         :param requester: requester making th request.
         """
         self.requester = requester
+
+    @staticmethod
+    def load_request(request_body: bytes):
+        """
+        Loads a request from a JSON string. All subclasses must implement
+        this static method.
+
+        :param request_body: body of the request in bytes format.
+        :return: request object.
+        :raise RequestDecodeError: if the JSON string is incorrectly formatted or if
+                                   it misses any parameter.
+        """
+        pass
 
     @property
     def method(self) -> str:
@@ -66,3 +84,29 @@ class Request:
         :return: JSON string containing the parameters of the request.
         """
         return json.dumps(self.parameters).encode()
+
+    @staticmethod
+    def body_to_parameters(request_body: bytes) -> dict:
+        """
+        Takes a request body in bytes format and returns a dictionary with
+        the parameters. It works as the inverse operation of the body
+        property. This abstracts the encoding of the requests. For the
+        Request subclasses it does not matter if we are encoding into JSON or
+        something else.
+
+        :param request_body: request body in bytes format.
+        :return: dictionary with the parameters.
+        """
+        # JSON loads method expects a string
+        request_body = request_body.decode()
+
+        try:
+            loaded_parameters = json.loads(request_body)
+        except JSONDecodeError as error:
+            raise RequestDecodeError(error)
+
+        if isinstance(loaded_parameters, dict):
+            return loaded_parameters
+        else:
+            raise RequestDecodeError("Parameters must be encoded as "
+                                     "JSON objects")
