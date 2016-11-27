@@ -41,7 +41,7 @@ class Request:
 
         :return: request's method
         """
-        return None
+        return ""
 
     @property
     def parameters(self) -> dict:
@@ -53,9 +53,16 @@ class Request:
 
         :return: dictionary with the names and values of the request parameters.
         """
-        return None
+        return dict()
 
     @property
     def body(self) -> str:
-        parameters_json = json.dumps(self.parameters).encode()
-        return self.requester.sign(parameters_json)
+        """
+        Returns a string containing the body of the request. The body of the
+        request is composed by the parameters dictionary of the request
+        implementation serialized to JSON format. Subclasses should not
+        override this method and just implement the parameters property.
+
+        :return: JSON string containing the parameters of the request.
+        """
+        return json.dumps(self.parameters).encode()

@@ -1,4 +1,3 @@
-
 class Requester:
     """
     A requester is someone that has an ID and is able to sign data. it is
@@ -9,8 +8,8 @@ class Requester:
     @property
     def id(self) -> str:
         """ Returns the ID of the requester """
-        return None
+        return ""
 
     def sign(self, data: bytes) -> bytes:
-        """ Takes data in bytes and returns a signature for it """
+        """ Takes data in bytes and returns a signature for it in base 64 """
         pass
