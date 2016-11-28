@@ -1,8 +1,15 @@
+import logging
+
 from utils.crypto import rsa
 from utils.requests.ack_response import AckResponse
 from utils.requests.connection import Connection
 from utils.requests.invite_request import InviteRequest
 from utils.requests.signer import Signer
+
+
+logger = logging.Logger(__name__)
+logger.addHandler(logging.StreamHandler())
+logger.setLevel(logging.DEBUG)
 
 
 class Client(Signer):
