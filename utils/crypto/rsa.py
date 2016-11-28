@@ -16,7 +16,7 @@ from utils.crypto.public_key import PublicKey
 PUBLIC_EXPONENT = 3
 
 
-def generate_keys():
+def generate_keys() -> (PrivateKey, PublicKey):
     """
     Generates a pair of private and public keys
 
@@ -31,7 +31,7 @@ def generate_keys():
     return PrivateKey(raw_private_key), PublicKey(raw_private_key.public_key())
 
 
-def load_keys(key_filepath):
+def load_keys(key_filepath) -> (PrivateKey, PublicKey):
     """
     Loads a pair of private and public keys from a key file in the PEM format.
 
