@@ -1,5 +1,8 @@
+from pytest import raises
+
 from utils.crypto import rsa
 from utils.crypto.public_key import PublicKey
+from utils.crypto.rsa import InvalidSignature
 
 
 class TestCrypto:
@@ -22,21 +25,22 @@ class TestCrypto:
 
         assert privkey.decrypt(encrypted_text) == plain_text
 
-    def test_Verify_SomeTextSignedWithCorrectPrivateKey_Succeeds(self):
+    def test_Verify_SomeTextSignedWithCorrectPrivateKey_DoesNotRaiseInvalidSignature(self):
         plain_text = b"some text"
         privkey, pubkey = rsa.generate_keys()
         valid_signature = privkey.sign(plain_text)
 
-        assert pubkey.verify(valid_signature, plain_text)
+        pubkey.verify(valid_signature, plain_text)
 
-    def test_Verify_SomeTextSignedWithIncorrectPrivateKey_Fails(self):
+    def test_Verify_SomeTextSignedWithIncorrectPrivateKey_RaisesInvalidSignature(self):
         plain_text = b"some text"
         privkey_1, pubkey_1 = rsa.generate_keys()
         privkey_2, pubkey_2 = rsa.generate_keys()
 
         invalid_signature = privkey_1.sign(plain_text)
 
-        assert not pubkey_2.verify(plain_text, invalid_signature)
+        with raises(InvalidSignature):
+            pubkey_2.verify(plain_text, invalid_signature)
 
     def test_bytes_DecryptUsingPublicLoadedFromBytes_GeneratesOriginalText(self):
         plain_text = b"original text"
