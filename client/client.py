@@ -1,7 +1,8 @@
 from utils.crypto import rsa
+from utils.requests.signer import Signer
 
 
-class Client:
+class Client(Signer):
     """ Interface for the client """
 
     def __init__(self, email: str, key_filepath=None):
