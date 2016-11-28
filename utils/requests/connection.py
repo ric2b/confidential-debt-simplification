@@ -58,7 +58,7 @@ class Connection:
         """
         self._http_connection.request(
             method='POST',
-            url='/fakeserver/' + request.method,
+            url='/' + request.method,
             body=request.body
         )
 
