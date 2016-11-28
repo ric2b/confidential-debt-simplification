@@ -44,7 +44,7 @@ class Client(Signer):
 
         :returns: signature for the given data in bytes format.
         """
-        return self.privkey.sign(data)
+        return self.privkey.sign(*data)
 
     def invite(self, invitee_id: str, invitee_email: str):
         """
