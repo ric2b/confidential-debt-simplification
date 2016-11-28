@@ -8,6 +8,9 @@ from utils.crypto.private_key import PrivateKey
 from utils.crypto.public_key import PublicKey
 
 
+class InvalidSignature(Exception):
+    """ Raised when a verification of a signature fails. """
+
 # cryptography suggests this value for
 # the public exponent, stating that "65537 should almost always be used"
 # However, 65537 is the most used value if we use a lower value with a good
@@ -57,7 +60,7 @@ def verify(encoded_public_key: bytes, signature: bytes, *data: bytes):
     :param encoded_public_key: public key in base64 format.
     :param signature: signature to check in base64 format.
     :param data: data in the usual bytes format.
-    :return: True if the signature is valid and False if otherwise.
+    :raise InvalidSignature: if verification fails.
     """
     # decode public key to the usual bytes format
     encoded_public_key = base64.b64decode(encoded_public_key)

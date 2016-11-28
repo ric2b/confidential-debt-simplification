@@ -76,7 +76,7 @@ class PublicKey:
 
         return base64.b64encode(cypher_text)
 
-    def verify(self, signature: bytes, *data: bytes) -> bool:
+    def verify(self, signature: bytes, *data: bytes):
         """
         Takes the original data and its signature and verifies if the
         signature is valid for the private key corresponding to this public
@@ -85,7 +85,7 @@ class PublicKey:
 
         :param signature: signed data in base64 format.
         :param data: original data in the usual bytes format.
-        :return: True if the signature is verified and False if otherwise.
+        :raise InvalidSignature: if verification fails.
         """
         # The signature is expected in base 64 and must be decoded
         signature = base64.b64decode(signature)
@@ -107,11 +107,10 @@ class PublicKey:
 
         try:
             verifier.verify()
-            # verification succeeded
-            return True
         except InvalidSignature:
-            # verification failed
-            return False
+            # raise custom invalid signature exception
+            # hides the cryptographic library used
+            raise rsa.InvalidSignature()
 
     def dump(self, key_filepath):
         """
