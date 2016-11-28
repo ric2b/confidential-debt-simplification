@@ -46,22 +46,29 @@ class Client(Signer):
         """
         return self.privkey.sign(data)
 
-    def invite(self, invitee: str, invitee_email: str):
+    def invite(self, invitee_id: str, invitee_email: str):
         """
         Invites a new client to the group.
 
-        :param invitee: invited client's ID.
+        :param invitee_id: invited client's ID.
         :param invitee_email: invited client's email.
         """
         with Connection(self.server_url) as connection:
-            connection.request(InviteRequest.signed_request(
+            request = InviteRequest.signed_request(
                 inviter=self,
-                invitee_id=invitee.encode(),
+                invitee_id=invitee_id.encode(),
                 invitee_email=invitee_email,
-            ))
+            )
+
+            logger.debug("Sending 'invite' request for user id='%s' "
+                         "email='%s'" % (invitee_id, invitee_email))
+            connection.request(request)
+            logger.debug("Finished sending invite")
 
             # TODO check for errors
             connection.get_response(AckResponse)
+            logger.debug("Sent 'invite' to user id='%s' email='%s'" %
+                         (invitee_id, invitee_email))
 
     def join(self, secret_code):
         pass
