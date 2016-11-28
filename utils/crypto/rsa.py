@@ -57,7 +57,7 @@ def verify(encoded_public_key: bytes, signature: bytes, *data: bytes):
     :param encoded_public_key: public key in base64 format.
     :param signature: signature to check in base64 format.
     :param data: data in the usual bytes format.
-    :return: True if the signature is valid and False if otherwise.
+    :raise InvalidSignature: if verification fails.
     """
     # decode public key to the usual bytes format
     encoded_public_key = base64.b64decode(encoded_public_key)
