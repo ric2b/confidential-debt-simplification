@@ -105,7 +105,12 @@ class PublicKey:
         concatenated_data = b"".join(data)
         verifier.update(concatenated_data)
 
-        verifier.verify()
+        try:
+            verifier.verify()
+        except InvalidSignature:
+            # raise custom invalid signature exception
+            # hides the cryptographic library used
+            raise rsa.InvalidSignature()
 
     def dump(self, key_filepath):
         """
