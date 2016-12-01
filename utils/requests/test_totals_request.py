@@ -1,6 +1,6 @@
 from pytest import raises
 
-from utils.requests.request import RequestDecodeError, Request
+from utils.requests.request import DecodeError, Request
 from utils.requests.test_utils import fake_signer, fake_body
 from utils.requests.totals_request import TotalsRequest
 
@@ -26,11 +26,11 @@ class TestTotalsRequest:
         assert request.user == b"C1"
         assert request.signature == b"C1"
 
-    def test_load_request_RequestMissingOneParameter_RaisesRequestDecodeError(self):
+    def test_load_request_RequestMissingOneParameter_RaisesDecodeError(self):
         request_body = fake_body({
             # missing user parameter
             "signature": "C1",
         })
 
-        with raises(RequestDecodeError):
+        with raises(DecodeError):
             Request.load_request(request_body, TotalsRequest)

@@ -1,6 +1,6 @@
 import pytest
 
-from utils.requests.request import Request, RequestDecodeError
+from utils.requests.request import Request, DecodeError
 
 
 class TestRequest:
@@ -30,14 +30,14 @@ class TestRequest:
 
         assert parameters == {}
 
-    def test_read_body_EmptyString_RaisesRequestDecodeError(self):
+    def test_read_body_EmptyString_RaisesDecodeError(self):
         body = b''
 
-        with pytest.raises(RequestDecodeError):
+        with pytest.raises(DecodeError):
             Request._read_body(body)
 
-    def test_read_body_ValidJSONWithArray_RaisesRequestDecodeError(self):
+    def test_read_body_ValidJSONWithArray_RaisesDecodeError(self):
         body = b'["parameter1", "parameter2"]'
 
-        with pytest.raises(RequestDecodeError):
+        with pytest.raises(DecodeError):
             Request._read_body(body)

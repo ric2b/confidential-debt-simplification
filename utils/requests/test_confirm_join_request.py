@@ -1,7 +1,7 @@
 from pytest import raises
 
 from utils.requests.confirm_join_request import ConfirmJoinRequest
-from utils.requests.request import RequestDecodeError
+from utils.requests.request import DecodeError
 from utils.requests.test_utils import fake_signer, fake_body
 
 
@@ -30,11 +30,11 @@ class TestConfirmJoinRequest:
         assert request.user == b"C1"
         assert request.signature == b"sign1234"
 
-    def test_load_request_RequestMissingOneParameter_RaisesRequestDecodeError(self):
+    def test_load_request_RequestMissingOneParameter_RaisesDecodeError(self):
         request_body = fake_body({
             # missing user parameter
             "signature": "sign1234",
         })
 
-        with raises(RequestDecodeError):
+        with raises(DecodeError):
             ConfirmJoinRequest.load_request(request_body, ConfirmJoinRequest)

@@ -1,7 +1,7 @@
 from pytest import raises
 
 from utils.requests.UOMe_request import UOMeRequest
-from utils.requests.request import RequestDecodeError, Request
+from utils.requests.request import DecodeError, Request
 from utils.requests.test_utils import fake_signer, fake_body
 
 
@@ -40,7 +40,7 @@ class TestUOMeRequest:
         assert request.salt == "salt"
         assert request.signature == b"C1C210salt"
 
-    def test_load_request_RequestMissingOneParameter_RaisesRequestDecodeError(self):
+    def test_load_request_RequestMissingOneParameter_RaisesDecodeError(self):
         request_body = fake_body({
             # missing borrower parameter
             "loaner": "C2",
@@ -49,10 +49,10 @@ class TestUOMeRequest:
             "signature": "C1C210salt",
         })
 
-        with raises(RequestDecodeError):
+        with raises(DecodeError):
             Request.load_request(request_body, UOMeRequest)
 
-    def test_load_request_RequestWithAmountNotAnInt_RaisesRequestDecodeError(self):
+    def test_load_request_RequestWithAmountNotAnInt_RaisesDecodeError(self):
         request_body = fake_body({
             "borrower": "C1",
             "loaner": "C2",
@@ -61,5 +61,5 @@ class TestUOMeRequest:
             "signature": "C1C210salt",
         })
 
-        with raises(RequestDecodeError):
+        with raises(DecodeError):
             Request.load_request(request_body, UOMeRequest)

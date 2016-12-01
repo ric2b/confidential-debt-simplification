@@ -2,10 +2,7 @@ import json
 from json import JSONDecodeError
 
 from utils.requests.base64_json_encoder import Base64Encoder
-
-
-class RequestDecodeError(Exception):
-    """ Raised to indicate that there was an error while decoding a request. """
+from utils.requests.parameters_decoder import ParametersDecoder, DecodeError
 
 
 class Request:
@@ -41,10 +38,10 @@ class Request:
         :param request_body: body of the request in bytes format.
         :param request_type: request type to be loaded.
         :return: request object.
-        :raise RequestDecodeError: if the JSON string is incorrectly formatted or if
+        :raise DecodeError: if the JSON string is incorrectly formatted or if
                                    it misses any parameter.
         """
-        request_items = Request._read_body(request_body)
+        request_items = ParametersDecoder.load(request_body.decode())
 
         try:
             # parse each parameter of the given request type
@@ -59,11 +56,11 @@ class Request:
             return Request._create(request_type, values)
 
         except KeyError:
-            raise RequestDecodeError("request is missing at least one "
-                                     "of its required parameters")
+            raise DecodeError("request is missing at least one of its "
+                              "required parameters")
         except TypeError:
-            raise RequestDecodeError("at least one of the parameters of the "
-                                     "request is not in the correct type")
+            raise DecodeError("at least one of the parameters of the "
+                              "request is not in the correct type")
 
     @property
     def method(self) -> str:
@@ -110,33 +107,3 @@ class Request:
                                   request.
         """
         return request_type(parameters_values)
-
-    @staticmethod
-    def _read_body(request_body: bytes) -> dict:
-        """
-        Reads a request body in bytes format and returns a dictionary with
-        the read parameters. The values of the parameters are returned as
-        JSON supported types, which means that some base64 encoded values
-        are returned as strings and must be converted outside this method.
-
-        This method abstracts the encoding of the requests. Its current
-        implementation decodes from JSON format. It is enough to
-        re-implement this method to change to other encoding format.
-
-        :param request_body: request body in bytes format.
-        :return: dictionary with the parameters (parameter values support
-                 ony JSON supported types)
-        """
-        # JSON loads method expects a string
-        request_body = request_body.decode()
-
-        try:
-            loaded_parameters = json.loads(request_body)
-        except JSONDecodeError as error:
-            raise RequestDecodeError(error)
-
-        if isinstance(loaded_parameters, dict):
-            return loaded_parameters
-        else:
-            raise RequestDecodeError("Parameters must be encoded as "
-                                     "JSON objects")

@@ -1,7 +1,7 @@
 from pytest import raises
 
 from utils.requests.cancel_request import CancelRequest
-from utils.requests.request import RequestDecodeError, Request
+from utils.requests.request import DecodeError, Request
 from utils.requests.test_utils import fake_signer, fake_body
 
 
@@ -32,12 +32,12 @@ class TestCancelRequest:
         assert request.UOMe == "1234"
         assert request.signature == b"C11234"
 
-    def test_load_request_RequestMissingOneParameter_RaisesRequestDecodeError(self):
+    def test_load_request_RequestMissingOneParameter_RaisesDecodeError(self):
         request_body = fake_body({
             # missing user parameter
             "UOMe": "1234",
             "signature": "C11234",
         })
 
-        with raises(RequestDecodeError):
+        with raises(DecodeError):
             Request.load_request(request_body, CancelRequest)

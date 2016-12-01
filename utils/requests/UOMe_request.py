@@ -1,6 +1,6 @@
 from utils import bytesutils
 from utils.requests.parameters import identifier, signature
-from utils.requests.request import Request, RequestDecodeError
+from utils.requests.request import Request
 from utils.requests.signer import Signer
 
 
