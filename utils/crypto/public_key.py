@@ -8,7 +8,8 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey, \
     RSAPublicNumbers
 
-from utils.crypto import rsa
+from utils.crypto import configs
+from utils.crypto import exceptions
 
 
 class PublicKey:
@@ -38,7 +39,7 @@ class PublicKey:
         public_base64 = base64.b64decode(public_bytes)
 
         public_key = default_backend().load_rsa_public_numbers(RSAPublicNumbers(
-            e=rsa.PUBLIC_EXPONENT,
+            e=configs.PUBLIC_EXPONENT,
             n=int(public_base64.decode())
         ))
 
@@ -110,7 +111,7 @@ class PublicKey:
         except InvalidSignature:
             # raise custom invalid signature exception
             # hides the cryptographic library used
-            raise rsa.InvalidSignature()
+            raise exceptions.InvalidSignature()
 
     def dump(self, key_filepath):
         """

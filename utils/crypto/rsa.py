@@ -4,20 +4,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+from utils.crypto import configs
 from utils.crypto.private_key import PrivateKey
 from utils.crypto.public_key import PublicKey
 
-
-class InvalidSignature(Exception):
-    """ Raised when a verification of a signature fails. """
-
-# cryptography suggests this value for
-# the public exponent, stating that "65537 should almost always be used"
-# However, 65537 is the most used value if we use a lower value with a good
-# padding scheme we don't loose any security and gain more performance
-# Using e=3 might improve performance by 8x
-PUBLIC_EXPONENT = 65537
-KEY_SIZE = 2048
 
 def generate_keys() -> (PrivateKey, PublicKey):
     """
@@ -26,8 +16,8 @@ def generate_keys() -> (PrivateKey, PublicKey):
     :return: 2-tuple with the private and public key in this order.
     """
     raw_private_key = rsa.generate_private_key(
-        public_exponent=PUBLIC_EXPONENT,
-        key_size=KEY_SIZE,
+        public_exponent=configs.PUBLIC_EXPONENT,
+        key_size=configs.KEY_SIZE,
         backend=default_backend()
     )
 
