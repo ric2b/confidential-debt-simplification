@@ -5,7 +5,7 @@ from pytest import fixture
 from pytest import raises
 
 from utils.requests.invite_request import InviteRequest
-from utils.requests.request import RequestDecodeError
+from utils.requests.request import RequestDecodeError, Request
 from utils.requests.test_utils import fake_signer, fake_body
 
 
@@ -26,12 +26,12 @@ class TestInviteRequest:
         assert request.method == "INVITE"
 
     def test_load_request_RequestWithAllParameters_LoadsRequestWithValidParameters(self):
-        request = InviteRequest.load_request(fake_body({
+        request = Request.load_request(fake_body({
             "inviter": "C1",
             "invitee": "C2",
             "invitee_email": "c2@y.com",
             "inviter_signature": "sign1234",
-        }))
+        }), InviteRequest)
 
         assert request.inviter == b"C1"
         assert request.invitee == b"C2"
@@ -40,9 +40,9 @@ class TestInviteRequest:
 
     def test_load_request_RequestMissingOneParameter_RaisesRequestDecodeError(self):
         with raises(RequestDecodeError):
-            InviteRequest.load_request(fake_body({
+            Request.load_request(fake_body({
                 # missing inviter parameter
                 "invitee": "C2",
                 "invitee_email": "c2@y.com",
                 "inviter_signature": "sign1234",
-            }))
+            }), InviteRequest)

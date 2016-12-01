@@ -10,6 +10,8 @@ class RequestDecodeError(Exception):
 
 class Request:
     """
+    << Abstract Class >>
+
     Request abstracts the complexity of an HTTP request. Hides the actual
     format of the request and provides a clean interface to set the values of
     the parameters required for each type of request.
@@ -75,16 +77,20 @@ class Request:
         return json.dumps(self.parameters, cls=Base64Encoder)
 
     @staticmethod
-    def _body_to_parameters(request_body: bytes) -> dict:
+    def _read_body(request_body: bytes) -> dict:
         """
-        Takes a request body in bytes format and returns a dictionary with
-        the parameters. It works as the inverse operation of the body
-        property. This abstracts the encoding of the requests. For the
-        Request subclasses it does not matter if we are encoding into JSON or
-        something else.
+        Reads a request body in bytes format and returns a dictionary with
+        the read parameters. The values of the parameters are returned as
+        JSON supported types, which means that some base64 encoded values
+        are returned as strings and must be converted outside this method.
+
+        This method abstracts the encoding of the requests. Its current
+        implementation decodes from JSON format. It is enough to
+        re-implement this method to change to other encoding format.
 
         :param request_body: request body in bytes format.
-        :return: dictionary with the parameters.
+        :return: dictionary with the parameters (parameter values support
+                 ony JSON supported types)
         """
         # JSON loads method expects a string
         request_body = request_body.decode()

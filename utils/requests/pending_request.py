@@ -33,7 +33,7 @@ class PendingRequest(Request):
 
     @staticmethod
     def load_request(request_body: bytes):
-        parameters = Request._body_to_parameters(request_body)
+        parameters = Request._read_body(request_body)
 
         try:
             return PendingRequest(
