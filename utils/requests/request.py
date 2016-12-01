@@ -29,18 +29,41 @@ class Request:
     mentioned getter methods.
     """
 
+    def __init__(self, parameters_values: dict):
+        self._parameters_values = parameters_values
+
     @staticmethod
-    def load_request(request_body: bytes):
+    def load_request(request_body: bytes, request_type):
         """
         Loads a request from a JSON string. All subclasses must implement
         this static method.
 
         :param request_body: body of the request in bytes format.
+        :param request_type: request type to be loaded.
         :return: request object.
         :raise RequestDecodeError: if the JSON string is incorrectly formatted or if
                                    it misses any parameter.
         """
-        pass
+        request_items = Request._read_body(request_body)
+
+        try:
+            # parse each parameter of the given request type
+            # ensure the value of each parameter is encoded in the type
+            # format specified by the given request type
+            values = {}
+            for parameter, param_type in request_type.parameters_types.items():
+                values[parameter] = param_type(request_items[parameter])
+
+            # create instance of the given request type
+            # assign loaded values to the request
+            return Request._create(request_type, values)
+
+        except KeyError:
+            raise RequestDecodeError("request is missing at least one "
+                                     "of its required parameters")
+        except TypeError:
+            raise RequestDecodeError("at least one of the parameters of the "
+                                     "request is not in the correct type")
 
     @property
     def method(self) -> str:
@@ -75,6 +98,18 @@ class Request:
         :return: JSON string containing the parameters of the request.
         """
         return json.dumps(self.parameters, cls=Base64Encoder)
+
+    @staticmethod
+    def _create(request_type, parameters_values: dict):
+        """
+        Creates an instance of the given request type. Assigns teh request
+        type with the values from the dictionary parameters_values.
+
+        :param request_type: type of request to create.
+        :param parameters_values: dict with the parameter values for the
+                                  request.
+        """
+        return request_type(parameters_values)
 
     @staticmethod
     def _read_body(request_body: bytes) -> dict:

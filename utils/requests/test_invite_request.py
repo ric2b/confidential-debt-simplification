@@ -13,7 +13,7 @@ class TestInviteRequest:
 
     def test_signed_request_ReturnsCorrectSignedInviteRequest(self):
         signer = fake_signer()
-        request = InviteRequest.signed_request(
+        request = InviteRequest.signed(
             inviter=signer,
             invitee_id=b"C2",
             invitee_email="c2@y.com"
