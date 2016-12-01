@@ -1,6 +1,7 @@
 from pytest import raises
 
-from utils.requests.response import ResponseError
+from utils.requests.response import DecodeError, Response
+from utils.requests.test_utils import fake_body, fake_http_response
 from utils.requests.totals_response import TotalsResponse
 
 
@@ -9,9 +10,8 @@ class TestTotalsResponse:
     # Tests for the from_parameters() method
     #
 
-    def test_ValidResponseWithCorrectFormattingAndOneEntry_TotalsResponseWithEntry(
-            self):
-        parameters = {
+    def test_ValidResponseWithCorrectFormattingAndOneEntry_TotalsResponseWithEntry(self):
+        http_response = fake_http_response(body=fake_body({
             "response": "TOTALS",
             "entries": [
                 {
@@ -19,9 +19,9 @@ class TestTotalsResponse:
                     "amount": 1000
                 }
             ]
-        }
+        }))
 
-        response = TotalsResponse.from_parameters(parameters)
+        response = Response.load_response(http_response, TotalsResponse)
 
         assert response.entries == [
             {
@@ -31,21 +31,21 @@ class TestTotalsResponse:
         ]
 
     def test_ResponseMissingTheResponseParameter_RaisesResponseError(self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "entries": [
                 {
                     "other_user": "C1",
                     "amount": 1000
                 }
             ]
-        }
+        }))
 
         expected_message = "Response was missing some parameters"
-        with raises(ResponseError, message=expected_message):
-            TotalsResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, TotalsResponse)
 
     def test_ResponseWithIncorrectMethod_RaisesResponseError(self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "response": "INCORRECT",
             "entries": [
                 {
@@ -53,14 +53,14 @@ class TestTotalsResponse:
                     "amount": 1000
                 }
             ]
-        }
+        }))
 
         expected_message = "Response method does not match"
-        with raises(ResponseError, message=expected_message):
-            TotalsResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, TotalsResponse)
 
     def test_ResponseMethodIsAnInt_RaisesResponseError(self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "response": 1234,
             "entries": [
                 {
@@ -68,25 +68,25 @@ class TestTotalsResponse:
                     "amount": 1000
                 }
             ]
-        }
+        }))
 
         expected_message = "Parameters are of incorrect type"
-        with raises(ResponseError, message=expected_message):
-            TotalsResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, TotalsResponse)
 
     def test_ResponseEntriesIsNotAList_RaisesResponseError(self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "response": "TOTALS",
             "entries": "value"
-        }
+        }))
 
         expected_message = "Parameters are of incorrect type"
-        with raises(ResponseError, message=expected_message):
-            TotalsResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, TotalsResponse)
 
     def test_ResponseEntryMissesOneParameter_RaisesResponseError(
             self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "response": "TOTALS",
             "entries": [
                 {
@@ -94,26 +94,26 @@ class TestTotalsResponse:
                     "amount": 1000
                 }
             ]
-        }
+        }))
 
         expected_message = "Parameters are of incorrect type"
-        with raises(ResponseError, message=expected_message):
-            TotalsResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, TotalsResponse)
 
     def test_ResponseEntryIsNotADict_RaisesResponseError(
             self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "response": "TOTALS",
             "entries": [["entry1"], ["entry2"]]
-        }
+        }))
 
         expected_message = "Parameters are of incorrect type"
-        with raises(ResponseError, message=expected_message):
-            TotalsResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, TotalsResponse)
 
     def test_ResponseEntryAmountIsNotAValidInt_RaisesResponseError(
             self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "response": "TOTALS",
             "entries": [
                 {
@@ -121,8 +121,8 @@ class TestTotalsResponse:
                     "amount": "AD"
                 }
             ]
-        }
+        }))
 
         expected_message = "Parameters are of incorrect type"
-        with raises(ResponseError, message=expected_message):
-            TotalsResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, TotalsResponse)

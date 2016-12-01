@@ -1,5 +1,6 @@
 import json
-from unittest.mock import Mock
+from http.client import HTTPResponse
+from unittest.mock import Mock, MagicMock
 
 from pytest import fixture
 
@@ -9,6 +10,22 @@ def fake_body(parameters: dict) -> bytes:
     # there is no problem to use JSON directly to convert the parameters since
     # here it is not our goal to test the JSON format but input parameters
     return json.dumps(parameters).encode()
+
+
+def fake_http_response(status=200, body=bytes()) -> HTTPResponse:
+    """
+    Creates a fake HTTP response.
+
+    :param status:  status code of the response.
+    :param body:    body of the response in bytes
+    :return: fake http response (mock object)
+    """
+    http_response = Mock()
+    http_response.status = status
+    http_response.read = MagicMock(return_value=body)
+
+    # noinspection PyTypeChecker
+    return http_response
 
 
 @fixture

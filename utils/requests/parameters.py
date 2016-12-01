@@ -37,6 +37,13 @@ def identifier(value) -> bytes:
     return _bytes_parameter(value)
 
 
+def integer(value) -> int:
+    try:
+        return int(value)
+    except ValueError:
+        raise TypeError
+
+
 def signature(value) -> bytes:
     """
     Signature parameters are used for signed string. They can be a string
@@ -49,3 +56,35 @@ def signature(value) -> bytes:
     :raise TypeError: if the input value is not a string or bytes string.
     """
     return _bytes_parameter(value)
+
+
+def entries(values_types: dict):
+    """
+    Takes a dictionary with parameters and the respective value types.
+    Returns the function type for the parameters.
+
+    :param values_types:
+    :return:
+    """
+    return Entries(values_types).parse
+
+
+class Entries:
+
+    def __init__(self, values_types: dict):
+        self.values_types = values_types
+
+    def parse(self, entries: list):
+
+        if not isinstance(entries, list):
+            raise TypeError
+
+        parsed_entries = []
+        for entry in entries:
+            values = {}
+            for parameter, param_type in self.values_types.items():
+                values[parameter] = param_type(entry[parameter])
+
+            parsed_entries.append(values)
+
+        return parsed_entries

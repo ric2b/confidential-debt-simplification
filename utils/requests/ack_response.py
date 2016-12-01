@@ -1,4 +1,7 @@
-class AckResponse:
+from utils.requests.response import Response
+
+
+class AckResponse(Response):
     """
     Ack Response - Is a special response to indicate everything went ok with 
     the request. It has no parameters.
@@ -6,14 +9,13 @@ class AckResponse:
 
     method = "ACK"
 
-    @staticmethod
-    def from_parameters(parameters: dict):
-        """
-        It has no parameters, therefore, it just returns an AckResponse object.
+    # The class field parameter_types defines the parameters and types of
+    # the values of each parameter
+    parameters_types = {}
 
-        :return: AckResponse object.
-        """
-        return AckResponse()
+    @staticmethod
+    def build():
+        return AckResponse({})
 
     @property
     def parameters(self) -> dict:
