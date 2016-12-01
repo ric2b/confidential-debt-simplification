@@ -1,7 +1,7 @@
 from pytest import raises
 
 from utils.requests.accept_request import AcceptRequest
-from utils.requests.request import RequestDecodeError
+from utils.requests.request import DecodeError, Request
 from utils.requests.test_utils import fake_signer, fake_body
 
 
@@ -9,7 +9,7 @@ class TestAcceptRequest:
 
     def test_signed_request_ReturnsCorrectSignedAcceptRequest(self):
         signer = fake_signer()
-        request = AcceptRequest.signed_request(
+        request = AcceptRequest.signed(
             borrower=signer,
             loaner_id=B"C2",
             amount=10,
@@ -26,14 +26,16 @@ class TestAcceptRequest:
         assert request.method == "ACCEPT"
 
     def test_load_request_RequestWithAllParameters_LoadsRequestWithValidParameters(self):
-        request = AcceptRequest.load_request(fake_body({
+        request_body = fake_body({
             "borrower": "C1",
             "loaner": "C2",
             "amount": 10,
             "salt": "salt",
-            "UOMe_id": "1234",
+            "UOMe": "1234",
             "signature": "C2C110salt1234",
-        }))
+        })
+
+        request = Request.load_request(request_body, AcceptRequest)
 
         assert request.borrower == b"C1"
         assert request.loaner == b"C2"
@@ -42,24 +44,28 @@ class TestAcceptRequest:
         assert request.UOMe == "1234"
         assert request.signature == b"C2C110salt1234"
 
-    def test_load_request_RequestMissingOneParameter_RaisesRequestDecodeError(self):
-        with raises(RequestDecodeError):
-            AcceptRequest.load_request(fake_body({
-                # missing borrower parameter
-                "loaner": "C2",
-                "amount": 10,
-                "salt": "salt",
-                "UOMe_id": "1234",
-                "signature": "C2C110salt1234",
-            }))
+    def test_load_request_RequestMissingOneParameter_RaisesDecodeError(self):
+        request_body = fake_body({
+            # missing borrower parameter
+            "loaner": "C2",
+            "amount": 10,
+            "salt": "salt",
+            "UOMe": "1234",
+            "signature": "C2C110salt1234",
+        })
 
-    def test_load_request_RequestWithAmountNotAnInt_RaisesRequestDecodeError(self):
-        with raises(RequestDecodeError):
-            AcceptRequest.load_request(fake_body({
-                "borrower": "C1",
-                "loaner": "C2",
-                "amount": [],  # should be an int but it's a list
-                "salt": "salt",
-                "UOMe_id": "1234",
-                "signature": "C2C110salt1234"
-            }))
+        with raises(DecodeError):
+            Request.load_request(request_body, AcceptRequest)
+
+    def test_load_request_RequestWithAmountNotAnInt_RaisesDecodeError(self):
+        request_body = fake_body({
+            "borrower": "C1",
+            "loaner": "C2",
+            "amount": [],  # should be an int but it's a list
+            "salt": "salt",
+            "UOMe": "1234",
+            "signature": "C2C110salt1234"
+        })
+
+        with raises(DecodeError):
+            Request.load_request(request_body, AcceptRequest)

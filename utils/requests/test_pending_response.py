@@ -1,7 +1,8 @@
 from pytest import raises
 
 from utils.requests.pending_response import PendingResponse
-from utils.requests.response import ResponseError
+from utils.requests.response import DecodeError, Response
+from utils.requests.test_utils import fake_body, fake_http_response
 
 
 class TestPendingResponse:
@@ -9,13 +10,12 @@ class TestPendingResponse:
     # Tests for the from_parameters() method
     #
 
-    def test_ValidResponseWithCorrectFormattingAndOneEntry_PendingResponseWithEntry(
-            self):
-        parameters = {
+    def test_ValidResponseWithCorrectFormattingAndOneEntry_PendingResponseWithEntry(self):
+        http_response = fake_http_response(body=fake_body({
             "response": "PENDING",
             "entries": [
                 {
-                    "id": "#1234",
+                    "UOMe": "#1234",
                     "loaner": "C1",
                     "borrower": "C2",
                     "amount": 1000,
@@ -23,13 +23,13 @@ class TestPendingResponse:
                     "loaner_signature": "df4r2"
                 }
             ]
-        }
+        }))
 
-        response = PendingResponse.from_parameters(parameters)
+        response = Response.load_response(http_response, PendingResponse)
 
         assert response.entries == [
             {
-                "id": "#1234",
+                "UOMe": "#1234",
                 "loaner": b"C1",
                 "borrower": b"C2",
                 "amount": 1000,
@@ -39,10 +39,10 @@ class TestPendingResponse:
         ]
 
     def test_ResponseMissingTheResponseParameter_RaisesResponseError(self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "entries": [
                 {
-                    "id": "#1234",
+                    "UOMe": "#1234",
                     "loaner": "C1",
                     "borrower": "C2",
                     "amount": 1000,
@@ -50,18 +50,18 @@ class TestPendingResponse:
                     "loaner_signature": "df4r2"
                 }
             ]
-        }
+        }))
 
         expected_message = "Response was missing some parameters"
-        with raises(ResponseError, message=expected_message):
-            PendingResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, PendingResponse)
 
     def test_ResponseWithIncorrectMethod_RaisesResponseError(self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "response": "INCORRECT",
             "entries": [
                 {
-                    "id": "#1234",
+                    "UOMe": "#1234",
                     "loaner": "C1",
                     "borrower": "C2",
                     "amount": 1000,
@@ -69,18 +69,18 @@ class TestPendingResponse:
                     "loaner_signature": "df4r2"
                 }
             ]
-        }
+        }))
 
         expected_message = "Response method does not match"
-        with raises(ResponseError, message=expected_message):
-            PendingResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, PendingResponse)
 
     def test_ResponseMethodIsAnInt_RaisesResponseError(self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "response": 1234,
             "entries": [
                 {
-                    "id": "#1234",
+                    "UOMe": "#1234",
                     "loaner": "C1",
                     "borrower": "C2",
                     "amount": 1000,
@@ -88,25 +88,25 @@ class TestPendingResponse:
                     "loaner_signature": "df4r2"
                 }
             ]
-        }
+        }))
 
         expected_message = "Parameters are of incorrect type"
-        with raises(ResponseError, message=expected_message):
-            PendingResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, PendingResponse)
 
     def test_ResponseEntriesIsNotAList_RaisesResponseError(self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "response": "PENDING",
             "entries": "value"
-        }
+        }))
 
         expected_message = "Parameters are of incorrect type"
-        with raises(ResponseError, message=expected_message):
-            PendingResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, PendingResponse)
 
     def test_ResponseEntryMissesOneParameter_RaisesResponseError(
             self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "response": "PENDING",
             "entries": [
                 {
@@ -118,30 +118,30 @@ class TestPendingResponse:
                     "loaner_signature": "df4r2"
                 }
             ]
-        }
+        }))
 
         expected_message = "Parameters are of incorrect type"
-        with raises(ResponseError, message=expected_message):
-            PendingResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, PendingResponse)
 
     def test_ResponseEntryIsNotADict_RaisesResponseError(
             self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "response": "PENDING",
             "entries": [["entry1"], ["entry2"]]
-        }
+        }))
 
         expected_message = "Parameters are of incorrect type"
-        with raises(ResponseError, message=expected_message):
-            PendingResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, PendingResponse)
 
     def test_ResponseEntryAmountIsNotAValidInt_RaisesResponseError(
             self):
-        parameters = {
+        http_response = fake_http_response(body=fake_body({
             "response": "PENDING",
             "entries": [
                 {
-                    "id": "1234",
+                    "UOMe": "1234",
                     "loaner": "C1",
                     "borrower": "C2",
                     "amount": "AD",
@@ -149,8 +149,8 @@ class TestPendingResponse:
                     "loaner_signature": "df4r2"
                 }
             ]
-        }
+        }))
 
         expected_message = "Parameters are of incorrect type"
-        with raises(ResponseError, message=expected_message):
-            PendingResponse.from_parameters(parameters)
+        with raises(DecodeError, message=expected_message):
+            Response.load_response(http_response, PendingResponse)

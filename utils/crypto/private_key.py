@@ -81,6 +81,8 @@ class PrivateKey:
         """
         # Question: Should the private key be stored encrypted?
 
+        # Yes. TODO: Store private key encrypted
+
         pem = self._private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,

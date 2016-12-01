@@ -1,59 +1,34 @@
-from utils.requests.response import ResponseError
+from utils.requests.response import Response
 
 
-class UOMeResponse:
+class UOMeResponse(Response):
     """
     UOMe Response - response to a UOMe request.
     """
 
     method = "UOMe"
 
-    def __init__(self, UOMe_id: str):
-        self._parameters = {
-            "response": self.method,
-            "UOMe": UOMe_id
-        }
+    # The class field parameter_types defines the parameters and types of
+    # the values of each parameter
+    parameters_types = {
+        "UOMe": str,
+    }
 
     @staticmethod
-    def from_parameters(parameters: dict):
+    def build(UOMe_id: str):
         """
-        Expects the following parameters:
-            - response type
-            - UOMe ID
+        Factory method for an UOMe response. Use this method to create
+        UOMe responses instead of the default initializer.
 
-        :raise ResponseError: if the response is not in the expected format
-                              or missing some parameters.
-        :return: UOMeResponse object.
+        Returns an UOMe response signed by the given signer. This method
+        abstracts which parameters are signed by the signer.
         """
-        try:
-            if parameters["response"] != UOMeResponse.method:
-                raise ResponseError("Response method does not match")
+        parameters_values = {
+            "UOMe": UOMe_id,
+        }
 
-            # Note: there is no problem forcing the parameters to be strings
-            # and then encoding to bytes. Any JSON type is decoded into a
-            # python type that can be correctly converted to a string without
-            # generating an exception. Checking if the value is correct is
-            # not the responsibility of the response implementation
-
-            return UOMeResponse(
-                UOMe_id=str(parameters["UOMe"])
-            )
-
-        except KeyError:
-            raise ResponseError("Response was missing some parameters")
-        except ValueError:
-            raise ResponseError("Parameters are of incorrect type")
-
-    @property
-    def parameters(self) -> dict:
-        """
-        Returns a dictionary containing the parameters of the response.
-
-        :return: dictionary with the names and values of the response
-                 parameters.
-        """
-        return self._parameters
+        return UOMeResponse(parameters_values)
 
     @property
     def UOMe(self) -> str:
-        return self._parameters["UOMe"]
+        return self._parameters_values["UOMe"]
