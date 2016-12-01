@@ -1,8 +1,9 @@
 from pytest import raises
 
+from utils.crypto.exceptions import InvalidSignature
 from utils.requests.pending_request import PendingRequest
 from utils.requests.request import DecodeError, Request
-from utils.requests.test_utils import fake_signer, fake_body
+from utils.requests.test_utils import fake_signer, fake_body, fake_verifier
 
 
 class TestPendingRequest:
@@ -14,6 +15,23 @@ class TestPendingRequest:
         assert request.user == b"C1"
         assert request.signature == b"C1"
         assert request.method == "PENDING"
+
+    def test_verify_ValidSignedRequest_DoesNotRaiseInvalidSignature(self):
+        signed_request = PendingRequest.signed(fake_signer())
+
+        verifier = fake_verifier()
+        signed_request.verify(verifier)
+
+    def test_verify_InvalidSignedRequest_RaiseInvalidSignature(self):
+        invalid_signed_request = Request.load_request(fake_body({
+            "user": "C3",
+            "signature": "C1",
+        }), PendingRequest)
+
+        verifier = fake_verifier()
+
+        with raises(InvalidSignature):
+            invalid_signed_request.verify(verifier)
 
     def test_load_request_RequestWithAllParameters_LoadsRequestWithValidParameters(self):
         request_body = fake_body({
