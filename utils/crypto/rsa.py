@@ -16,8 +16,8 @@ class InvalidSignature(Exception):
 # However, 65537 is the most used value if we use a lower value with a good
 # padding scheme we don't loose any security and gain more performance
 # Using e=3 might improve performance by 8x
-PUBLIC_EXPONENT = 3
-
+PUBLIC_EXPONENT = 65537
+KEY_SIZE = 2048
 
 def generate_keys() -> (PrivateKey, PublicKey):
     """
@@ -27,7 +27,7 @@ def generate_keys() -> (PrivateKey, PublicKey):
     """
     raw_private_key = rsa.generate_private_key(
         public_exponent=PUBLIC_EXPONENT,
-        key_size=2048,
+        key_size=KEY_SIZE,
         backend=default_backend()
     )
 
