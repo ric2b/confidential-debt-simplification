@@ -1,6 +1,7 @@
 from utils.requests.parameters import identifier, signature
 from utils.requests.request import Request, DecodeError
 from utils.requests.signer import Signer
+from utils.requests.verifier import Verifier
 
 
 class PendingRequest(Request):
@@ -33,6 +34,14 @@ class PendingRequest(Request):
         }
 
         return PendingRequest(parameters_values)
+
+    def verify(self, verifier: Verifier):
+        """
+        Verifies if the signatures in the join request are valid.
+
+        :param verifier: verifier used to verify the signature.
+        """
+        verifier.verify(self.signature, self.user)
 
     @property
     def method(self) -> str:

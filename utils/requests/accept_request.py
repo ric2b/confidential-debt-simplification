@@ -2,6 +2,7 @@ from utils import bytesutils
 from utils.requests.parameters import identifier, signature
 from utils.requests.request import Request
 from utils.requests.signer import Signer
+from utils.requests.verifier import Verifier
 
 
 class AcceptRequest(Request):
@@ -49,6 +50,16 @@ class AcceptRequest(Request):
         }
 
         return AcceptRequest(parameters_values)
+
+    def verify(self, verifier: Verifier):
+        """
+        Verifies if the signatures in the invite request are valid.
+
+        :param verifier: verifier used to verify the signature.
+        """
+        verifier.verify(self.signature, self.loaner, self.borrower,
+                        bytesutils.from_int(self.amount), self.salt.encode(),
+                        self.UOMe.encode())
 
     @property
     def method(self) -> str:

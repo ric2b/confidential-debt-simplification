@@ -4,6 +4,8 @@ from unittest.mock import Mock, MagicMock
 
 from pytest import fixture
 
+from utils.crypto.exceptions import InvalidSignature
+
 
 def fake_body(parameters: dict) -> bytes:
     """ Creates a fake request body from a dict with parameters """
@@ -28,17 +30,32 @@ def fake_http_response(status=200, body=bytes()) -> HTTPResponse:
     return http_response
 
 
+def fake_signature(*data):
+    return b"".join(data)
+
+
 @fixture
 def fake_signer():
     """
     Creates a fake signer with some predefined ID and which concatenates all
     data elements as a signature
     """
-
-    def signature(*data):
-        return b"".join(data)
-
     signer = Mock()
-    signer.sign = Mock(side_effect=signature)
+    signer.sign = Mock(side_effect=fake_signature)
     signer.id = b"C1"
     return signer
+
+
+@fixture
+def fake_verifier():
+    """
+    Creates a fake verifier to verify fake signatures from the fake signer.
+    """
+
+    def fake_verify(signature, *data):
+        if signature != fake_signature(*data):
+            raise InvalidSignature
+
+    verifier = Mock()
+    verifier.verify = Mock(side_effect=fake_verify)
+    return verifier

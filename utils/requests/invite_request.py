@@ -1,6 +1,7 @@
 from utils.requests.parameters import identifier, signature
 from utils.requests.request import Request
 from utils.requests.signer import Signer
+from utils.requests.verifier import Verifier
 
 
 class InviteRequest(Request):
@@ -40,6 +41,15 @@ class InviteRequest(Request):
         }
 
         return InviteRequest(parameters_values)
+
+    def verify(self, verifier: Verifier):
+        """
+        Verifies if the signatures in the invite request are valid.
+
+        :param verifier: verifier used to verify the signature.
+        """
+        verifier.verify(self.inviter_signature, self.inviter, self.invitee,
+                        self.invitee_email.encode())
 
     @property
     def method(self) -> str:

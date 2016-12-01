@@ -1,12 +1,9 @@
-import json
-from unittest.mock import Mock
-
-from pytest import fixture
 from pytest import raises
 
+from utils.crypto.exceptions import InvalidSignature
 from utils.requests.invite_request import InviteRequest
 from utils.requests.request import DecodeError, Request
-from utils.requests.test_utils import fake_signer, fake_body
+from utils.requests.test_utils import fake_signer, fake_body, fake_verifier
 
 
 class TestInviteRequest:
@@ -24,6 +21,29 @@ class TestInviteRequest:
         assert request.invitee_email == "c2@y.com"
         assert request.inviter_signature == b"C1C2c2@y.com"
         assert request.method == "INVITE"
+
+    def test_verify_ValidSignedRequest_DoesNotRaiseInvalidSignature(self):
+        signed_request = InviteRequest.signed(
+            inviter=fake_signer(),
+            invitee_id=b"C2",
+            invitee_email="c2@y.com"
+        )
+
+        verifier = fake_verifier()
+        signed_request.verify(verifier)
+
+    def test_verify_InvalidSignedRequest_RaiseInvalidSignature(self):
+        invalid_signed_request = Request.load_request(fake_body({
+            "inviter": "C3",
+            "invitee": "C2",
+            "invitee_email": "c2@y.com",
+            "inviter_signature": "C1C2c2@y.com",
+        }), InviteRequest)
+
+        verifier = fake_verifier()
+
+        with raises(InvalidSignature):
+            invalid_signed_request.verify(verifier)
 
     def test_load_request_RequestWithAllParameters_LoadsRequestWithValidParameters(self):
         request = Request.load_request(fake_body({
