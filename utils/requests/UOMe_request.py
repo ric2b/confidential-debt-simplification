@@ -51,10 +51,6 @@ class UOMeRequest(Request):
         return "UOMe"
 
     @property
-    def parameters(self) -> dict:
-        return self._parameters_values
-
-    @property
     def loaner(self) -> bytes:
         return self._parameters_values['loaner']
 

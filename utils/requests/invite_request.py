@@ -46,10 +46,6 @@ class InviteRequest(Request):
         return "INVITE"
 
     @property
-    def parameters(self) -> dict:
-        return self._parameters_values
-
-    @property
     def inviter(self) -> bytes:
         return self._parameters_values['inviter']
 

@@ -41,10 +41,6 @@ class ConfirmJoinRequest(Request):
         return "CONFIRM JOIN"
 
     @property
-    def parameters(self) -> dict:
-        return self._parameters_values
-
-    @property
     def user(self) -> bytes:
         return self._parameters_values['user']
 

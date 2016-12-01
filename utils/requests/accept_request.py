@@ -55,10 +55,6 @@ class AcceptRequest(Request):
         return "ACCEPT"
 
     @property
-    def parameters(self) -> dict:
-        return self._parameters_values
-
-    @property
     def borrower(self) -> bytes:
         return self._parameters_values['borrower']
 

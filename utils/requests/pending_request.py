@@ -39,10 +39,6 @@ class PendingRequest(Request):
         return "PENDING"
 
     @property
-    def parameters(self) -> dict:
-        return self._parameters_values
-
-    @property
     def user(self) -> bytes:
         return self._parameters_values['user']
 

@@ -73,18 +73,6 @@ class Request:
         return ""
 
     @property
-    def parameters(self) -> dict:
-        """
-        Must return a dictionary containing the parameters of the request.
-        For instance, the invite request would require 2 parameters: the
-        invitee ID and its email, thereby, the parameters getter should
-        return a dictionary with: { 'invitee_ID': ID, 'invitee_email': email }.
-
-        :return: dictionary with the names and values of the request parameters.
-        """
-        return dict()
-
-    @property
     def body(self) -> str:
         """
         Returns a string containing the body of the request. The body of the
@@ -94,7 +82,7 @@ class Request:
 
         :return: JSON string containing the parameters of the request.
         """
-        return json.dumps(self.parameters, cls=Base64Encoder)
+        return json.dumps(self._parameters_values, cls=Base64Encoder)
 
     @staticmethod
     def _create(request_type, parameters_values: dict):
