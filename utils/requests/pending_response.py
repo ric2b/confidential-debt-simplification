@@ -1,5 +1,7 @@
+from utils import bytesutils
 from utils.requests.parameters import entries, identifier, signature, integer
 from utils.requests.response import Response
+from utils.requests.verifier import Verifier
 
 
 class PendingResponse(Response):
@@ -36,6 +38,18 @@ class PendingResponse(Response):
         }
 
         return PendingResponse(parameters_values)
+
+    def verify(self, verifier: Verifier):
+        """
+        Verifies if the signatures of each entry in the pending request are
+        valid. Does not check if the borrower corresponds to the verifier.
+        """
+        for entry in self.entries:
+            verifier.verify(entry["loaner_signature"],
+                            entry["loaner"],
+                            entry["borrower"],
+                            bytesutils.from_int(entry["amount"]),
+                            entry["salt"].encode())
 
     @property
     def entries(self) -> list:

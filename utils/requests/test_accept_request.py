@@ -1,8 +1,9 @@
 from pytest import raises
 
+from utils.crypto.exceptions import InvalidSignature
 from utils.requests.accept_request import AcceptRequest
 from utils.requests.request import DecodeError, Request
-from utils.requests.test_utils import fake_signer, fake_body
+from utils.requests.test_utils import fake_signer, fake_body, fake_verifier
 
 
 class TestAcceptRequest:
@@ -24,6 +25,33 @@ class TestAcceptRequest:
         assert request.UOMe == "1234"
         assert request.signature == b"C2C110salt1234"
         assert request.method == "ACCEPT"
+
+    def test_verify_ValidSignedRequest_DoesNotRaiseInvalidSignature(self):
+        signed_request = AcceptRequest.signed(
+            borrower=fake_signer(),
+            loaner_id=B"C2",
+            amount=10,
+            salt="salt",
+            UOMe_id="1234"
+        )
+
+        verifier = fake_verifier()
+        signed_request.verify(verifier)
+
+    def test_verify_InvalidSignedRequest_RaiseInvalidSignature(self):
+        invalid_signed_request = Request.load_request(fake_body({
+            "borrower": "C2",
+            "loaner": "C3",
+            "amount": 10,
+            "salt": "salt",
+            "UOMe": "1234",
+            "signature": "C2C110salt1234",
+        }), AcceptRequest)
+
+        verifier = fake_verifier()
+
+        with raises(InvalidSignature):
+            invalid_signed_request.verify(verifier)
 
     def test_load_request_RequestWithAllParameters_LoadsRequestWithValidParameters(self):
         request_body = fake_body({
