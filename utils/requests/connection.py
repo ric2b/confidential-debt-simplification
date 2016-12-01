@@ -58,12 +58,12 @@ class Connection:
         """
         self._http_connection.request(
             method='POST',
-            url='/' + request.method,
+            url='/fakeserver/' + request.method,
             body=request.body
         )
 
     def get_response(self, response_impl):
-        return Response.from_HTTP_response(
+        return Response.load_response(
             self._http_connection.getresponse(),
             response_impl
         )

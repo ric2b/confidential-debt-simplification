@@ -1,111 +1,38 @@
+from http.client import HTTPResponse
 from unittest.mock import MagicMock, Mock
 
 from pytest import raises
 
-from utils.requests.response import Response, HTTPError, ResponseError, \
-    RequestError
+from utils.requests.response import Response, HTTPError, BadRequestError, \
+    ForbiddenError
+from utils.requests.test_utils import fake_http_response
 
 
-def fake_http_response(status=200, headers=None, body=bytes()):
-    """
-    Creates a fake HTTP response.
-
-    :param status:  status code of the response.
-    :param headers: dict with the header keys and values.
-    :param body:    body of the response in bytes
-    :return: fake http response (mock object)
-    """
-    if headers is None:
-        headers = {}
-
-    http_response = Mock()
-    http_response.status = status
-
-    def side_effect(header):
-        return headers.get(header)
-
-    http_response.getheader = Mock(side_effect=side_effect)
-    http_response.read = MagicMock(return_value=body)
-
-    return http_response
-
-
-# noinspection PyTypeChecker,PyPep8Naming
-class TestResponse_ToParameters:
+class TestResponse:
 
     #
-    # Tests for the _to_parameters() method
+    # Tests for the check_status_code() method
     #
 
-    def test_200ResponseWithJsonHeaderAndOneParameter_DictWithTheReceivedParameter(self):
-        response = fake_http_response(
-            status=200,
-            headers={'Content-Type': 'application/json'},
-            body=b'{"parameter": "value"}'
-        )
+    def test_check_status_code_Code200ForOK_DoesNotRaiseAnything(self):
+        http_response = fake_http_response(status=200, body=b"")
 
-        parameters = Response._to_parameters(response)
+        Response._check_status_code(http_response)
 
-        assert parameters == {
-            "parameter": "value"
-        }
+    def test_check_status_code_Code400ForBadRequest_RaisesBadRequestError(self):
+        http_response = fake_http_response(status=400, body=b"")
 
-    def test_404Response_Raises404HTTPError(self):
-        response = fake_http_response(
-            status=404,
-            headers={},
-            body=b'Not found'
-        )
+        with raises(BadRequestError):
+            Response._check_status_code(http_response)
 
-        with raises(HTTPError, status_code=404):
-            Response._to_parameters(response)
+    def test_check_status_code_Code403ForForbidden_RaisesForbiddenRequestError(self):
+        http_response = fake_http_response(status=403, body=b"")
 
-    def test_200ResponseMissingContentType_RaisesResponseError(self):
-        response = fake_http_response(
-            status=200,
-            headers={},
-            body=b'{"parameter": "value"}'
-        )
+        with raises(ForbiddenError):
+            Response._check_status_code(http_response)
 
-        with raises(ResponseError):
-            Response._to_parameters(response)
+    def test_check_status_code_UnexpectedCode_RaisesHTTPError(self):
+        http_response = fake_http_response(status=500, body=b"some content")
 
-    def test_200ResponseWithInvalidContentType_RaisesResponseError(self):
-        response = fake_http_response(
-            status=200,
-            headers={'Content-Type': 'text/html'},
-            body=b'{"parameter": "value"}'
-        )
-
-        with raises(ResponseError):
-            Response._to_parameters(response)
-
-    def test_200ResponseWithInvalidJSONFormat_RaisesResponseError(self):
-        response = fake_http_response(
-            status=200,
-            headers={'Content-Type': 'application/json'},
-            body=b'parameter'
-        )
-
-        with raises(ResponseError):
-            Response._to_parameters(response)
-
-    def test_200ResponseWithoutJSONObject_RaisesResponseError(self):
-        response = fake_http_response(
-            status=200,
-            headers={'Content-Type': 'application/json'},
-            body=b'["parameter", "value"]'
-        )
-
-        with raises(ResponseError):
-            Response._to_parameters(response)
-
-    def test_400Response_RaisesRequestError(self):
-        response = fake_http_response(
-            status=400,
-            headers={},
-            body=b'Bad Request'
-        )
-
-        with raises(RequestError):
-            Response._to_parameters(response)
+        with raises(HTTPError, message="some content"):
+            Response._check_status_code(http_response)

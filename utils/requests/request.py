@@ -2,14 +2,13 @@ import json
 from json import JSONDecodeError
 
 from utils.requests.base64_json_encoder import Base64Encoder
-
-
-class RequestDecodeError(Exception):
-    """ Raised to indicate that there was an error while decoding a request. """
+from utils.requests.parameters_decoder import ParametersDecoder, DecodeError
 
 
 class Request:
     """
+    << Abstract Class >>
+
     Request abstracts the complexity of an HTTP request. Hides the actual
     format of the request and provides a clean interface to set the values of
     the parameters required for each type of request.
@@ -27,18 +26,41 @@ class Request:
     mentioned getter methods.
     """
 
+    def __init__(self, parameters_values: dict):
+        self._parameters_values = parameters_values
+
     @staticmethod
-    def load_request(request_body: bytes):
+    def load_request(request_body: bytes, request_type):
         """
         Loads a request from a JSON string. All subclasses must implement
         this static method.
 
         :param request_body: body of the request in bytes format.
+        :param request_type: request type to be loaded.
         :return: request object.
-        :raise RequestDecodeError: if the JSON string is incorrectly formatted or if
+        :raise DecodeError: if the JSON string is incorrectly formatted or if
                                    it misses any parameter.
         """
-        pass
+        request_items = ParametersDecoder.load(request_body.decode())
+
+        try:
+            # parse each parameter of the given request type
+            # ensure the value of each parameter is encoded in the type
+            # format specified by the given request type
+            values = {}
+            for parameter, param_type in request_type.parameters_types.items():
+                values[parameter] = param_type(request_items[parameter])
+
+            # create instance of the given request type
+            # assign loaded values to the request
+            return Request._create(request_type, values)
+
+        except KeyError:
+            raise DecodeError("request is missing at least one of its "
+                              "required parameters")
+        except TypeError:
+            raise DecodeError("at least one of the parameters of the "
+                              "request is not in the correct type")
 
     @property
     def method(self) -> str:
@@ -51,18 +73,6 @@ class Request:
         return ""
 
     @property
-    def parameters(self) -> dict:
-        """
-        Must return a dictionary containing the parameters of the request.
-        For instance, the invite request would require 2 parameters: the
-        invitee ID and its email, thereby, the parameters getter should
-        return a dictionary with: { 'invitee_ID': ID, 'invitee_email': email }.
-
-        :return: dictionary with the names and values of the request parameters.
-        """
-        return dict()
-
-    @property
     def body(self) -> str:
         """
         Returns a string containing the body of the request. The body of the
@@ -72,30 +82,16 @@ class Request:
 
         :return: JSON string containing the parameters of the request.
         """
-        return json.dumps(self.parameters, cls=Base64Encoder)
+        return json.dumps(self._parameters_values, cls=Base64Encoder)
 
     @staticmethod
-    def _body_to_parameters(request_body: bytes) -> dict:
+    def _create(request_type, parameters_values: dict):
         """
-        Takes a request body in bytes format and returns a dictionary with
-        the parameters. It works as the inverse operation of the body
-        property. This abstracts the encoding of the requests. For the
-        Request subclasses it does not matter if we are encoding into JSON or
-        something else.
+        Creates an instance of the given request type. Assigns teh request
+        type with the values from the dictionary parameters_values.
 
-        :param request_body: request body in bytes format.
-        :return: dictionary with the parameters.
+        :param request_type: type of request to create.
+        :param parameters_values: dict with the parameter values for the
+                                  request.
         """
-        # JSON loads method expects a string
-        request_body = request_body.decode()
-
-        try:
-            loaded_parameters = json.loads(request_body)
-        except JSONDecodeError as error:
-            raise RequestDecodeError(error)
-
-        if isinstance(loaded_parameters, dict):
-            return loaded_parameters
-        else:
-            raise RequestDecodeError("Parameters must be encoded as "
-                                     "JSON objects")
+        return request_type(parameters_values)
