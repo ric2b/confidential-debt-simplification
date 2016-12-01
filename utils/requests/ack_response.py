@@ -16,8 +16,3 @@ class AckResponse(Response):
     @staticmethod
     def build():
         return AckResponse({})
-
-    @property
-    def parameters(self) -> dict:
-        """ Returns empty dict """
-        return {}

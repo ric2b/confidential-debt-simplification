@@ -36,10 +36,6 @@ class JoinResponse(Response):
         return JoinResponse(parameters_values)
 
     @property
-    def parameters(self) -> dict:
-        return self._parameters_values
-
-    @property
     def main_server_signature(self) -> bytes:
         return self._parameters_values["main_server_signature"]
 

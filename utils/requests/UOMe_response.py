@@ -30,9 +30,5 @@ class UOMeResponse(Response):
         return UOMeResponse(parameters_values)
 
     @property
-    def parameters(self) -> dict:
-        return self._parameters_values
-
-    @property
     def UOMe(self) -> str:
         return self._parameters_values["UOMe"]

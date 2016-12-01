@@ -38,9 +38,5 @@ class PendingResponse(Response):
         return PendingResponse(parameters_values)
 
     @property
-    def parameters(self) -> dict:
-        return self._parameters_values
-
-    @property
     def entries(self) -> list:
         return self._parameters_values["entries"]

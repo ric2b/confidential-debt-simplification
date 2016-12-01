@@ -109,16 +109,6 @@ class Response:
                               "response is not in the correct type")
 
     @property
-    def parameters(self) -> dict:
-        """
-        Returns a dictionary containing the parameters of the response.
-
-        :return: dictionary with the names and values of the response
-                 parameters.
-        """
-        return dict()
-
-    @property
     def body(self) -> str:
         """
         Returns a string containing the body of the response. The body of the
@@ -128,7 +118,7 @@ class Response:
 
         :return: JSON string containing the parameters of the response.
         """
-        return json.dumps(self.parameters, cls=Base64Encoder)
+        return json.dumps(self._parameters_values, cls=Base64Encoder)
 
     @staticmethod
     def _create(response_type, parameters_values: dict):

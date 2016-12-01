@@ -34,15 +34,5 @@ class TotalsResponse(Response):
         return TotalsResponse(parameters_values)
 
     @property
-    def parameters(self) -> dict:
-        """
-        Returns a dictionary containing the parameters of the response.
-
-        :return: dictionary with the names and values of the response
-                 parameters.
-        """
-        return self._parameters_values
-
-    @property
     def entries(self) -> list:
         return self._parameters_values["entries"]
