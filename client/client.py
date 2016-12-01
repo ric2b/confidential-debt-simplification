@@ -3,7 +3,6 @@ import logging
 from cryptography.exceptions import InvalidSignature
 
 from utils.crypto import rsa
-from utils.crypto.public_key import PublicKey
 from utils.requests.ack_response import AckResponse
 from utils.requests.confirm_join_request import ConfirmJoinRequest
 from utils.requests.connection import Connection
@@ -31,10 +30,14 @@ logger.setLevel(logging.DEBUG)
 class Client(Signer):
     """ Interface for the client """
 
-    def __init__(self, register_server_url: str, main_server_pubkey: PublicKey,
+    def __init__(self, register_server_url: str,
+                 register_server_key: str,
+                 main_server_pubkey: str,
                  email: str, key_filepath=None):
-        self.server_url = register_server_url
-        self.main_server_pubkey = main_server_pubkey
+
+        self.register_server_url = register_server_url
+        self.register_server_key = register_server_key.encode()
+        self.main_server_key = main_server_pubkey.encode()
         self.email = email
 
         if key_filepath:
@@ -70,8 +73,8 @@ class Client(Signer):
         :param invitee_id: invited client's ID.
         :param invitee_email: invited client's email.
         """
-        with Connection(self.server_url) as connection:
-            request = InviteRequest.signed_request(
+        with Connection(self.register_server_url) as connection:
+            request = InviteRequest.signed(
                 inviter=self,
                 invitee_id=invitee_id.encode(),
                 invitee_email=invitee_email,
@@ -82,10 +85,6 @@ class Client(Signer):
             connection.request(request)
             logger.debug("Finished sending request")
 
-            # TODO check for errors
-            # - security errors
-            # - failed requests
-            # - communication errors
             connection.get_response(AckResponse)
             logger.info("Sent 'invite' to user id='%s' email='%s'" %
                         (invitee_id, invitee_email))
@@ -104,8 +103,8 @@ class Client(Signer):
         # directly from the user input and that needs to be a string
         inviter_id = inviter_id.encode()
 
-        with Connection(self.server_url) as connection:
-            request = JoinRequest.signed_request(
+        with Connection(self.register_server_url) as connection:
+            request = JoinRequest.signed(
                 joiner=self,
                 secret_code=secret_code
             )
@@ -114,48 +113,34 @@ class Client(Signer):
             connection.request(request)
             logger.debug("Finished sending request")
 
-            # TODO check for errors
-            # - security errors
-            # - failed requests
-            # - communication errors
-
-            response = connection.get_response(JoinResponse)
+            response = connection.get_response(JoinResponse)  # type: JoinResponse
 
             # TODO should we keep the connection for the second request or
             # should we close and create a new one
             # Take into account that a TLS connection might take time
 
             try:
-                logger.debug("Verifying main server signature")
+                logger.debug("Verifying the response...")
 
-                self.main_server_pubkey.verify(
-                    response.main_server_signature, bytes(self.pubkey))
+                response.verify(
+                    inviter=inviter_id,
+                    invitee=self.id,
+                    invitee_email=self.email,
+                    main_server_key=self.main_server_key,
+                    register_server_key=self.register_server_key
+                )
 
-                logger.debug("Main server signature was correct")
-
-            except InvalidSignature:
-                logger.warning("Main server signature was invalid")
-                raise SecurityError("Main server did not receive the "
-                                    "correct ID")
-
-            try:
-                logger.debug("Verifying inviter signature")
-
-                # verify invite (inviter, invitee, invitee email)
-                rsa.verify(inviter_id, response.inviter_signature,
-                           inviter_id, self.id, self.email.encode())
-
-                logger.debug("Inviter signature was correct")
+                logger.debug("Response was valid")
 
             except InvalidSignature:
-                logger.warning("Inviter signature was invalid")
-                raise SecurityError("Invite signature is invalid and "
-                                    "therefore can not join")
+                logger.warning("Response failed verification")
+                raise SecurityError("There was an identify error with the "
+                                    "response from the server")
 
             # TODO store signed invite from inviter
             # TODO store signed invite from request server
 
-            confirm_request = ConfirmJoinRequest.signed_request(
+            confirm_request = ConfirmJoinRequest.signed(
                 joiner=self,
                 inviter_id=inviter_id,
                 joiner_email=self.email
