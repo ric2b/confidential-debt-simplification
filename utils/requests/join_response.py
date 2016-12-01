@@ -1,3 +1,4 @@
+from utils.crypto import rsa
 from utils.requests.parameters import signature
 from utils.requests.response import Response
 
@@ -34,6 +35,16 @@ class JoinResponse(Response):
         }
 
         return JoinResponse(parameters_values)
+
+    def verify(self, inviter: bytes, invitee: bytes, invitee_email: str,
+               main_server_key: bytes, register_server_key: bytes, ):
+        """
+        Verifies if the signatures in the join request are valid.
+        """
+        rsa.verify(main_server_key, self.main_server_signature, invitee)
+        rsa.verify(register_server_key, self.register_server_signature,
+                   inviter, invitee, invitee_email.encode())
+        rsa.verify(inviter, invitee, invitee_email.encode())
 
     @property
     def main_server_signature(self) -> bytes:

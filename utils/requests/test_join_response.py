@@ -2,13 +2,14 @@ from pytest import raises
 
 from utils.requests.join_response import JoinResponse
 from utils.requests.response import DecodeError, Response
-from utils.requests.test_utils import fake_body, fake_http_response
+from utils.requests.test_utils import fake_body, fake_http_response, \
+    fake_verifier
 
 
 class TestJoinResponse:
 
     #
-    # Tests for the from_parameters() method
+    # Tests for the load_response() method
     #
 
     def test_ValidResponseWithCorrectFormatting_JoinResponseWithCorrespondingParameters(self):
