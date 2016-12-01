@@ -1,8 +1,8 @@
 from pytest import raises
 
 from utils.crypto import rsa
+from utils.crypto.exceptions import InvalidSignature
 from utils.crypto.public_key import PublicKey
-from utils.crypto.rsa import InvalidSignature
 
 
 class TestCrypto:
