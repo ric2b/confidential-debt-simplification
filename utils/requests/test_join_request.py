@@ -1,6 +1,7 @@
 from pytest import raises
 
 from utils.requests.join_request import JoinRequest
+from utils.requests.parameters_decoder import DecodeError
 from utils.requests.request import Request
 from utils.requests.test_utils import fake_signer, fake_body
 
