@@ -1,3 +1,4 @@
+from utils.requests.parameters import identifier, signature
 from utils.requests.request import Request, RequestDecodeError
 from utils.requests.signer import Signer
 
@@ -7,45 +8,31 @@ class TotalsRequest(Request):
     Totals request is sent by the user to obtain its totals.
     """
 
-    def __init__(self, user_id: bytes, signature: bytes):
-        #
-        # Parameters in bytes format are stored as a str. However,
-        # the respective getter methods return bytes.
-        # This prevents problems when serializing to JSON and deserializing
-        # since JSON does not support the bytes format.
-        #
-        self._parameters = {
-            "user": user_id,
-            "signature": signature
-        }
+    # The class field parameter_types defines the parameters and types of
+    # the values of each parameter
+    parameters_types = {
+        "user": identifier,
+        "signature": signature,
+    }
 
     @staticmethod
-    def signed_request(user: Signer):
+    def signed(user: Signer):
         """
-        Returns a Totals request signed by the given signer. This method
+        Factory method for an Pending request. Use this method to create
+        invite requests instead of the default initializer.
+
+        Returns an Pending request signed by the given signer. This method
         abstracts which parameters are signed by the signer.
 
         :param user:    client requesting pending UOMes.
         :return: Totals request signed by the client.
         """
-        return TotalsRequest(
-            user_id=user.id,
-            signature=user.sign(user.id)
-        )
+        parameters_values = {
+            "user": user.id,
+            "signature": user.sign(user.id)
+        }
 
-    @staticmethod
-    def load_request(request_body: bytes):
-        parameters = Request._read_body(request_body)
-
-        try:
-            return TotalsRequest(
-                user_id=str(parameters['user']).encode(),
-                signature=str(parameters['signature']).encode()
-            )
-
-        except KeyError:
-            raise RequestDecodeError("Totals request is missing at least one "
-                                     "of its required parameters")
+        return TotalsRequest(parameters_values)
 
     @property
     def method(self) -> str:
@@ -53,13 +40,13 @@ class TotalsRequest(Request):
 
     @property
     def parameters(self) -> dict:
-        return self._parameters
+        return self._parameters_values
 
     @property
     def user(self) -> bytes:
-        return self._parameters['user']
+        return self._parameters_values['user']
 
     @property
     def signature(self) -> bytes:
-        return self._parameters['signature']
+        return self._parameters_values['signature']
 
