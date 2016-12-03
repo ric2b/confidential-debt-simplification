@@ -5,7 +5,7 @@ from cryptography.exceptions import InvalidSignature
 from utils.crypto import rsa
 from utils.requests.ack_response import AckResponse
 from utils.requests.confirm_join_request import ConfirmJoinRequest
-from utils.requests.connection import Connection
+from utils.requests.connection import Connection, connect
 from utils.requests.invite_request import InviteRequest
 from utils.requests.join_request import JoinRequest
 from utils.requests.join_response import JoinResponse
@@ -73,7 +73,7 @@ class Client(Signer):
         :param invitee_id: invited client's ID.
         :param invitee_email: invited client's email.
         """
-        with Connection(self.register_server_url) as connection:
+        with connect(self.register_server_url) as connection:
             request = InviteRequest.signed(
                 inviter=self,
                 invitee_id=invitee_id.encode(),
@@ -94,7 +94,7 @@ class Client(Signer):
         Tries to have the client join to a group.
 
         :param secret_code: secret code provided by email.
-        :param inviter_id: ID of teh inviter.
+        :param inviter_id: ID of the inviter.
         :raise SecurityError: if the main server signature or the inviter
                               signature do not verify.
         """
@@ -103,7 +103,7 @@ class Client(Signer):
         # directly from the user input and that needs to be a string
         inviter_id = inviter_id.encode()
 
-        with Connection(self.register_server_url) as connection:
+        with connect(self.register_server_url) as connection:
             request = JoinRequest.signed(
                 joiner=self,
                 secret_code=secret_code
