@@ -1,3 +1,9 @@
+# Directory where some code is put with small experiments
+experiments/
+
+# PyCharm
+.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
