@@ -38,7 +38,9 @@ class UOMe(models.Model):
 
     borrower = models.ForeignKey(User, on_delete=models.PROTECT, related_name='uome_borrower')
     lender = models.ForeignKey(User, on_delete=models.PROTECT, related_name='uome_lender')
-    value = models.PositiveIntegerField()  # In cents!
+    
+    # In cents!
+    value = models.PositiveIntegerField()  
     
     description = models.CharField(max_length=description_length)
     issuing_date = models.DateField('date issued', auto_now_add=True)
@@ -46,7 +48,7 @@ class UOMe(models.Model):
     confirmed = models.BooleanField(default=False)
 
     def __str__(self):
-        return "%i€ from %s to %s: %s" % (self.value*100, self.borrower, self.lender, self.description)
+        return "%.3f€ from %s to %s: %s" % (self.value/100, self.borrower, self.lender, self.description)
 
 
 class UserDebt(models.Model):
@@ -57,3 +59,7 @@ class UserDebt(models.Model):
     lender = models.ForeignKey(User, on_delete=models.PROTECT, related_name='debt_lender')
 
     value = models.PositiveIntegerField()  # In cents!
+
+    def __str__(self):
+        return "%.3f€ from %s to %s" % (self.value/100, self.borrower, self.lender)
+

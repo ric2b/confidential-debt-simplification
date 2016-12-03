@@ -2,6 +2,7 @@ from django.test import TestCase  # TODO: check out pytest
 from django.urls import reverse
 from django.core import serializers
 import json
+import pytest
 from collections import defaultdict
 
 from .models import Group, User, UOMe, UserDebt
@@ -36,7 +37,7 @@ class AddUOMeTests(TestCase):
                                                 'description': 'test'
                                                 })
 
-        self.assertEqual(raw_response.content.decode('utf-8'), 'UOMe added')
+        assert raw_response.content.decode('utf-8') == 'UOMe added'
 
 
 class CheckUnconfirmedUOMesTests(TestCase):
@@ -62,7 +63,7 @@ class CheckUnconfirmedUOMesTests(TestCase):
 
         # https://docs.djangoproject.com/en/1.10/topics/serialization/
         response = serializers.deserialize('json', raw_response.content)
-        self.assertEqual([item.object for item in response], [uome])
+        assert [item.object for item in response] == [uome]
 
 
 class ConfirmUOMeTests(TestCase):
@@ -88,22 +89,22 @@ class ConfirmUOMeTests(TestCase):
                                                  'user_id':self.borrower.user_id})
 
         # Confirm uome is marked as confirmed
-        self.assertEqual(raw_response.content.decode('utf-8'), 'UOMe confirmed')
-        self.assertIs(UOMe.objects.filter(group=self.group, uuid=uome.uuid).first().confirmed, True)
+        assert raw_response.content.decode('utf-8') == 'UOMe confirmed'
+        assert UOMe.objects.filter(group=self.group, uuid=uome.uuid).first().confirmed == True
 
         # Confirm totals
         totals = {}
         for user in User.objects.filter(group=self.group):
             totals[user] = user.balance
 
-        self.assertEqual(totals, {self.borrower: -uome.value, self.lender: uome.value})
+        assert totals == {self.borrower: -uome.value, self.lender: uome.value}
 
         # Confirm simplified debt
         simplified_debt = defaultdict(dict)
         for user_debt in UserDebt.objects.filter(group=self.group):
             simplified_debt[user_debt.borrower][user_debt.lender] = user_debt.value
 
-        self.assertEqual(simplified_debt, {self.borrower: {self.lender: uome.value}})
+        assert simplified_debt == {self.borrower: {self.lender: uome.value}}
 
 
 class CheckTotalsTests(TestCase):
@@ -124,23 +125,39 @@ class CheckTotalsTests(TestCase):
                                                  'user_id':self.borrower.user_id})
 
         response = json.loads(raw_response.content.decode("utf-8"))
-        self.assertIs(response['balance'], 0)
-        self.assertEqual(response['user_debt'], {})
+        assert response['balance'] == 0
+        assert response['user_debt'] == {}
 
 
     def test_check_totals_one_unconfirmed_uome(self):
-        return
-        raise NotImplementedError
+        uome = UOMe(group=self.group, borrower=self.borrower, lender=self.lender,
+                    value=10, description="test")
+        uome.save()
+
+        raw_response = self.client.post(reverse('main_server_app:total_debt'), 
+                                            {'group_uuid': self.group.uuid,
+                                             'user_id':self.borrower.user_id})
+
+        response = json.loads(str(raw_response.content.decode("utf-8")))
+        assert response['balance'] == 0
+        assert response['user_debt'] == {}
 
 
     def test_check_totals_one_confirmed_uome(self):
-        return
-        raise NotImplementedError
-        uome = UOMe(group=group, borrower=borrower, lender=lender, value=10, description="test").save()
+        debt_value = 1000
+        
+        user_debt = UserDebt.objects.create(group=self.group, borrower=self.borrower, 
+                                            lender=self.lender, value=debt_value)
+
+        self.borrower.balance = -debt_value
+        self.borrower.save()
+        self.lender.balance = debt_value
+        self.lender.save()
 
         raw_response = self.client.post(reverse('main_server_app:total_debt'), 
-                                            {'group_uuid': group.uuid, 'user_id':borrower.user_id})
+                                            {'group_uuid': self.group.uuid,
+                                             'user_id':self.borrower.user_id})
 
         response = json.loads(str(raw_response.content.decode("utf-8")))
-        self.assertIs(response['is_borrower'], True)
-        self.assertEqual(response['user_debt'], {lender.user_id: uome.value})
+        assert response['balance'] == -debt_value
+        assert response['user_debt'] == {self.lender.user_id: debt_value}

@@ -72,10 +72,10 @@ def get_total_debt(request):
     user_debt = {}
     if user.balance < 0:
         for debt in UserDebt.objects.filter(group=group, borrower=user):
-            user_debt[debt.lender] = debt.value
+            user_debt[debt.lender.user_id] = debt.value
     elif user.balance > 0:
         for debt in UserDebt.objects.filter(group=group, lender=user):
-            user_debt[debt.borrower] = debt.value
+            user_debt[debt.borrower.user_id] = debt.value
 
     # example: {is_borrower: True, user_debt: {'user1': val1, 'user2': val2}, rnd: 'Drmhze6EPcv0fN_81Bj-nA'}
     json_payload = json.dumps({'balance': user.balance, 'user_debt': user_debt, 'rnd': str(b64encode(urandom(32)))})
