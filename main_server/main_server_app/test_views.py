@@ -40,6 +40,38 @@ class AddUOMeTests(TestCase):
         assert raw_response.content.decode('utf-8') == 'UOMe added'
 
 
+class CancelUOMeTests(TestCase):
+    def setUp(self):
+        group = Group(name='test', owner='test')
+        group.save()
+        borrower = User(group=group, user_id='signature_key1', encryption_key='encryption_key1')
+        borrower.save()
+        lender = User(group=group, user_id='signature_key2', encryption_key='encryption_key2')
+        lender.save()
+
+        self.group, self.borrower, self.lender = group, borrower, lender
+
+    def test_cancel_unconfirmed_uome(self):
+        uome = UOMe(group=self.group, borrower=self.borrower, lender=self.lender,
+                    value=10, description="test")
+        uome.save()
+
+        assert UOMe.objects.filter(uuid=uome.uuid).first() == uome
+
+        raw_response = self.client.post(reverse('main_server_app:cancel_uome'), 
+                                                {
+                                                'group_uuid': self.group.uuid,
+                                                'user_id': self.lender.user_id,
+                                                'uome_uuid': uome.uuid                                                
+                                                })
+
+        assert raw_response.content.decode('utf-8') == 'UOMe #%i canceled' % uome.uuid
+        assert UOMe.objects.filter(uuid=uome.uuid).first() == None
+
+    # TODO: test for the other cases: uome doesn't exist, the user isn't the issuer of the uome
+    # or the uome has already been confirmed
+
+
 class CheckUnconfirmedUOMesTests(TestCase):
     def setUp(self):
         group = Group(name='test', owner='test')

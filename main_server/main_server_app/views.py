@@ -24,6 +24,24 @@ def add_uome(request):
     return HttpResponse('UOMe added')
 
 
+def cancel_uome(request):
+    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
+    user = User.objects.filter(user_id=request.POST['user_id']).first()
+
+    uome = UOMe.objects.filter(uuid=request.POST['uome_uuid']).first()
+
+    if not uome:
+        return HttpResponse('UOMe #%i not found' % uome.uuid)
+
+    else:
+        if user.user_id == uome.lender.user_id:
+            uome_uuid = uome.uuid
+            uome.delete()
+            return HttpResponse('UOMe #%i canceled' % uome_uuid)
+        else:
+            return HttpResponse('User is not the issuer of uuid #%i' % uome.uuid)
+
+
 def get_unconfirmed_uomes(request):
     group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
     user = User.objects.filter(user_id=request.POST['user_id']).first()
