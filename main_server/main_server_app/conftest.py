@@ -10,6 +10,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'main_server.settings')
 # `pytest` automatically calls this function once when tests are run.
 def pytest_configure():
     settings.DEBUG = False
+    settings.ALLOWED_HOSTS = ['testserver']
     # If you have any test specific settings, you can declare them here,
     # e.g.
     # settings.PASSWORD_HASHERS = (
