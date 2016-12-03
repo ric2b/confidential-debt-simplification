@@ -4,6 +4,10 @@ from utils.requests.request import Request
 from utils.requests.response import Response
 
 
+def connect(server_url):
+    return Connection(server_url)
+
+
 class Connection:
     """
     Abstraction of an HTTP or HTTPS connection which supports our own request
