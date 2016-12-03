@@ -44,7 +44,8 @@ class JoinResponse(Response):
         rsa.verify(main_server_key, self.main_server_signature, invitee)
         rsa.verify(register_server_key, self.register_server_signature,
                    inviter, invitee, invitee_email.encode())
-        rsa.verify(inviter, invitee, invitee_email.encode())
+        rsa.verify(inviter, self.inviter_signature,
+                   inviter, invitee, invitee_email.encode())
 
     @property
     def main_server_signature(self) -> bytes:
