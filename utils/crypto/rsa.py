@@ -52,13 +52,5 @@ def verify(encoded_public_key: bytes, signature: bytes, *data: bytes):
     :param data: data in the usual bytes format.
     :raise InvalidSignature: if verification fails.
     """
-    # decode public key to the usual bytes format
-    encoded_public_key = base64.b64decode(encoded_public_key)
-
-    public_key = serialization.load_pem_private_key(
-        encoded_public_key,
-        password=None,
-        backend=default_backend()
-    )
-
-    return PublicKey(public_key).verify(signature, data)
+    public_key = PublicKey.from_bytes(encoded_public_key)
+    return public_key.verify(signature, *data)
