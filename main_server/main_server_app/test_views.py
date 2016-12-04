@@ -208,3 +208,23 @@ class RegisterGroupTests(TestCase):
 
         assert raw_response.content.decode("utf-8") == "Group '%s' registered" % group_name
 
+
+class GetGroupInfoTests(TestCase):
+    # TODO: add proxy/name server address
+    def setUp(self):
+        group = Group(name='test_name', owner='test_owner')
+        group.save()
+        self.group = group
+
+    def test_get_existing_group(self):
+        raw_response = self.client.post(reverse('main_server_app:get_group_info'), 
+                                                {'group_uuid': self.group.uuid})
+
+        expected_info = {
+                         'uuid': str(self.group.uuid), 
+                         'name': self.group.name, 
+                         'owner': self.group.owner
+                        }
+
+        assert json.loads(raw_response.content.decode("utf-8")) == expected_info
+

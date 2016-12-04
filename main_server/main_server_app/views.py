@@ -107,3 +107,10 @@ def register_group(request):
 
     return HttpResponse("Group '%s' registered" % group.name)
 
+
+def get_group_info(request):
+    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
+
+    json_payload = json.dumps({'uuid': str(group.uuid), 'name': group.name, 'owner': group.owner})
+    return HttpResponse(json_payload, content_type='application/json')
+
