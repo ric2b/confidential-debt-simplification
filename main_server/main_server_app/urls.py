@@ -14,4 +14,5 @@ urlpatterns = [
     url(r'^total-debt/$', views.get_total_debt, name='total_debt'),
     url(r'^register-group/$', views.register_group, name='register_group'),
     url(r'^get-group-info/$', views.get_group_info, name='get_group_info'),
+    url(r'^register-user/$', views.register_user, name='register_user'),
 ]

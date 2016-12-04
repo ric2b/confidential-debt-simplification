@@ -228,3 +228,22 @@ class GetGroupInfoTests(TestCase):
 
         assert json.loads(raw_response.content.decode("utf-8")) == expected_info
 
+
+class RegisterUserTests(TestCase):
+    def setUp(self):
+        group = Group(name='test', owner='test')
+        group.save()
+        self.group = group
+
+    def test_register_new_user_to_existing_group(self):
+        signing_key = 'test_signing key'
+        encryption_key = 'test_encryption_key'
+
+        raw_response = self.client.post(reverse('main_server_app:register_user'), 
+                                                {
+                                                'group_uuid': self.group.uuid,
+                                                'signing_key': signing_key,
+                                                'encryption_key': encryption_key
+                                                })
+
+        assert raw_response.content.decode("utf-8") == "User '%s' registered" % signing_key

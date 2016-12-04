@@ -114,3 +114,13 @@ def get_group_info(request):
     json_payload = json.dumps({'uuid': str(group.uuid), 'name': group.name, 'owner': group.owner})
     return HttpResponse(json_payload, content_type='application/json')
 
+
+def register_user(request):
+    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
+
+    user = User(group=group, 
+                user_id=request.POST['signing_key'],
+                encryption_key=request.POST['encryption_key'])
+    user.save()
+
+    return HttpResponse("User '%s' registered" % user.user_id)
