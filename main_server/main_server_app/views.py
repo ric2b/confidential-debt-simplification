@@ -10,6 +10,7 @@ from .models import Group, User, UOMe, UserDebt
 from .services import simplify_debt
 # Create your views here.
 # TODO: cripto stuff!
+# TODO: RESTify this stuff: adequate error codes, http verbs and reponses: https://github.com/dsi-dev-sessions/02-rest-microservices/blob/master/slides.pdf
 
 def add_uome(request):
     group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
@@ -98,3 +99,11 @@ def get_total_debt(request):
     # example: {is_borrower: True, user_debt: {'user1': val1, 'user2': val2}, rnd: 'Drmhze6EPcv0fN_81Bj-nA'}
     json_payload = json.dumps({'balance': user.balance, 'user_debt': user_debt, 'rnd': str(b64encode(urandom(32)))})
     return HttpResponse(json_payload, content_type='application/json')
+
+
+def register_group(request):  
+    group = Group(name=request.POST['group_name'], owner=request.POST['group_owner'])
+    group.save()
+
+    return HttpResponse("Group '%s' registered" % group.name)
+

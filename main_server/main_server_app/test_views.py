@@ -193,3 +193,18 @@ class CheckTotalsTests(TestCase):
         response = json.loads(str(raw_response.content.decode("utf-8")))
         assert response['balance'] == -debt_value
         assert response['user_debt'] == {self.lender.user_id: debt_value}
+
+
+class RegisterGroupTests(TestCase):
+    # TODO: add proxy/name server address
+    def test_register_new_group(self):
+        group_name = 'test_name'
+        group_owner = 'test_owner'
+        raw_response = self.client.post(reverse('main_server_app:register_group'), 
+                                                {
+                                                'group_name': group_name,
+                                                'group_owner': group_owner
+                                                })
+
+        assert raw_response.content.decode("utf-8") == "Group '%s' registered" % group_name
+

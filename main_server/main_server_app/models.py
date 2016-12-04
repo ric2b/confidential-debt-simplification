@@ -13,6 +13,7 @@ class Group(models.Model):
 
     owner = models.CharField(max_length=key_length)
     #owner_email = models.EmailField(max_length=254)
+    # TODO: add proxy/name server address
     
 
 class User(models.Model):
