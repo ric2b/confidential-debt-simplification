@@ -52,7 +52,7 @@ class Connection:
     def request(self, request: Request):
         """
         Issues a request. Takes a request object and makes a post request to
-        the HTTP server. It accesses the 'method' property of teh request to
+        the HTTP server. It accesses the 'method' property of the request to
         generate the URL of the HTTP post request. The body of the HTTP
         request is taken from the 'body' property of the Request object.
         After calling this method, the get_response() method should be called

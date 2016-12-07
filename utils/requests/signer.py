@@ -8,7 +8,7 @@ class Signer:
     @property
     def id(self) -> bytes:
         """ Returns the ID of the signer """
-        return b""
+        raise NotImplementedError
 
     def sign(self, *data: bytes) -> bytes:
         """
@@ -17,4 +17,4 @@ class Signer:
         :param data: list with data elements to sign in bytes format.
         :return: signature for the given data in base 64.
         """
-        pass
+        raise NotImplementedError

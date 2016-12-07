@@ -11,7 +11,7 @@ class Verifier:
         return DefaultVerifier(PublicKey.from_bytes(encoded_key))
 
     def verify(self, signature: bytes, *data: bytes):
-        pass
+        raise NotImplementedError
 
 
 class DefaultVerifier(Verifier):
