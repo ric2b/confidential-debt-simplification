@@ -2,13 +2,15 @@ from django.test import TestCase  # TODO: check out pytest
 from django.urls import reverse
 from django.core import serializers
 import json
-import pytest
+
 from collections import defaultdict
 
 from .models import Group, User, UOMe, UserDebt
+
+
 # Create your tests here.
 
-#Good rules-of-thumb include having:
+# Good rules-of-thumb include having:
 #
 # - a separate TestClass for each model or view
 # - a separate test method for each set of conditions you want to test
@@ -26,16 +28,15 @@ class AddUOMeTests(TestCase):
 
         self.group, self.borrower, self.lender = group, borrower, lender
 
-
     def test_add_first_uome(self):
-        raw_response = self.client.post(reverse('main_server_app:add_uome'), 
-                                                {
-                                                'group_uuid': self.group.uuid, 
-                                                'user_id':self.lender.user_id,
-                                                'borrower':self.borrower.user_id,
-                                                'value': 10,
-                                                'description': 'test'
-                                                })
+        raw_response = self.client.post(reverse('main_server_app:add_uome'),
+                                        {
+                                            'group_uuid': self.group.uuid,
+                                            'user_id': self.lender.user_id,
+                                            'borrower': self.borrower.user_id,
+                                            'value': 10,
+                                            'description': 'test'
+                                        })
 
         assert raw_response.content.decode('utf-8') == 'UOMe added'
 
@@ -58,18 +59,18 @@ class CancelUOMeTests(TestCase):
 
         assert UOMe.objects.filter(uuid=uome.uuid).first() == uome
 
-        raw_response = self.client.post(reverse('main_server_app:cancel_uome'), 
-                                                {
-                                                'group_uuid': self.group.uuid,
-                                                'user_id': self.lender.user_id,
-                                                'uome_uuid': uome.uuid                                                
-                                                })
+        raw_response = self.client.post(reverse('main_server_app:cancel_uome'),
+                                        {
+                                            'group_uuid': self.group.uuid,
+                                            'user_id': self.lender.user_id,
+                                            'uome_uuid': uome.uuid
+                                        })
 
         assert raw_response.content.decode('utf-8') == 'UOMe #%i canceled' % uome.uuid
-        assert UOMe.objects.filter(uuid=uome.uuid).first() == None
+        assert UOMe.objects.filter(uuid=uome.uuid).first() is None
 
-    # TODO: test for the other cases: uome doesn't exist, the user isn't the issuer of the uome
-    # or the uome has already been confirmed
+        # TODO: test for the other cases: uome doesn't exist, the user isn't the issuer of the uome
+        # or the uome has already been confirmed
 
 
 class CheckUnconfirmedUOMesTests(TestCase):
@@ -83,15 +84,14 @@ class CheckUnconfirmedUOMesTests(TestCase):
 
         self.group, self.borrower, self.lender = group, borrower, lender
 
-
     def test_one_unconfirmed_uome(self):
         uome = UOMe(group=self.group, borrower=self.borrower, lender=self.lender,
                     value=10, description="test")
         uome.save()
 
-        raw_response = self.client.post(reverse('main_server_app:get_unconfirmed_uomes'), 
-                                                {'group_uuid': self.group.uuid, 
-                                                 'user_id':self.borrower.user_id})
+        raw_response = self.client.post(reverse('main_server_app:get_unconfirmed_uomes'),
+                                        {'group_uuid': self.group.uuid,
+                                         'user_id': self.borrower.user_id})
 
         # https://docs.djangoproject.com/en/1.10/topics/serialization/
         response = serializers.deserialize('json', raw_response.content)
@@ -115,10 +115,10 @@ class ConfirmUOMeTests(TestCase):
         uome.save()
         self.assertIs(uome.confirmed, False)
 
-        raw_response = self.client.post(reverse('main_server_app:confirm_uome'), 
-                                                {'group_uuid': self.group.uuid,
-                                                 'uome_uuid': uome.uuid,
-                                                 'user_id':self.borrower.user_id})
+        raw_response = self.client.post(reverse('main_server_app:confirm_uome'),
+                                        {'group_uuid': self.group.uuid,
+                                         'uome_uuid': uome.uuid,
+                                         'user_id': self.borrower.user_id})
 
         # Confirm uome is marked as confirmed
         assert raw_response.content.decode('utf-8') == 'UOMe confirmed'
@@ -150,45 +150,41 @@ class CheckTotalsTests(TestCase):
 
         self.group, self.borrower, self.lender = group, borrower, lender
 
-
     def test_check_totals_no_uome(self):
-        raw_response = self.client.post(reverse('main_server_app:total_debt'), 
-                                                {'group_uuid': self.group.uuid,
-                                                 'user_id':self.borrower.user_id})
+        raw_response = self.client.post(reverse('main_server_app:total_debt'),
+                                        {'group_uuid': self.group.uuid,
+                                         'user_id': self.borrower.user_id})
 
         response = json.loads(raw_response.content.decode("utf-8"))
         assert response['balance'] == 0
         assert response['user_debt'] == {}
-
 
     def test_check_totals_one_unconfirmed_uome(self):
         uome = UOMe(group=self.group, borrower=self.borrower, lender=self.lender,
                     value=10, description="test")
         uome.save()
 
-        raw_response = self.client.post(reverse('main_server_app:total_debt'), 
-                                            {'group_uuid': self.group.uuid,
-                                             'user_id':self.borrower.user_id})
+        raw_response = self.client.post(reverse('main_server_app:total_debt'),
+                                        {'group_uuid': self.group.uuid,
+                                         'user_id': self.borrower.user_id})
 
         response = json.loads(str(raw_response.content.decode("utf-8")))
         assert response['balance'] == 0
         assert response['user_debt'] == {}
 
-
     def test_check_totals_one_confirmed_uome(self):
         debt_value = 1000
-        
-        user_debt = UserDebt.objects.create(group=self.group, borrower=self.borrower, 
-                                            lender=self.lender, value=debt_value)
+
+        UserDebt.objects.create(group=self.group, borrower=self.borrower, lender=self.lender, value=debt_value)
 
         self.borrower.balance = -debt_value
         self.borrower.save()
         self.lender.balance = debt_value
         self.lender.save()
 
-        raw_response = self.client.post(reverse('main_server_app:total_debt'), 
-                                            {'group_uuid': self.group.uuid,
-                                             'user_id':self.borrower.user_id})
+        raw_response = self.client.post(reverse('main_server_app:total_debt'),
+                                        {'group_uuid': self.group.uuid,
+                                         'user_id': self.borrower.user_id})
 
         response = json.loads(str(raw_response.content.decode("utf-8")))
         assert response['balance'] == -debt_value
@@ -200,11 +196,11 @@ class RegisterGroupTests(TestCase):
     def test_register_new_group(self):
         group_name = 'test_name'
         group_owner = 'test_owner'
-        raw_response = self.client.post(reverse('main_server_app:register_group'), 
-                                                {
-                                                'group_name': group_name,
-                                                'group_owner': group_owner
-                                                })
+        raw_response = self.client.post(reverse('main_server_app:register_group'),
+                                        {
+                                            'group_name': group_name,
+                                            'group_owner': group_owner
+                                        })
 
         assert raw_response.content.decode("utf-8") == "Group '%s' registered" % group_name
 
@@ -217,14 +213,14 @@ class GetGroupInfoTests(TestCase):
         self.group = group
 
     def test_get_existing_group(self):
-        raw_response = self.client.post(reverse('main_server_app:get_group_info'), 
-                                                {'group_uuid': self.group.uuid})
+        raw_response = self.client.post(reverse('main_server_app:get_group_info'),
+                                        {'group_uuid': self.group.uuid})
 
         expected_info = {
-                         'uuid': str(self.group.uuid), 
-                         'name': self.group.name, 
-                         'owner': self.group.owner
-                        }
+            'uuid': str(self.group.uuid),
+            'name': self.group.name,
+            'owner': self.group.owner
+        }
 
         assert json.loads(raw_response.content.decode("utf-8")) == expected_info
 
@@ -239,11 +235,11 @@ class RegisterUserTests(TestCase):
         signing_key = 'test_signing key'
         encryption_key = 'test_encryption_key'
 
-        raw_response = self.client.post(reverse('main_server_app:register_user'), 
-                                                {
-                                                'group_uuid': self.group.uuid,
-                                                'signing_key': signing_key,
-                                                'encryption_key': encryption_key
-                                                })
+        raw_response = self.client.post(reverse('main_server_app:register_user'),
+                                        {
+                                            'group_uuid': self.group.uuid,
+                                            'signing_key': signing_key,
+                                            'encryption_key': encryption_key
+                                        })
 
         assert raw_response.content.decode("utf-8") == "User '%s' registered" % signing_key

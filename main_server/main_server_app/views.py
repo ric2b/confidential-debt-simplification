@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from django.core.serializers import serialize
 from django.http import HttpResponse
 import json
@@ -9,8 +8,10 @@ from collections import defaultdict
 from .models import Group, User, UOMe, UserDebt
 from .services import simplify_debt
 # Create your views here.
-# TODO: cripto stuff!
-# TODO: RESTify this stuff: adequate error codes, http verbs and reponses: https://github.com/dsi-dev-sessions/02-rest-microservices/blob/master/slides.pdf
+# TODO: crypto stuff!
+# TODO: RESTify this stuff: adequate error codes, http verbs and reponses:
+# https://github.com/dsi-dev-sessions/02-rest-microservices/blob/master/slides.pdf
+
 
 def add_uome(request):
     group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
@@ -26,8 +27,7 @@ def add_uome(request):
 
 
 def cancel_uome(request):
-    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
-    user = User.objects.filter(user_id=request.POST['user_id']).first()
+    user = User.objects.filter(group=request.POST['group_uuid'], user_id=request.POST['user_id']).first()
 
     uome = UOMe.objects.filter(uuid=request.POST['uome_uuid']).first()
 
@@ -71,15 +71,13 @@ def confirm_uome(request):
         user.balance = new_totals[user]
         user.save()
 
-
     # drop the previous user debt for this group
     UserDebt.objects.filter(group=group).delete()
 
     for borrower, user_debts in new_simplified_debt.items():
         # debts is a dict of users this borrower owes to, like {'user1': 3, 'user2':8}
         for lender, value in user_debts.items():
-            new_user_debt = UserDebt.objects.create(group=group, borrower=borrower,
-                                                    lender=lender, value=value)
+            UserDebt.objects.create(group=group, borrower=borrower, lender=lender, value=value)
 
     return HttpResponse('UOMe confirmed')
 

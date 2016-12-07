@@ -12,7 +12,7 @@ class Group(models.Model):
     name = models.CharField(max_length=80)
 
     owner = models.CharField(max_length=key_length)
-    #owner_email = models.EmailField(max_length=254)
+    # owner_email = models.EmailField(max_length=254)
     # TODO: add proxy/name server address
     
 
@@ -29,6 +29,7 @@ class User(models.Model):
 
     def __str__(self):
         return self.user_id
+
 
 class UOMe(models.Model):
     class Meta:
@@ -49,7 +50,7 @@ class UOMe(models.Model):
     confirmed = models.BooleanField(default=False)
 
     def __str__(self):
-        return "%.3f€ from %s to %s: %s" % (self.value/100, self.borrower, self.lender, self.description)
+        return "%.3f€ from %s to %s: %s" % (int(self.value)/100, self.borrower, self.lender, self.description)
 
 
 class UserDebt(models.Model):
@@ -62,5 +63,4 @@ class UserDebt(models.Model):
     value = models.PositiveIntegerField()  # In cents!
 
     def __str__(self):
-        return "%.3f€ from %s to %s" % (self.value/100, self.borrower, self.lender)
-
+        return "%.3f€ from %s to %s" % (int(self.value)/100, self.borrower, self.lender)
