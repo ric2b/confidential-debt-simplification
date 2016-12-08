@@ -3,6 +3,8 @@ from json import JSONDecodeError
 
 from utils.requests.base64_json_encoder import Base64Encoder
 from utils.requests.parameters_decoder import ParametersDecoder, DecodeError
+from utils.requests.signer import Signer
+from utils.requests.verifier import Verifier
 
 
 class Request:
@@ -26,11 +28,55 @@ class Request:
     mentioned getter methods.
     """
 
-    def __init__(self, parameters_values: dict):
-        self._parameters_values = parameters_values
+    request_type = None
+    parameter_types = None
+    parameters_to_sign = None
 
-    @staticmethod
-    def load_request(request_body: bytes, request_type):
+    def __init__(self, signer: Signer, **kwargs):
+        # This will be sub-classed, we want to get the attributes from those sub-classes
+        parameter_types = self.__class__.parameter_types
+        signed_parameters = self.__class__.parameters_to_sign
+
+        # Check that the types of the arguments match the request parameters, and that they exist
+        for parameter in parameter_types:
+            if not isinstance(kwargs[parameter], parameter_types[parameter]):
+                error_string = "Got type %s for parameter %s but expected type %s"
+                raise TypeError(error_string % (type(kwargs[parameter]),
+                                                parameter,
+                                                type(parameter_types[parameter])))
+            else:
+                # If the parameter type is correct, add it as an object attribute
+                self.__dict__[parameter] = kwargs[parameter]
+
+        # Figure out what parameters need to be signed and concatenate them in a bytes string
+        to_be_signed = b""
+        for parameter_to_sign in signed_parameters:
+            parameter = self.__dict__[parameter_to_sign]
+            parameter_bytes = parameter if isinstance(parameter, bytes) else parameter.encode()
+            to_be_signed += parameter_bytes
+
+        # Create the signature for the request
+        self.signature = signer.sign(to_be_signed)
+
+    def verify(self, verifier: Verifier):
+        # This will be sub-classed, we want to get the attributes from those sub-classes
+        parameters_to_sign = self.__class__.parameters_to_sign
+
+        signed_parameters = []
+        for parameter in parameters_to_sign:
+            parameter_value = self.__dict__[parameter]
+            bytes_value = parameter_value if isinstance(parameter_value, bytes) else parameter_value.encode()
+            signed_parameters.append(bytes_value)
+
+        verifier.verify(self.signature, *signed_parameters)
+
+        self.extra_verifications()
+
+    def extra_verifications(self):
+        pass
+
+    @classmethod
+    def load_request(cls, request_body: bytes, request_type):
         """
         Loads a request from a JSON string. All subclasses must implement
         this static method.
@@ -48,14 +94,22 @@ class Request:
             # ensure the value of each parameter is encoded in the type
             # format specified by the given request type
             values = {}
-            for parameter, param_type in request_type.parameters_types.items():
-                values[parameter] = param_type(request_items[parameter])
+            for parameter, param_type in cls.parameter_types.items():
+                # TODO: This is a temporary hack because I don't have an Identifier Type
+                if not isinstance(request_items[parameter], param_type) and not isinstance(request_items[parameter], str):
+                    error_string = "Got type %s for parameter %s but expected type %s"
+                    raise TypeError(error_string % (type(request_items[parameter]),
+                                                    parameter,
+                                                    param_type))
 
             # create instance of the given request type
             # assign loaded values to the request
-            return Request._create(request_type, values)
+            return Request._create(cls, values)
 
         except KeyError:
+            print(parameter)
+            print(request_items)
+            print(request_items[parameter])
             raise DecodeError("request is missing at least one of its "
                               "required parameters")
         except TypeError:
@@ -70,7 +124,7 @@ class Request:
 
         :return: request's method
         """
-        return ""
+        return self.__class__.request_type
 
     @property
     def body(self) -> str:
@@ -82,16 +136,20 @@ class Request:
 
         :return: JSON string containing the parameters of the request.
         """
-        return json.dumps(self._parameters_values, cls=Base64Encoder)
+        parameters = {}
+        for parameter in self.__class__.parameter_types:
+            parameters[parameter] = self.__dict__[parameter]
+
+        return json.dumps(parameters, cls=Base64Encoder)
 
     @staticmethod
     def _create(request_type, parameters_values: dict):
         """
-        Creates an instance of the given request type. Assigns teh request
+        Creates an instance of the given request type. Assigns the request
         type with the values from the dictionary parameters_values.
 
         :param request_type: type of request to create.
         :param parameters_values: dict with the parameter values for the
                                   request.
         """
-        return request_type(parameters_values)
+        return request_type(**parameters_values)
