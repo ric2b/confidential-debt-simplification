@@ -32,10 +32,10 @@ class Request:
     parameter_types = None
     parameters_to_sign = None
 
-    def __init__(self, signer: Signer, **kwargs):
+    def __init__(self, **kwargs):
         # This will be sub-classed, we want to get the attributes from those sub-classes
         parameter_types = self.__class__.parameter_types
-        signed_parameters = self.__class__.parameters_to_sign
+        self.__dict__['signature'] = None
 
         # Check that the types of the arguments match the request parameters, and that they exist
         for parameter in parameter_types:
@@ -43,10 +43,17 @@ class Request:
                 error_string = "Got type %s for parameter %s but expected type %s"
                 raise TypeError(error_string % (type(kwargs[parameter]),
                                                 parameter,
-                                                type(parameter_types[parameter])))
+                                                parameter_types[parameter]))
             else:
                 # If the parameter type is correct, add it as an object attribute
                 self.__dict__[parameter] = kwargs[parameter]
+
+        print(kwargs)
+        print(self.__dict__)
+
+    def sign(self, signer: Signer):
+        # This will be sub-classed, we want to get the attributes from those sub-classes
+        signed_parameters = self.__class__.parameters_to_sign
 
         # Figure out what parameters need to be signed and concatenate them in a bytes string
         to_be_signed = b""
@@ -56,7 +63,9 @@ class Request:
             to_be_signed += parameter_bytes
 
         # Create the signature for the request
-        self.signature = signer.sign(to_be_signed)
+        self.__dict__['signature'] = signer.sign(to_be_signed)
+
+        return self
 
     def verify(self, verifier: Verifier):
         # This will be sub-classed, we want to get the attributes from those sub-classes
@@ -76,7 +85,7 @@ class Request:
         pass
 
     @classmethod
-    def load_request(cls, request_body: bytes, request_type):
+    def load_request(cls, request_body: bytes):
         """
         Loads a request from a JSON string. All subclasses must implement
         this static method.
@@ -96,20 +105,22 @@ class Request:
             values = {}
             for parameter, param_type in cls.parameter_types.items():
                 # TODO: This is a temporary hack because I don't have an Identifier Type
-                if not isinstance(request_items[parameter], param_type) and not isinstance(request_items[parameter], str):
+                if not isinstance(request_items[parameter], param_type):
                     error_string = "Got type %s for parameter %s but expected type %s"
                     raise TypeError(error_string % (type(request_items[parameter]),
                                                     parameter,
                                                     param_type))
+                else:
+                    values[parameter] = request_items[parameter]
+
+            # Load the signature as well, if it exists
+            values['signature'] = request_items.get('signature', None)
 
             # create instance of the given request type
             # assign loaded values to the request
             return Request._create(cls, values)
 
         except KeyError:
-            print(parameter)
-            print(request_items)
-            print(request_items[parameter])
             raise DecodeError("request is missing at least one of its "
                               "required parameters")
         except TypeError:
@@ -152,4 +163,6 @@ class Request:
         :param parameters_values: dict with the parameter values for the
                                   request.
         """
-        return request_type(**parameters_values)
+        request = request_type(**parameters_values)
+        request.__dict__['signature'] = parameters_values['signature']
+        return request

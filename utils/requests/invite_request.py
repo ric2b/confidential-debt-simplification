@@ -14,9 +14,9 @@ class InviteRequest(Request):
     request_type = "INVITE"
 
     parameter_types = {
-        "inviter_id": bytes,
-        "invitee_id": bytes,
+        "inviter": str,
+        "invitee": str,
         "invitee_email": str
     }
 
-    parameters_to_sign = ["inviter_id", "invitee_id", "invitee_email"]
+    parameters_to_sign = ["inviter", "invitee", "invitee_email"]

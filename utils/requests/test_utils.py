@@ -5,13 +5,13 @@ from unittest.mock import Mock, MagicMock
 from pytest import fixture
 
 from utils.crypto.exceptions import InvalidSignature
-
+from utils.requests.base64_json_encoder import Base64Encoder
 
 def fake_body(parameters: dict) -> bytes:
     """ Creates a fake request body from a dict with parameters """
     # there is no problem to use JSON directly to convert the parameters since
     # here it is not our goal to test the JSON format but input parameters
-    return json.dumps(parameters).encode()
+    return json.dumps(parameters, cls=Base64Encoder).encode()
 
 
 def fake_http_response(status=200, body=bytes()) -> HTTPResponse:
