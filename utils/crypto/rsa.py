@@ -45,7 +45,51 @@ def load_keys(key_filepath, password=None) -> (str, str):
     :param password:     password to decrypt the key file.
     :return: 2-tuple with the private and public key in string format.
     """
-    pass
+    with open(key_filepath, "rb") as key_file:
+        key_object = serialization.load_pem_private_key(
+            data=key_file.read(),
+            password=None,
+            backend=default_backend()
+        )
+
+    return _key_to_str(key_object), _pubkey_to_str(key_object.public_key())
+
+
+def load_pubkey(key_filepath) -> str:
+    """
+    Loads a public key from a key file in the PEM format.
+    Takes the password to decrypt the key file as an optional argument.
+
+    :param key_filepath: path to the key file in PEM format.
+    :return: public key in string format.
+    """
+    with open(key_filepath) as key_file:
+        return _pem_to_str(key_file.read(), _PUBLIC_BEGIN_TAG, _PUBLIC_END_TAG)
+
+
+def dump_key(key: str, key_filepath, password=None):
+    """
+    Dumps a private key to a key file in the PEM format.
+    Takes the password to encrypt the key file as an optional argument.
+
+    :param key:          private key to dump to file.
+    :param key_filepath: path to the key file in PEM format.
+    :param password:     password to encrypt the key file.
+    """
+    with open(key_filepath, "wb") as key_file:
+        key_file.write(_str_to_pem(key, _PRIVATE_BEGIN_TAG, _PRIVATE_END_TAG))
+
+
+def dump_pubkey(pubkey: str, key_filepath):
+    """
+    Dumps a public key to a key file in the PEM format.
+    Takes the password to encrypt the key file as an optional argument.
+
+    :param pubkey:       public key to dump to file.
+    :param key_filepath: path to the key file in PEM format.
+    """
+    with open(key_filepath, "wb") as key_file:
+        key_file.write(_str_to_pem(pubkey, _PUBLIC_BEGIN_TAG, _PUBLIC_END_TAG))
 
 
 def sign(key: str, *values: str) -> str:
@@ -187,3 +231,12 @@ def _str_to_pem(key: str, begin_tag, end_tag) -> bytes:
     pem_key = "\n".join(lines)
     pem_key = begin_tag + "\n" + pem_key + "\n" + end_tag
     return pem_key.encode()
+
+def _pem_to_str(pem_key: str, begin_tag, end_tag):
+    """ Converts a pem key in PEM format to a string key """
+    key_str = pem_key
+    key_str = key_str[len(begin_tag):]  # remove being tag
+    key_str = key_str[:-(len(end_tag) + 1)]  # remove end tag
+    key_str = key_str.replace("\n", "")  # remove new lines
+
+    return key_str
