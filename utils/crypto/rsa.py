@@ -48,7 +48,7 @@ def load_keys(key_filepath, password=None) -> (str, str):
     with open(key_filepath, "rb") as key_file:
         key_object = serialization.load_pem_private_key(
             data=key_file.read(),
-            password=None,
+            password=None if password is None else password.encode(),
             backend=default_backend()
         )
 
@@ -76,8 +76,21 @@ def dump_key(key: str, key_filepath, password=None):
     :param key_filepath: path to the key file in PEM format.
     :param password:     password to encrypt the key file.
     """
+    key_object = _str_to_key(key)
+
+    if password:
+        encryption = serialization.BestAvailableEncryption(password.encode())
+    else:
+        encryption = serialization.NoEncryption()
+
+    pem = key_object.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=encryption
+    )
+
     with open(key_filepath, "wb") as key_file:
-        key_file.write(_str_to_pem(key, _PRIVATE_BEGIN_TAG, _PRIVATE_END_TAG))
+        key_file.write(pem)
 
 
 def dump_pubkey(pubkey: str, key_filepath):

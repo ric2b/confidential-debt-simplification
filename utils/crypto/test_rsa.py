@@ -29,6 +29,15 @@ class TestRSA:
     def test_DumpingAPrivateKeyAndLoadingTheRespectiveReturnsTheSameKey(self, tmpfile):
         key, pubkey = rsa.generate_keys()
 
+        rsa.dump_key(key, tmpfile)
+        loaded_key, loaded_pubkey = rsa.load_keys(tmpfile)
+
+        assert key == loaded_key
+        assert pubkey == loaded_pubkey
+
+    def test_DumpingAPrivateKeyWithPasswordAndLoadingTheRespectiveReturnsTheSameKey(self, tmpfile):
+        key, pubkey = rsa.generate_keys()
+
         rsa.dump_key(key, tmpfile, password="1234")
         loaded_key, loaded_pubkey = rsa.load_keys(tmpfile, password="1234")
 
