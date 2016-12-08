@@ -1,56 +1,59 @@
-import base64
+# cryptography suggests this value for
+# the public exponent, stating that "65537 should almost always be used"
+# However, 65537 is the most used value if we use a lower value with a good
+# padding scheme we don't loose any security and gain more performance
+# Using e=3 might improve performance by 8x
+PUBLIC_EXPONENT = 65537
 
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-
-from utils.crypto import configs
-from utils.crypto.private_key import PrivateKey
-from utils.crypto.public_key import PublicKey
+KEY_SIZE = 2048
 
 
-def generate_keys() -> (PrivateKey, PublicKey):
+class InvalidSignature(Exception):
+    """ Raised when a verification of a signature fails. """
+
+
+def generate_keys() -> (str, str):
     """
     Generates a pair of private and public keys
 
-    :return: 2-tuple with the private and public key in this order.
+    :return: 2-tuple with the private and public key in string format.
     """
-    raw_private_key = rsa.generate_private_key(
-        public_exponent=configs.PUBLIC_EXPONENT,
-        key_size=configs.KEY_SIZE,
-        backend=default_backend()
-    )
-
-    return PrivateKey(raw_private_key), PublicKey(raw_private_key.public_key())
+    pass
 
 
-def load_keys(key_filepath) -> (PrivateKey, PublicKey):
+def load_keys(key_filepath, password=None) -> (str, str):
     """
-    Loads a pair of private and public keys from a key file in the PEM format.
+    Loads the private and public keys from a key file in the PEM format.
+    Takes the password to decrypt the key file as an optional argument.
 
     :param key_filepath: path to the key file in PEM format.
-    :return: 2-tuple with the private and public key in this order.
+    :param password:     password to decrypt the key file.
+    :return: 2-tuple with the private and public key in string format.
     """
-    with open(key_filepath, "rb") as key_file:
-        raw_private_key = serialization.load_pem_private_key(
-            data=key_file,
-            password=None,
-            backend=default_backend()
-        )
-
-    return PrivateKey(raw_private_key), PublicKey(raw_private_key.public_key())
+    pass
 
 
-def verify(encoded_public_key: bytes, signature: bytes, *data: bytes):
+def sign(key: str, *values: str):
     """
-    Using an encoded public key it verifies if the given signature is valid
-    for this data. Data may be constituted by multiple parts, in that case,
-    the data is concatenated before verification.
+    Signs a list of values with the given key.
 
-    :param encoded_public_key: public key in base64 format.
-    :param signature: signature to check in base64 format.
-    :param data: data in the usual bytes format.
-    :raise InvalidSignature: if verification fails.
+    :param key:     private key used to sign the values.
+    :param values:  list of values to sign.
+    :return: signed values (signature)
     """
-    public_key = PublicKey.from_bytes(encoded_public_key)
-    return public_key.verify(signature, *data)
+    pass
+
+
+def verify(pubkey: str, signature: str, *values: str):
+    """
+    Verifies if a signature is valid. Expects the list of values included in
+    the signature to be in the same order as they were signed. If the
+    verification fails it raises an InvalidSignature exception.
+
+    :param pubkey:      public key used to verify the signature.
+    :param signature:   signature to verify.
+    :param values:      values included in the signature.
+    :return:
+    :raise InvalidSignature: if the signature is invalid.
+    """
+    pass
