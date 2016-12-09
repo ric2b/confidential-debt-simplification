@@ -1,4 +1,5 @@
 import base64
+import binascii  # for the binascii.Error exception
 
 from cryptography import exceptions
 from cryptography.hazmat.backends import default_backend
@@ -106,6 +107,7 @@ def dump_pubkey(pubkey: str, key_filepath):
 
 
 def sign(key: str, *values: str) -> str:
+    # TODO: *values is a list but the function does not receive a list
     """
     Signs a list of values with the given key.
 
@@ -130,6 +132,7 @@ def sign(key: str, *values: str) -> str:
 
 
 def verify(pubkey: str, signature: str, *values: str):
+    # TODO: *values is a list but the function does not receive a list
     """
     Verifies if a signature is valid. Expects the list of values included in
     the signature to be in the same order as they were signed. If the
@@ -142,7 +145,13 @@ def verify(pubkey: str, signature: str, *values: str):
     :raise InvalidSignature: if the signature is invalid.
     """
     # The signature is expected in base 64 and must be decoded
-    signature = base64.b64decode(signature.encode())
+    try:
+        signature = base64.b64decode(signature.encode())
+    except binascii.Error:
+        # raise custom invalid signature exception
+        # hides the cryptographic library used
+        raise InvalidSignature()
+
 
     pubkey_object = _str_to_pubkey(pubkey)  # type: rsa.RSAPublicKey
 
