@@ -125,7 +125,11 @@ def sign(key: str, *values: str) -> str:
         hashes.SHA256()
     )
 
-    signer.update("".join(values).encode())
+    to_sign = ""
+    for value in values:
+        to_sign += str(value)
+
+    signer.update(to_sign.encode())
     signature = signer.finalize()
 
     return base64.b64encode(signature).decode()
