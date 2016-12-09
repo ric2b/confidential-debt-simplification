@@ -10,6 +10,18 @@ class TestRSA:
     def tmpfile(self, tmpdir):
         return str(tmpdir.join("keyfile.pem"))
 
+    def test_VerifyingACompletelyBrokenSignature_RaisesInvalidSignature(self):
+        key, pubkey = rsa.generate_keys()
+
+        with raises(rsa.InvalidSignature):
+            rsa.verify(pubkey, "completelyBogûsÇigna_!ture", "not a chance!")
+
+    def test_SigningSomeNonStringValues(self):
+        values = ["hey", 10, 56.4, 'ho']
+        key, pubkey = rsa.generate_keys()
+        
+        rsa.sign(key, *values)
+
     def test_SigningSomeTextWithKey1AndVerifyingWithPubkey1_DoesNotRaiseInvalidSignature(self):
         plain_text = "some text"
         key, pubkey = rsa.generate_keys()
