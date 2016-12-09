@@ -18,7 +18,7 @@ class TestInviteRequest:
         assert request.inviter == example_pub_key
         assert request.invitee == "C2"
         assert request.invitee_email == "c2@y.com"
-        assert request.method == "INVITE"
+        assert request.method == "invite-user"
 
     def test_verify_ValidSignedRequest_DoesNotRaiseInvalidSignature(self):
         signed_request = InviteRequest(

@@ -1,9 +1,8 @@
 import json
-from json import JSONDecodeError
 
 from utils.requests.base64_json_encoder import Base64Encoder
 from utils.requests.parameters_decoder import DecodeError
-from utils.crypto.rsa import sign, verify, InvalidSignature
+from utils.crypto.rsa import sign, verify
 
 
 class Request:
@@ -27,12 +26,12 @@ class Request:
     mentioned getter methods.
     """
 
-    request_type = None  # type: str
+    request_address = None  # type: str
     parameter_types = None  # type: {str: type}
     format_to_sign = None  # type: [str]
     formats_to_verify = None  # type: {str: [str]}
 
-    def __init__(self, **given_parameters: {str: object}) -> None:
+    def __init__(self, **given_parameters: {str: object}):
         """
         Initializes a someRequest object from the someRequest class attributes.
         In particular, the following are added as object attributes:
@@ -47,7 +46,7 @@ class Request:
         """
 
         # check that the attributes were assigned.
-        if not (self.__class__.request_type and self.__class__.parameter_types and
+        if not (self.__class__.request_address and self.__class__.parameter_types and
                 self.__class__.format_to_sign and self.__class__.formats_to_verify):
             raise NotImplementedError('One of the class attributes was not initiated')
 
@@ -110,7 +109,7 @@ class Request:
             signature = self.__dict__[sig_name]
             parameters_to_sign = ""
             for parameter in sig_format:
-                parameters_to_sign += self.__dict__[parameter]
+                parameters_to_sign += str(self.__dict__[parameter])
 
             verify(signature_keys[sig_name], signature, *parameters_to_sign)
 
@@ -166,7 +165,7 @@ class Request:
 
         :return: request's method
         """
-        return self.__class__.request_type
+        return self.__class__.request_address
 
     @property
     def body(self) -> str:
