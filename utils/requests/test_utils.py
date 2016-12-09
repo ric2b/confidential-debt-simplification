@@ -4,8 +4,12 @@ from unittest.mock import Mock, MagicMock
 
 from pytest import fixture
 
-from utils.crypto.exceptions import InvalidSignature
+from utils.crypto.rsa import generate_keys, InvalidSignature
 from utils.requests.base64_json_encoder import Base64Encoder
+
+
+example_key, example_pub_key = generate_keys()
+
 
 def fake_body(parameters: dict) -> bytes:
     """ Creates a fake request body from a dict with parameters """
@@ -31,7 +35,7 @@ def fake_http_response(status=200, body=bytes()) -> HTTPResponse:
 
 
 def fake_signature(*data):
-    return b"".join(data)
+    return "".join(data)
 
 
 @fixture
@@ -59,3 +63,4 @@ def fake_verifier():
     verifier = Mock()
     verifier.verify = Mock(side_effect=fake_verify)
     return verifier
+

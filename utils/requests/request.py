@@ -2,9 +2,8 @@ import json
 from json import JSONDecodeError
 
 from utils.requests.base64_json_encoder import Base64Encoder
-from utils.requests.parameters_decoder import ParametersDecoder, DecodeError
-from utils.requests.signer import Signer
-from utils.requests.verifier import Verifier
+from utils.requests.parameters_decoder import DecodeError
+from utils.crypto.rsa import sign, verify, InvalidSignature
 
 
 class Request:
@@ -28,64 +27,96 @@ class Request:
     mentioned getter methods.
     """
 
-    request_type = None
-    parameter_types = None
-    parameters_to_sign = None
+    request_type = None  # type: str
+    parameter_types = None  # type: {str: type}
+    format_to_sign = None  # type: [str]
+    formats_to_verify = None  # type: {str: [str]}
 
-    def __init__(self, **kwargs):
-        # This will be sub-classed, we want to get the attributes from those sub-classes
+    def __init__(self, **given_parameters: {str: object}) -> None:
+        """
+        Initializes a someRequest object from the someRequest class attributes.
+        In particular, the following are added as object attributes:
+        - request_type
+        - parameter_types
+
+        It also sets the object.signature to Null if a signature isn't given.
+        This is done because a request can be created before being signed with
+        the sign(key) method.
+
+        :param given_parameters:
+        """
+
+        # check that the attributes were assigned.
+        if not (self.__class__.request_type and self.__class__.parameter_types and
+                self.__class__.format_to_sign and self.__class__.formats_to_verify):
+            raise NotImplementedError('One of the class attributes was not initiated')
+
+        # This will be sub-classed, get the attributes from the sub-class
         parameter_types = self.__class__.parameter_types
-        self.__dict__['signature'] = None
 
-        # Check that the types of the arguments match the request parameters, and that they exist
+        # Check that argument types match the request parameter types (and exist)
         for parameter in parameter_types:
-            if not isinstance(kwargs[parameter], parameter_types[parameter]):
+            if not isinstance(given_parameters[parameter], parameter_types[parameter]):
                 error_string = "Got type %s for parameter %s but expected type %s"
-                raise TypeError(error_string % (type(kwargs[parameter]),
+                raise TypeError(error_string % (type(given_parameters[parameter]),
                                                 parameter,
                                                 parameter_types[parameter]))
             else:
-                # If the parameter type is correct, add it as an object attribute
-                self.__dict__[parameter] = kwargs[parameter]
+                # Add the parameter as an object attribute if it's type is correct
+                self.__dict__[parameter] = given_parameters[parameter]
 
-        print(kwargs)
-        print(self.__dict__)
+        self.__dict__['signature'] = given_parameters.get('signature', None)
 
-    def sign(self, signer: Signer):
-        # This will be sub-classed, we want to get the attributes from those sub-classes
-        signed_parameters = self.__class__.parameters_to_sign
+    def sign(self, key: str) -> object:
+        """
+        Signs the request as defined in self.__class__.format_to_sign, using key.
+        The resulting signature is added as an object attribute, so it can be
+        accessed via request.signature.
+        The object is returned so that a request initialization can be done with:
+        request = someRequest(**params).sign(key)
 
-        # Figure out what parameters need to be signed and concatenate them in a bytes string
-        to_be_signed = b""
-        for parameter_to_sign in signed_parameters:
-            parameter = self.__dict__[parameter_to_sign]
-            parameter_bytes = parameter if isinstance(parameter, bytes) else parameter.encode()
-            to_be_signed += parameter_bytes
+        :param key:
+        :return self:
+        """
+        # This will be sub-classed, get the attributes from the sub-class
+        format_to_sign = self.__class__.format_to_sign
 
-        # Create the signature for the request
-        self.__dict__['signature'] = signer.sign(to_be_signed)
+        # Concatenate in a string the parameters to be signed
+        to_be_signed = []
+        for parameter_to_sign in format_to_sign:
+            to_be_signed.append(self.__dict__[parameter_to_sign])
+
+        # Sign and add the signature as an object attribute
+        self.__dict__['signature'] = sign(key, *to_be_signed)
 
         return self
 
-    def verify(self, verifier: Verifier):
-        # This will be sub-classed, we want to get the attributes from those sub-classes
-        parameters_to_sign = self.__class__.parameters_to_sign
+    def verify(self, **signature_keys: {str: str}):
+        """
+        Verify all the signatures in self.__class__.formats_to_verify, using the
+        keys given in signature_keys.
 
-        signed_parameters = []
-        for parameter in parameters_to_sign:
-            parameter_value = self.__dict__[parameter]
-            bytes_value = parameter_value if isinstance(parameter_value, bytes) else parameter_value.encode()
-            signed_parameters.append(bytes_value)
+        If one of the signatures is invalid, InvalidSignature is raised.
+        It's not important to know which one failed since the request should fail
+        regardless of which one it was. (May be useful for debugging purposes?)
 
-        verifier.verify(self.signature, *signed_parameters)
+        :param signature_keys: a map of keys used to verify the signatures
+        :raises InvalidSignature: if any of the signatures fail to verify
+        """
+        # This will be sub-classed, get the attributes from the sub-class
+        formats_to_verify = self.__class__.formats_to_verify
 
-        self.extra_verifications()
+        for sig_name, sig_format in formats_to_verify.items():
+            signature = self.__dict__[sig_name]
+            parameters_to_sign = ""
+            for parameter in sig_format:
+                parameters_to_sign += self.__dict__[parameter]
 
-    def extra_verifications(self):
-        pass
+            verify(signature_keys[sig_name], signature, *parameters_to_sign)
+
 
     @classmethod
-    def load_request(cls, request_body: bytes):
+    def load(cls, request_body: bytes):
         """
         Loads a request from a JSON string. All subclasses must implement
         this static method.
@@ -96,7 +127,7 @@ class Request:
         :raise DecodeError: if the JSON string is incorrectly formatted or if
                                    it misses any parameter.
         """
-        request_items = ParametersDecoder.load(request_body.decode())
+        request_items = json.loads(request_body.decode())
 
         try:
             # parse each parameter of the given request type
@@ -114,11 +145,11 @@ class Request:
                     values[parameter] = request_items[parameter]
 
             # Load the signature as well, if it exists
-            values['signature'] = request_items.get('signature', None)
+            signature = request_items.get('signature', None)
+            values['signature'] = signature if isinstance(signature, str) else None
 
             # create instance of the given request type
-            # assign loaded values to the request
-            return Request._create(cls, values)
+            return cls(**values)
 
         except KeyError:
             raise DecodeError("request is missing at least one of its "
@@ -152,17 +183,3 @@ class Request:
             parameters[parameter] = self.__dict__[parameter]
 
         return json.dumps(parameters, cls=Base64Encoder)
-
-    @staticmethod
-    def _create(request_type, parameters_values: dict):
-        """
-        Creates an instance of the given request type. Assigns the request
-        type with the values from the dictionary parameters_values.
-
-        :param request_type: type of request to create.
-        :param parameters_values: dict with the parameter values for the
-                                  request.
-        """
-        request = request_type(**parameters_values)
-        request.__dict__['signature'] = parameters_values['signature']
-        return request
