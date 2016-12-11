@@ -13,9 +13,3 @@ class InviteRequest(Request):
         'invitee': str,
         'invitee_email': str
     }
-
-    format_to_sign = ['inviter', 'invitee', 'invitee_email']
-
-    formats_to_verify = {
-        "signature": format_to_sign,
-    }

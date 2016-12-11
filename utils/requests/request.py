@@ -28,8 +28,6 @@ class Request:
 
     request_address = None  # type: str
     parameter_types = None  # type: {str: type}
-    format_to_sign = None  # type: [str]
-    formats_to_verify = None  # type: {str: [str]}
 
     def __init__(self, **given_parameters: {str: object}):
         """
@@ -46,8 +44,7 @@ class Request:
         """
 
         # check that the attributes were assigned.
-        if not (self.__class__.request_address and self.__class__.parameter_types and
-                self.__class__.format_to_sign and self.__class__.formats_to_verify):
+        if not (self.__class__.request_address and self.__class__.parameter_types):
             raise NotImplementedError('One of the class attributes was not initiated')
 
         # This will be sub-classed, get the attributes from the sub-class
@@ -65,54 +62,6 @@ class Request:
                 self.__dict__[parameter] = given_parameters[parameter]
 
         self.__dict__['signature'] = given_parameters.get('signature', None)
-
-    def sign(self, key: str) -> object:
-        """
-        Signs the request as defined in self.__class__.format_to_sign, using key.
-        The resulting signature is added as an object attribute, so it can be
-        accessed via request.signature.
-        The object is returned so that a request initialization can be done with:
-        request = someRequest(**params).sign(key)
-
-        :param key:
-        :return self:
-        """
-        # This will be sub-classed, get the attributes from the sub-class
-        format_to_sign = self.__class__.format_to_sign
-
-        # Concatenate in a string the parameters to be signed
-        to_be_signed = []
-        for parameter_to_sign in format_to_sign:
-            to_be_signed.append(self.__dict__[parameter_to_sign])
-
-        # Sign and add the signature as an object attribute
-        self.__dict__['signature'] = sign(key, *to_be_signed)
-
-        return self
-
-    def verify(self, **signature_keys: {str: str}):
-        """
-        Verify all the signatures in self.__class__.formats_to_verify, using the
-        keys given in signature_keys.
-
-        If one of the signatures is invalid, InvalidSignature is raised.
-        It's not important to know which one failed since the request should fail
-        regardless of which one it was. (May be useful for debugging purposes?)
-
-        :param signature_keys: a map of keys used to verify the signatures
-        :raises InvalidSignature: if any of the signatures fail to verify
-        """
-        # This will be sub-classed, get the attributes from the sub-class
-        formats_to_verify = self.__class__.formats_to_verify
-
-        for sig_name, sig_format in formats_to_verify.items():
-            signature = self.__dict__[sig_name]
-            parameters_to_sign = ""
-            for parameter in sig_format:
-                parameters_to_sign += str(self.__dict__[parameter])
-
-            verify(signature_keys[sig_name], signature, *parameters_to_sign)
-
 
     @classmethod
     def load(cls, request_body: bytes):
