@@ -2,7 +2,7 @@ from pytest import raises
 
 from utils.crypto.rsa import sign, verify, InvalidSignature
 from utils.requests.invite_request import InviteRequest
-from utils.requests.request import DecodeError, Request
+from utils.requests.message import DecodeError, Message
 from utils.requests.test_utils import example_key, example_pub_key, fake_body
 
 
@@ -18,7 +18,7 @@ class TestInviteRequest:
         assert request.inviter == example_pub_key
         assert request.invitee == "C2"
         assert request.invitee_email == "c2@y.com"
-        assert request.method == "invite-user"
+        assert request.message_type == "invite-user"
 
     def test_load_request_RequestWithAllParameters_LoadsRequestWithValidParameters(self):
         request = InviteRequest.load(fake_body({

@@ -1,12 +1,12 @@
-from utils.requests.request import Request
+from utils.requests.message import Message
 
 
-class InviteRequest(Request):
+class InviteRequest(Message):
     """
     Invite request sent by a valid user to invite a new user into the group.
     """
 
-    request_address = 'invite-user'
+    message_type = 'invite-user'
 
     parameter_types = {
         'inviter': str,

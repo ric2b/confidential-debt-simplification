@@ -1,6 +1,6 @@
 import http.client as http
 
-from utils.requests.request import Request
+from utils.requests.message import Message
 from utils.requests.response import Response
 
 
@@ -49,7 +49,7 @@ class Connection:
     # Public Interface to make requests
     #
 
-    def request(self, request: Request):
+    def request(self, request: Message):
         """
         Issues a request. Takes a request object and makes a post request to
         the HTTP server. It accesses the 'method' property of the request to

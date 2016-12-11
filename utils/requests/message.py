@@ -5,7 +5,7 @@ from utils.requests.parameters_decoder import DecodeError
 from utils.crypto.rsa import sign, verify
 
 
-class Request:
+class Message:
     """
     << Abstract Class >>
 
@@ -26,7 +26,7 @@ class Request:
     mentioned getter methods.
     """
 
-    request_address = None  # type: str
+    message_type = None  # type: str
     parameter_types = None  # type: {str: type}
 
     def __init__(self, **given_parameters: {str: object}):
@@ -44,8 +44,12 @@ class Request:
         """
 
         # check that the attributes were assigned.
-        if not (self.request_address and self.parameter_types):
+        if not (self.message_type and self.parameter_types):
             raise NotImplementedError('One of the class attributes was not initiated')
+
+        if not(isinstance(self.message_type, str) and
+                isinstance(self.parameter_types, dict)):
+            raise TypeError('One of the class attributes is of the wrong type')
 
         # This will be sub-classed, get the attributes from the sub-class
         parameter_types = self.parameter_types
@@ -102,16 +106,6 @@ class Request:
                               "request is not in the correct type")
 
     @property
-    def method(self) -> str:
-        """
-        Returns the method of the request. The method should be a string and
-        should be the same for all instances of the request implementation.
-
-        :return: request's method
-        """
-        return self.request_address
-
-    @property
     def body(self) -> str:
         """
         Returns a string containing the body of the request. The body of the
@@ -126,3 +120,11 @@ class Request:
             parameters[parameter] = getattr(self, parameter)
 
         return json.dumps(parameters, cls=Base64Encoder)
+
+    def dump(self) -> bytes:
+        """
+        Encode the body into UTF-8 for network transport
+
+        :return: JSON bytes string containing the parameters of the request.
+        """
+        return self.body.encode()
