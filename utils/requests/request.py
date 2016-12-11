@@ -44,11 +44,11 @@ class Request:
         """
 
         # check that the attributes were assigned.
-        if not (self.__class__.request_address and self.__class__.parameter_types):
+        if not (self.request_address and self.parameter_types):
             raise NotImplementedError('One of the class attributes was not initiated')
 
         # This will be sub-classed, get the attributes from the sub-class
-        parameter_types = self.__class__.parameter_types
+        parameter_types = self.parameter_types
 
         # Check that argument types match the request parameter types (and exist)
         for parameter in parameter_types:
@@ -59,9 +59,8 @@ class Request:
                                                 parameter_types[parameter]))
             else:
                 # Add the parameter as an object attribute if it's type is correct
-                self.__dict__[parameter] = given_parameters[parameter]
+                setattr(self, parameter, given_parameters[parameter])
 
-        self.__dict__['signature'] = given_parameters.get('signature', None)
 
     @classmethod
     def load(cls, request_body: bytes):
@@ -92,10 +91,6 @@ class Request:
                 else:
                     values[parameter] = request_items[parameter]
 
-            # Load the signature as well, if it exists
-            signature = request_items.get('signature', None)
-            values['signature'] = signature if isinstance(signature, str) else None
-
             # create instance of the given request type
             return cls(**values)
 
@@ -114,7 +109,7 @@ class Request:
 
         :return: request's method
         """
-        return self.__class__.request_address
+        return self.request_address
 
     @property
     def body(self) -> str:
@@ -127,7 +122,7 @@ class Request:
         :return: JSON string containing the parameters of the request.
         """
         parameters = {}
-        for parameter in self.__class__.parameter_types:
-            parameters[parameter] = self.__dict__[parameter]
+        for parameter in self.parameter_types:
+            parameters[parameter] = getattr(self, parameter)
 
         return json.dumps(parameters, cls=Base64Encoder)
