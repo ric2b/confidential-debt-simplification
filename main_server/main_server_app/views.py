@@ -13,6 +13,24 @@ from .services import simplify_debt
 # https://github.com/dsi-dev-sessions/02-rest-microservices/blob/master/slides.pdf
 
 
+def register_group(request):
+    group = Group(name=request.POST['group_name'], owner=request.POST['group_owner'])
+    group.save()
+
+    return HttpResponse("Group '%s' registered" % group.name)
+
+
+def register_user(request):
+    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
+
+    user = User(group=group,
+                user_id=request.POST['signing_key'],
+                encryption_key=request.POST['encryption_key'])
+    user.save()
+
+    return HttpResponse("User '%s' registered" % user.user_id)
+
+
 def add_uome(request):
     group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
     lender = User.objects.filter(user_id=request.POST['user_id']).first()
@@ -95,30 +113,8 @@ def get_total_debt(request):
             user_debt[debt.borrower.user_id] = debt.value
 
     # example: {is_borrower: True, user_debt: {'user1': val1, 'user2': val2}, rnd: 'Drmhze6EPcv0fN_81Bj-nA'}
-    json_payload = json.dumps({'balance': user.balance, 'user_debt': user_debt, 'rnd': str(b64encode(urandom(32)))})
+    json_payload = json.dumps({'balance': user.balance,
+                               'user_debt': user_debt,
+                               'rnd': str(b64encode(urandom(32)))})
+
     return HttpResponse(json_payload, content_type='application/json')
-
-
-def register_group(request):  
-    group = Group(name=request.POST['group_name'], owner=request.POST['group_owner'])
-    group.save()
-
-    return HttpResponse("Group '%s' registered" % group.name)
-
-
-def get_group_info(request):
-    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
-
-    json_payload = json.dumps({'uuid': str(group.uuid), 'name': group.name, 'owner': group.owner})
-    return HttpResponse(json_payload, content_type='application/json')
-
-
-def register_user(request):
-    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
-
-    user = User(group=group, 
-                user_id=request.POST['signing_key'],
-                encryption_key=request.POST['encryption_key'])
-    user.save()
-
-    return HttpResponse("User '%s' registered" % user.user_id)

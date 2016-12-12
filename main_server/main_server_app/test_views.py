@@ -17,6 +17,40 @@ from .models import Group, User, UOMe, UserDebt
 # - test method names that describe their function
 
 
+class RegisterGroupTests(TestCase):
+    # TODO: add proxy/name server address
+    def test_register_new_group(self):
+        group_name = 'test_name'
+        group_owner = 'test_owner'
+        raw_response = self.client.post(reverse('main_server_app:register_group'),
+                                        {
+                                            'group_name': group_name,
+                                            'group_owner': group_owner
+                                        })
+
+        assert raw_response.content.decode("utf-8") == "Group '%s' registered" % group_name
+
+
+class RegisterUserTests(TestCase):
+    def setUp(self):
+        group = Group(name='test', owner='test')
+        group.save()
+        self.group = group
+
+    def test_register_new_user_to_existing_group(self):
+        signing_key = 'test_signing key'
+        encryption_key = 'test_encryption_key'
+
+        raw_response = self.client.post(reverse('main_server_app:register_user'),
+                                        {
+                                            'group_uuid': self.group.uuid,
+                                            'signing_key': signing_key,
+                                            'encryption_key': encryption_key
+                                        })
+
+        assert raw_response.content.decode("utf-8") == "User '%s' registered" % signing_key
+
+
 class AddUOMeTests(TestCase):
     def setUp(self):
         group = Group(name='test', owner='test')
@@ -189,57 +223,3 @@ class CheckTotalsTests(TestCase):
         response = json.loads(str(raw_response.content.decode("utf-8")))
         assert response['balance'] == -debt_value
         assert response['user_debt'] == {self.lender.user_id: debt_value}
-
-
-class RegisterGroupTests(TestCase):
-    # TODO: add proxy/name server address
-    def test_register_new_group(self):
-        group_name = 'test_name'
-        group_owner = 'test_owner'
-        raw_response = self.client.post(reverse('main_server_app:register_group'),
-                                        {
-                                            'group_name': group_name,
-                                            'group_owner': group_owner
-                                        })
-
-        assert raw_response.content.decode("utf-8") == "Group '%s' registered" % group_name
-
-
-class GetGroupInfoTests(TestCase):
-    # TODO: add proxy/name server address
-    def setUp(self):
-        group = Group(name='test_name', owner='test_owner')
-        group.save()
-        self.group = group
-
-    def test_get_existing_group(self):
-        raw_response = self.client.post(reverse('main_server_app:get_group_info'),
-                                        {'group_uuid': self.group.uuid})
-
-        expected_info = {
-            'uuid': str(self.group.uuid),
-            'name': self.group.name,
-            'owner': self.group.owner
-        }
-
-        assert json.loads(raw_response.content.decode("utf-8")) == expected_info
-
-
-class RegisterUserTests(TestCase):
-    def setUp(self):
-        group = Group(name='test', owner='test')
-        group.save()
-        self.group = group
-
-    def test_register_new_user_to_existing_group(self):
-        signing_key = 'test_signing key'
-        encryption_key = 'test_encryption_key'
-
-        raw_response = self.client.post(reverse('main_server_app:register_user'),
-                                        {
-                                            'group_uuid': self.group.uuid,
-                                            'signing_key': signing_key,
-                                            'encryption_key': encryption_key
-                                        })
-
-        assert raw_response.content.decode("utf-8") == "User '%s' registered" % signing_key
