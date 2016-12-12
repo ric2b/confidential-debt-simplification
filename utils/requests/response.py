@@ -23,9 +23,17 @@ class BadRequestError(RequestError):
     pass
 
 
+class UnauthorizedError(RequestError):
+    """
+    Raised when the request was valid but the signature verification failed.
+    This happens when the response has the Unauthorized code (401).
+    """
+    pass
+
+
 class ForbiddenError(RequestError):
     """
-    Raised when the request was valid, but the signature was not verified.
+    Raised when the request was valid and the signature was verified but the user is not allowed to do the action.
     This happens when the response has the Forbidden code (403).
     """
     pass
