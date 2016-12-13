@@ -1,7 +1,8 @@
 from pytest import raises
 
 from utils.requests.message import Message, DecodeError
-from utils.requests.test_utils import fake_body
+from utils.requests.testing_utils import fake_body
+
 
 class TestMessage:
 
