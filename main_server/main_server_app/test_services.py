@@ -3,6 +3,8 @@ from collections import defaultdict
 from .services import simplify_debt
 
 
+# TODO: add WAY more tests here
+
 class TestSimplifyDebt:
     def test_basic_update_total(self):
         prev_totals = defaultdict(int)

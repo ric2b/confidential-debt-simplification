@@ -3,7 +3,8 @@ import uuid
 
 
 description_length = 80
-key_length = 400  # 2048 bit key in base 64? I don't know what I'm doing :) 
+key_length = 400  # 2048 bit key in base 64? I don't know what I'm doing :)
+# TODO: Use correct key length
 # Create your models here.
 
 
@@ -11,24 +12,22 @@ class Group(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=80)
 
-    owner = models.CharField(max_length=key_length)
+    key = models.CharField(max_length=key_length)
     # owner_email = models.EmailField(max_length=254)
     # TODO: add proxy/name server address
-    
+
 
 class User(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
 
     # the uuid is the signing key of the user!
-    user_id = models.CharField(primary_key=True, max_length=key_length)
-    encryption_key = models.CharField(max_length=key_length)
+    key = models.CharField(primary_key=True, max_length=key_length)
 
     # if the user, after simplification, is a borrower
-    # TODO: Check for race conditions all over the place, or something :)
     balance = models.IntegerField(default=0)
 
     def __str__(self):
-        return self.user_id
+        return self.key
 
 
 class UOMe(models.Model):

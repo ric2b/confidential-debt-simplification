@@ -21,11 +21,11 @@ class RegisterGroupTests(TestCase):
     # TODO: add proxy/name server address
     def test_register_new_group(self):
         group_name = 'test_name'
-        group_owner = 'test_owner'
+        key = 'test_key'
         raw_response = self.client.post(reverse('main_server_app:register_group'),
                                         {
                                             'group_name': group_name,
-                                            'group_owner': group_owner
+                                            'group_key': key
                                         })
 
         assert raw_response.content.decode("utf-8") == "Group '%s' registered" % group_name
@@ -33,19 +33,17 @@ class RegisterGroupTests(TestCase):
 
 class RegisterUserTests(TestCase):
     def setUp(self):
-        group = Group(name='test', owner='test')
+        group = Group(name='test', key='test')
         group.save()
         self.group = group
 
     def test_register_new_user_to_existing_group(self):
-        signing_key = 'test_signing key'
-        encryption_key = 'test_encryption_key'
+        signing_key = 'test_signing_key'
 
         raw_response = self.client.post(reverse('main_server_app:register_user'),
                                         {
                                             'group_uuid': self.group.uuid,
-                                            'signing_key': signing_key,
-                                            'encryption_key': encryption_key
+                                            'user_key': signing_key,
                                         })
 
         assert raw_response.content.decode("utf-8") == "User '%s' registered" % signing_key
@@ -53,11 +51,11 @@ class RegisterUserTests(TestCase):
 
 class AddUOMeTests(TestCase):
     def setUp(self):
-        group = Group(name='test', owner='test')
+        group = Group(name='test', key='test')
         group.save()
-        borrower = User(group=group, user_id='signature_key1', encryption_key='encryption_key1')
+        borrower = User(group=group, key='signature_key1')
         borrower.save()
-        lender = User(group=group, user_id='signature_key2', encryption_key='encryption_key2')
+        lender = User(group=group, key='signature_key2')
         lender.save()
 
         self.group, self.borrower, self.lender = group, borrower, lender
@@ -66,8 +64,8 @@ class AddUOMeTests(TestCase):
         raw_response = self.client.post(reverse('main_server_app:add_uome'),
                                         {
                                             'group_uuid': self.group.uuid,
-                                            'user_id': self.lender.user_id,
-                                            'borrower': self.borrower.user_id,
+                                            'lender': self.lender.key,
+                                            'borrower': self.borrower.key,
                                             'value': 10,
                                             'description': 'test'
                                         })
@@ -77,11 +75,11 @@ class AddUOMeTests(TestCase):
 
 class CancelUOMeTests(TestCase):
     def setUp(self):
-        group = Group(name='test', owner='test')
+        group = Group(name='test', key='test')
         group.save()
-        borrower = User(group=group, user_id='signature_key1', encryption_key='encryption_key1')
+        borrower = User(group=group, key='signature_key1')
         borrower.save()
-        lender = User(group=group, user_id='signature_key2', encryption_key='encryption_key2')
+        lender = User(group=group, key='signature_key2')
         lender.save()
 
         self.group, self.borrower, self.lender = group, borrower, lender
@@ -96,7 +94,7 @@ class CancelUOMeTests(TestCase):
         raw_response = self.client.post(reverse('main_server_app:cancel_uome'),
                                         {
                                             'group_uuid': self.group.uuid,
-                                            'user_id': self.lender.user_id,
+                                            'user_key': self.lender.key,
                                             'uome_uuid': uome.uuid
                                         })
 
@@ -109,11 +107,11 @@ class CancelUOMeTests(TestCase):
 
 class CheckUnconfirmedUOMesTests(TestCase):
     def setUp(self):
-        group = Group(name='test', owner='test')
+        group = Group(name='test', key='test')
         group.save()
-        borrower = User(group=group, user_id='signature_key1', encryption_key='encryption_key1')
+        borrower = User(group=group, key='signature_key1')
         borrower.save()
-        lender = User(group=group, user_id='signature_key2', encryption_key='encryption_key2')
+        lender = User(group=group, key='signature_key2')
         lender.save()
 
         self.group, self.borrower, self.lender = group, borrower, lender
@@ -125,7 +123,7 @@ class CheckUnconfirmedUOMesTests(TestCase):
 
         raw_response = self.client.post(reverse('main_server_app:get_unconfirmed_uomes'),
                                         {'group_uuid': self.group.uuid,
-                                         'user_id': self.borrower.user_id})
+                                         'user_key': self.borrower.key})
 
         # https://docs.djangoproject.com/en/1.10/topics/serialization/
         response = serializers.deserialize('json', raw_response.content)
@@ -134,11 +132,11 @@ class CheckUnconfirmedUOMesTests(TestCase):
 
 class ConfirmUOMeTests(TestCase):
     def setUp(self):
-        group = Group(name='test', owner='test')
+        group = Group(name='test', key='test')
         group.save()
-        borrower = User(group=group, user_id='signature_key1', encryption_key='encryption_key1')
+        borrower = User(group=group, key='signature_key1')
         borrower.save()
-        lender = User(group=group, user_id='signature_key2', encryption_key='encryption_key2')
+        lender = User(group=group, key='signature_key2')
         lender.save()
 
         self.group, self.borrower, self.lender = group, borrower, lender
@@ -152,7 +150,7 @@ class ConfirmUOMeTests(TestCase):
         raw_response = self.client.post(reverse('main_server_app:confirm_uome'),
                                         {'group_uuid': self.group.uuid,
                                          'uome_uuid': uome.uuid,
-                                         'user_id': self.borrower.user_id})
+                                         'user_key': self.borrower.key})
 
         # Confirm uome is marked as confirmed
         assert raw_response.content.decode('utf-8') == 'UOMe confirmed'
@@ -175,11 +173,11 @@ class ConfirmUOMeTests(TestCase):
 
 class CheckTotalsTests(TestCase):
     def setUp(self):
-        group = Group(name='test', owner='test')
+        group = Group(name='test', key='test')
         group.save()
-        borrower = User(group=group, user_id='signature_key1', encryption_key='encryption_key1')
+        borrower = User(group=group, key='signature_key1')
         borrower.save()
-        lender = User(group=group, user_id='signature_key2', encryption_key='encryption_key2')
+        lender = User(group=group, key='signature_key2')
         lender.save()
 
         self.group, self.borrower, self.lender = group, borrower, lender
@@ -187,7 +185,7 @@ class CheckTotalsTests(TestCase):
     def test_check_totals_no_uome(self):
         raw_response = self.client.post(reverse('main_server_app:total_debt'),
                                         {'group_uuid': self.group.uuid,
-                                         'user_id': self.borrower.user_id})
+                                         'user_key': self.borrower.key})
 
         response = json.loads(raw_response.content.decode("utf-8"))
         assert response['balance'] == 0
@@ -200,7 +198,7 @@ class CheckTotalsTests(TestCase):
 
         raw_response = self.client.post(reverse('main_server_app:total_debt'),
                                         {'group_uuid': self.group.uuid,
-                                         'user_id': self.borrower.user_id})
+                                         'user_key': self.borrower.key})
 
         response = json.loads(str(raw_response.content.decode("utf-8")))
         assert response['balance'] == 0
@@ -218,8 +216,8 @@ class CheckTotalsTests(TestCase):
 
         raw_response = self.client.post(reverse('main_server_app:total_debt'),
                                         {'group_uuid': self.group.uuid,
-                                         'user_id': self.borrower.user_id})
+                                         'user_key': self.borrower.key})
 
         response = json.loads(str(raw_response.content.decode("utf-8")))
         assert response['balance'] == -debt_value
-        assert response['user_debt'] == {self.lender.user_id: debt_value}
+        assert response['user_debt'] == {self.lender.key: debt_value}
