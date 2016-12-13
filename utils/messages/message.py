@@ -1,8 +1,10 @@
 import json
 
-from utils.requests.base64_json_encoder import Base64Encoder
-from utils.requests.parameters_decoder import DecodeError
-from utils.crypto.rsa import sign, verify
+from utils.messages.base64_json_encoder import Base64Encoder
+
+
+class DecodeError(Exception):
+    """ Raised when there is an error while decoding parameters """
 
 
 class Message:
