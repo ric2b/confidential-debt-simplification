@@ -1,12 +1,15 @@
 from django.test import TestCase  # TODO: check out pytest
 from django.urls import reverse
 from django.core import serializers
+from django.conf import settings
 import json
 
 from collections import defaultdict
 
 from .models import Group, User, UOMe, UserDebt
 
+from utils.crypto.rsa import generate_keys, sign, verify
+from utils.messages import requests, responses
 
 # Create your tests here.
 
@@ -18,17 +21,27 @@ from .models import Group, User, UOMe, UserDebt
 
 
 class RegisterGroupTests(TestCase):
+    def setUp(self):
+        self.private_key, self.key = generate_keys()
+
     # TODO: add proxy/name server address
     def test_register_new_group(self):
         group_name = 'test_name'
-        key = 'test_key'
-        raw_response = self.client.post(reverse('main_server_app:register_group'),
-                                        {
-                                            'group_name': group_name,
-                                            'group_key': key
-                                        })
+        key = self.key
 
-        assert raw_response.content.decode("utf-8") == "Group '%s' registered" % group_name
+        signature = sign(self.private_key, group_name, key)
+        message_data = requests.RegisterGroup(group_name=group_name,
+                                              group_key=key,
+                                              group_signature=signature)
+
+        raw_response = self.client.post(reverse('main_server_app:register_group'),
+                                        {'data': message_data.body})
+
+        print(raw_response.content.decode())
+        response = responses.RegisterGroup.load(raw_response.content.decode())
+
+        signature_content = [response.group_uuid, group_name, key]
+        verify(settings.PUBLIC_KEY, response.main_signature, *signature_content)
 
 
 class RegisterUserTests(TestCase):
@@ -46,7 +59,7 @@ class RegisterUserTests(TestCase):
                                             'user_key': signing_key,
                                         })
 
-        assert raw_response.content.decode("utf-8") == "User '%s' registered" % signing_key
+        assert raw_response.content.decode() == "User '%s' registered" % signing_key
 
 
 class AddUOMeTests(TestCase):
@@ -70,7 +83,7 @@ class AddUOMeTests(TestCase):
                                             'description': 'test'
                                         })
 
-        assert raw_response.content.decode('utf-8') == 'UOMe added'
+        assert raw_response.content.decode() == 'UOMe added'
 
 
 class CancelUOMeTests(TestCase):
@@ -153,7 +166,7 @@ class ConfirmUOMeTests(TestCase):
                                          'user_key': self.borrower.key})
 
         # Confirm uome is marked as confirmed
-        assert raw_response.content.decode('utf-8') == 'UOMe confirmed'
+        assert raw_response.content.decode() == 'UOMe confirmed'
         assert UOMe.objects.filter(group=self.group, uuid=uome.uuid).first().confirmed == True
 
         # Confirm totals
@@ -187,7 +200,7 @@ class CheckTotalsTests(TestCase):
                                         {'group_uuid': self.group.uuid,
                                          'user_key': self.borrower.key})
 
-        response = json.loads(raw_response.content.decode("utf-8"))
+        response = json.loads(raw_response.content.decode())
         assert response['balance'] == 0
         assert response['user_debt'] == {}
 
@@ -200,7 +213,7 @@ class CheckTotalsTests(TestCase):
                                         {'group_uuid': self.group.uuid,
                                          'user_key': self.borrower.key})
 
-        response = json.loads(str(raw_response.content.decode("utf-8")))
+        response = json.loads(str(raw_response.content.decode()))
         assert response['balance'] == 0
         assert response['user_debt'] == {}
 
@@ -218,6 +231,6 @@ class CheckTotalsTests(TestCase):
                                         {'group_uuid': self.group.uuid,
                                          'user_key': self.borrower.key})
 
-        response = json.loads(str(raw_response.content.decode("utf-8")))
+        response = json.loads(str(raw_response.content.decode()))
         assert response['balance'] == -debt_value
         assert response['user_debt'] == {self.lender.key: debt_value}

@@ -1,12 +1,15 @@
 from django.core.serializers import serialize
 from django.http import HttpResponse
 from django.db import transaction
-import json
+from django.conf import settings
 from collections import defaultdict
+import json
 
 from .models import Group, User, UOMe, UserDebt
 from .services import simplify_debt
 
+from utils.crypto.rsa import sign, verify
+from utils.messages import requests, responses
 
 # Create your views here.
 # TODO: crypto stuff!
@@ -15,10 +18,23 @@ from .services import simplify_debt
 
 
 def register_group(request):
-    group = Group(name=request.POST['group_name'], key=request.POST['group_key'])
+    # convert the message into the request object
+    request = requests.RegisterGroup.load(request.POST['data'])
+
+    # verify the signature
+    signature_content = [request.group_name, request.group_key]
+    verify(request.group_key, request.group_signature, *signature_content)
+
+    # signature is correct, create the group
+    group = Group(name=request.group_name, key=request.group_key)
     group.save()
 
-    return HttpResponse("Group '%s' registered" % group.name)
+    # group created, create the response object
+    signature = sign(settings.PRIVATE_KEY, group.uuid, group.name, group.key)
+    response = responses.RegisterGroup(group_uuid=str(group.uuid), main_signature=signature)
+
+    # send the response, the status for success is 201 Created
+    return HttpResponse(response.body, status=201)
 
 
 def register_user(request):
