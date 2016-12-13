@@ -71,6 +71,8 @@ def get_unconfirmed_uomes(request):
     return HttpResponse(serialize('json', unconfirmed_uomes), content_type='application/json')
 
 
+# TODO: Think about data races a lot more
+@transaction.atomic
 def confirm_uome(request):
     group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
     uome = UOMe.objects.filter(group=group, uuid=request.POST['uome_uuid']).first()
