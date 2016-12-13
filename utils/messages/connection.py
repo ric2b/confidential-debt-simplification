@@ -1,7 +1,6 @@
 import http.client as http
 
-from utils.requests.request import Request
-from utils.requests.response import Response
+from utils.messages.message import Message
 
 
 def connect(server_url):
@@ -46,10 +45,10 @@ class Connection:
         self.close()
 
     #
-    # Public Interface to make requests
+    # Public Interface to make messages
     #
 
-    def request(self, request: Request):
+    def request(self, request: Message):
         """
         Issues a request. Takes a request object and makes a post request to
         the HTTP server. It accesses the 'method' property of the request to
@@ -62,12 +61,12 @@ class Connection:
         """
         self._http_connection.request(
             method='POST',
-            url='/fakeserver/' + request.method,
+            url='/fakeserver/' + request.message_type,
             body=request.body
         )
 
     def get_response(self, response_impl):
-        return Response.load_response(
+        return Message.load_response(
             self._http_connection.getresponse(),
             response_impl
         )
