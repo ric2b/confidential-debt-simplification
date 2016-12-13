@@ -10,8 +10,6 @@ class RegisterGroup(Message):
 
     parameter_types = {
         'group_uuid': str,
-        'group_name': str,
-        'group_key': str,
         'main_signature': str
     }
 

@@ -114,7 +114,7 @@ class TestMessage:
                                                                         'd': dict}})
 
         my_message = test_class(a='hi', b=42, c=[1, 'a', 3], d={'e': [1]})
-        my_recovered_message = test_class.load(my_message.dump())
+        my_recovered_message = test_class.load(my_message.body)
 
         assert my_message.a == my_recovered_message.a
         assert my_message.b == my_recovered_message.b

@@ -66,7 +66,7 @@ class Connection:
         )
 
     def get_response(self, response_impl):
-        return Response.load_response(
+        return Message.load_response(
             self._http_connection.getresponse(),
             response_impl
         )
