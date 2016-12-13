@@ -11,11 +11,11 @@ from utils.messages.base64_json_encoder import Base64Encoder
 example_key, example_pub_key = generate_keys()
 
 
-def fake_body(parameters: dict) -> bytes:
+def fake_body(parameters: dict) -> str:
     """ Creates a fake request body from a dict with parameters """
     # there is no problem to use JSON directly to convert the parameters since
     # here it is not our goal to test the JSON format but input parameters
-    return json.dumps(parameters, cls=Base64Encoder).encode()
+    return json.dumps(parameters, cls=Base64Encoder)
 
 
 def fake_http_response(status=200, body=bytes()) -> HTTPResponse:

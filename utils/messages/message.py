@@ -75,12 +75,11 @@ class Message:
         this static method.
 
         :param request_body: body of the request in bytes format.
-        :param request_type: request type to be loaded.
         :return: request object.
         :raise DecodeError: if the JSON string is incorrectly formatted or if
                                    it misses any parameter.
         """
-        request_items = json.loads(request_body.decode())
+        request_items = json.loads(request_body)
 
         try:
             # parse each parameter of the given request type
