@@ -1,6 +1,6 @@
 import json
 
-from utils.requests.base64_json_encoder import Base64Encoder
+from utils.messages.base64_json_encoder import Base64Encoder
 
 
 class DecodeError(Exception):

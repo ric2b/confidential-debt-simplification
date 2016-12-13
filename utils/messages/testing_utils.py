@@ -5,7 +5,7 @@ from unittest.mock import Mock, MagicMock
 from pytest import fixture
 
 from utils.crypto.rsa import generate_keys, InvalidSignature
-from utils.requests.base64_json_encoder import Base64Encoder
+from utils.messages.base64_json_encoder import Base64Encoder
 
 
 example_key, example_pub_key = generate_keys()

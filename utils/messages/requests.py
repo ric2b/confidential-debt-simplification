@@ -1,4 +1,4 @@
-from utils.requests.message import Message
+from utils.messages.message import Message
 
 
 class RegisterGroup(Message):
@@ -9,10 +9,9 @@ class RegisterGroup(Message):
     message_type = 'register-group'
 
     parameter_types = {
-        'group_uuid': str,
         'group_name': str,
         'group_key': str,
-        'main_signature': str
+        'group_signature': str
     }
 
 
@@ -24,5 +23,9 @@ class UserInvite(Message):
     message_type = 'invite-user'
 
     parameter_types = {
-        'group_signature': str
+        'group_uuid': str,
+        'inviter': str,
+        'invitee': str,
+        'invitee_email': str,
+        'inviter_signature': str
     }
