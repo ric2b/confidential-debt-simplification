@@ -1,5 +1,5 @@
 from django.core.serializers import serialize
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.db import transaction
 from django.conf import settings
 from collections import defaultdict
@@ -8,8 +8,9 @@ import json
 from .models import Group, User, UOMe, UserDebt
 from .services import simplify_debt
 
-from utils.crypto.rsa import sign, verify
+from utils.crypto.rsa import sign, verify, InvalidSignature
 from utils.messages import requests, responses
+from utils.messages.message import DecodeError
 
 # Create your views here.
 # TODO: crypto stuff!
@@ -19,11 +20,17 @@ from utils.messages import requests, responses
 
 def register_group(request):
     # convert the message into the request object
-    request = requests.RegisterGroup.load(request.POST['data'])
+    try:
+        request = requests.RegisterGroup.load(request.POST['data'])
+    except DecodeError:
+        return HttpResponseBadRequest()
 
     # verify the signature
-    signature_content = [request.group_name, request.group_key]
-    verify(request.group_key, request.group_signature, *signature_content)
+    try:
+        signature_content = [request.group_name, request.group_key]
+        verify(request.group_key, request.group_signature, *signature_content)
+    except InvalidSignature:
+        return HttpResponse('401 Unauthorized', status=401)  # There's no class for it
 
     # signature is correct, create the group
     group = Group(name=request.group_name, key=request.group_key)
@@ -31,7 +38,8 @@ def register_group(request):
 
     # group created, create the response object
     signature = sign(settings.PRIVATE_KEY, group.uuid, group.name, group.key)
-    response = responses.RegisterGroup(group_uuid=str(group.uuid), main_signature=signature)
+    response = responses.RegisterGroup(group_uuid=str(group.uuid),
+                                       main_signature=signature)
 
     # send the response, the status for success is 201 Created
     return HttpResponse(response.body, status=201)

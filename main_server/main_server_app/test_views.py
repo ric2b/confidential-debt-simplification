@@ -24,8 +24,8 @@ class RegisterGroupTests(TestCase):
     def setUp(self):
         self.private_key, self.key = generate_keys()
 
-    # TODO: add proxy/name server address
-    def test_register_new_group(self):
+    # TODO: add proxy/name server address?
+    def test_correct_inputs(self):
         group_name = 'test_name'
         key = self.key
 
@@ -37,11 +37,42 @@ class RegisterGroupTests(TestCase):
         raw_response = self.client.post(reverse('main_server_app:register_group'),
                                         {'data': message_data.body})
 
-        print(raw_response.content.decode())
         response = responses.RegisterGroup.load(raw_response.content.decode())
+
+        assert raw_response.status_code == 201
 
         signature_content = [response.group_uuid, group_name, key]
         verify(settings.PUBLIC_KEY, response.main_signature, *signature_content)
+
+    def test_invalid_message(self):
+        group_name = 'test_name'
+        key = self.key
+
+        signature = sign(self.private_key, group_name)
+        message_data = requests.RegisterGroup(group_name=group_name,
+                                              group_key=key,
+                                              group_signature=signature)
+
+        message_data.group_key = 42
+
+        raw_response = self.client.post(reverse('main_server_app:register_group'),
+                                        {'data': message_data.body})
+
+        assert raw_response.status_code == 400
+
+    def test_invalid_signature(self):
+        group_name = 'test_name'
+        key = self.key
+
+        signature = sign(self.private_key, group_name)
+        message_data = requests.RegisterGroup(group_name=group_name,
+                                              group_key=key,
+                                              group_signature=signature)
+
+        raw_response = self.client.post(reverse('main_server_app:register_group'),
+                                        {'data': message_data.body})
+
+        assert raw_response.status_code == 401
 
 
 class RegisterUserTests(TestCase):
