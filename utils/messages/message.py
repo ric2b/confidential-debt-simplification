@@ -53,7 +53,7 @@ class Message:
         elif message_type == 'response':
             return cls.response_params
         else:
-            raise TypeError('received an unsupported message-type')
+            raise TypeError('received an unsupported message-type: %s' % message_type)
 
     def __init__(self, message_type, **given_parameters: {str: object}):
         """
@@ -139,11 +139,11 @@ class Message:
 
     @classmethod
     def load_request(cls, message_body: str):
-        return cls.load(cls.request_params, message_body)
+        return cls.load('request', message_body)
 
     @classmethod
     def load_response(cls, message_body: str):
-        return cls.load(cls.response_params, message_body)
+        return cls.load('response', message_body)
 
     def dumps(self) -> str:
         """
