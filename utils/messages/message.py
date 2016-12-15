@@ -1,6 +1,5 @@
 import json
 
-from utils.messages.base64_json_encoder import Base64Encoder
 
 
 class DecodeError(Exception):
@@ -158,4 +157,5 @@ class Message:
         for parameter in self._get_parameters_for_message_type(self.message_type):
             parameters[parameter] = getattr(self, parameter)
 
-        return json.dumps(parameters, cls=Base64Encoder)
+        return json.dumps(parameters)
+
