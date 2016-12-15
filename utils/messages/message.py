@@ -29,9 +29,33 @@ class Message:
     """
 
     message_type = None  # type: str
-    parameter_types = None  # type: {str: type}
+    request_params = None  # type: {str: type}
+    response_params = None  # type: {str: type}
 
-    def __init__(self, **given_parameters: {str: object}):
+    @classmethod
+    def _check_class(cls):
+        """
+        Verify that the sub-class correctly implemented the abstract
+        parameters of the Message class.
+        """
+        if (not cls.request_params) or (not cls.response_params):
+            raise NotImplementedError('One or more class attributes were not initiated')
+
+        if (not isinstance(cls.request_params, dict)) or \
+                (not isinstance(cls.response_params, dict)):
+            raise TypeError('One or more class attributes are of the wrong type')
+
+    @classmethod
+    def _get_parameters_for_message_type(cls, message_type):
+        # use the correct parameter_types for the message type
+        if message_type == 'request':
+            return cls.request_params
+        elif message_type == 'response':
+            return cls.response_params
+        else:
+            raise TypeError('received an unsupported message-type')
+
+    def __init__(self, message_type, **given_parameters: {str: object}):
         """
         Initializes a someRequest object from the someRequest class attributes.
         In particular, the following are added as object attributes:
@@ -45,16 +69,10 @@ class Message:
         :param given_parameters:
         """
 
-        # check that the attributes were assigned.
-        if not (self.message_type and self.parameter_types):
-            raise NotImplementedError('One of the class attributes was not initiated')
-
-        if not(isinstance(self.message_type, str) and
-                isinstance(self.parameter_types, dict)):
-            raise TypeError('One of the class attributes is of the wrong type')
-
-        # This will be sub-classed, get the attributes from the sub-class
-        parameter_types = self.parameter_types
+        # verify that the sub-class is implemented correctly and choose parameters
+        self._check_class()
+        parameter_types = self._get_parameters_for_message_type(message_type)
+        self.message_type = message_type
 
         # Check that argument types match the request parameter types (and exist)
         for parameter in parameter_types:
@@ -67,18 +85,31 @@ class Message:
                 # Add the parameter as an object attribute if it's type is correct
                 setattr(self, parameter, given_parameters[parameter])
 
+    @classmethod
+    def make_request(cls, **given_parameters: {str: object}):
+        return cls('request', **given_parameters)
 
     @classmethod
-    def load(cls, request_body: bytes):
+    def make_response(cls, **given_parameters: {str: object}):
+        return cls('response', **given_parameters)
+
+    @classmethod
+    def load(cls, message_type, request_body: str):
         """
         Loads a request from a JSON string. All subclasses must implement
         this static method.
 
+        :param message_type: the type of message, a request or a response
         :param request_body: body of the request in bytes format.
         :return: request object.
         :raise DecodeError: if the JSON string is incorrectly formatted or if
                                    it misses any parameter.
         """
+
+        # verify that the sub-class is implemented correctly and choose parameters
+        cls._check_class()
+        parameter_types = cls._get_parameters_for_message_type(message_type)
+
         request_items = json.loads(request_body)
 
         try:
@@ -86,7 +117,7 @@ class Message:
             # ensure the value of each parameter is encoded in the type
             # format specified by the given request type
             values = {}
-            for parameter, param_type in cls.parameter_types.items():
+            for parameter, param_type in parameter_types.items():
                 # TODO: This is a temporary hack because I don't have an Identifier Type
                 if not isinstance(request_items[parameter], param_type):
                     error_string = "Got type %s for parameter %s but expected type %s"
@@ -96,36 +127,35 @@ class Message:
                 else:
                     values[parameter] = request_items[parameter]
 
-            # create instance of the given request type
-            return cls(**values)
+            # create instance of the given message type
+            return cls(message_type, **values)
 
         except KeyError:
-            raise DecodeError("request is missing at least one of its "
+            raise DecodeError("message is missing at least one of its "
                               "required parameters")
         except TypeError:
             raise DecodeError("at least one of the parameters of the "
-                              "request is not in the correct type")
+                              "message is not in the correct type")
 
-    @property
-    def body(self) -> str:
+    @classmethod
+    def load_request(cls, message_body: str):
+        return cls.load(cls.request_params, message_body)
+
+    @classmethod
+    def load_response(cls, message_body: str):
+        return cls.load(cls.response_params, message_body)
+
+    def dumps(self) -> str:
         """
-        Returns a string containing the body of the request. The body of the
-        request is composed by the parameters dictionary of the request
+        Returns a string containing the body of the message. The body of the
+        message is composed by the parameters dictionary of the message
         implementation serialized to JSON format. Subclasses should not
         override this method and just implement the parameters property.
 
-        :return: JSON string containing the parameters of the request.
+        :return: JSON string containing the parameters of the message.
         """
         parameters = {}
-        for parameter in self.parameter_types:
+        for parameter in self._get_parameters_for_message_type(self.message_type):
             parameters[parameter] = getattr(self, parameter)
 
         return json.dumps(parameters, cls=Base64Encoder)
-
-    def dump(self) -> bytes:
-        """
-        Encode the body into UTF-8 for network transport
-
-        :return: JSON bytes string containing the parameters of the request.
-        """
-        return self.body.encode()

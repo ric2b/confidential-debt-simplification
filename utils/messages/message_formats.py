@@ -6,9 +6,13 @@ class RegisterGroup(Message):
     Message sent to the Main server to register a new group and it's signing key
     """
 
-    message_type = 'register-group'
+    request_params = {
+        'group_name': str,
+        'group_key': str,
+        'group_signature': str
+    }
 
-    parameter_types = {
+    response_params = {
         'group_uuid': str,
         'main_signature': str
     }
@@ -21,15 +25,19 @@ class GroupServerJoin(Message):
     Group server sends after another user invites him.
     """
 
-    message_type = 'join-group'
-
-    parameter_types = {
+    request_params = {
         'group_uuid': str,
         'user': str,
         'secret_code': str,
         'inviter_signature': str
     }
 
+    response_params = {
+        'group_uuid': str,
+        'user': str,
+        'secret_code': str,
+        'inviter_signature': str
+    }
 
 class MainServerJoin(Message):
     """
@@ -38,9 +46,14 @@ class MainServerJoin(Message):
     can get his key signed by the group server.
     """
 
-    message_type = 'join-group'
+    request_params = {
+        'group_uuid': str,
+        'user': str,
+        'user_signature': str,
+        'group_server_signature': str
+    }
 
-    parameter_types = {
+    response_params = {
         'group_uuid': str,
         'user': str,
         'user_signature': str,
@@ -53,8 +66,14 @@ class UserInvite(Message):
     Invite request sent by a valid user to invite a new user into the group.
     """
 
-    message_type = 'invite-user'
+    request_params = {
+        'group_uuid': str,
+        'inviter': str,
+        'invitee': str,
+        'invitee_email': str,
+        'inviter_signature': str
+    }
 
-    parameter_types = {
+    response_params = {
         'group_signature': str
     }
