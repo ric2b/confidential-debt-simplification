@@ -27,8 +27,9 @@ def register_group(request):
 
     # verify the signature
     try:
-        signature_content = [request.group_name, request.group_key]
-        verify(request.group_key, request.group_signature, *signature_content)
+        msg.RegisterGroup.verify(request.group_key, 'group', request.group_signature,
+                                 group_name=request.group_name,
+                                 group_key=request.group_key)
     except InvalidSignature:
         return HttpResponse('401 Unauthorized', status=401)  # There's no class for it
 
@@ -37,7 +38,11 @@ def register_group(request):
     group.save()
 
     # group created, create the response object
-    signature = sign(settings.PRIVATE_KEY, group.uuid, group.name, group.key)
+    signature = msg.RegisterGroup.sign(settings.PRIVATE_KEY, 'main',
+                                       group_uuid=group.uuid,
+                                       group_name=group.name,
+                                       group_key=group.key)
+
     response = msg.RegisterGroup.make_response(group_uuid=str(group.uuid),
                                                main_signature=signature)
 
