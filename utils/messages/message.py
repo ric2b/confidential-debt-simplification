@@ -1,6 +1,6 @@
 import json
 
-from utils.messages.base64_json_encoder import Base64Encoder
+from utils.crypto.rsa import sign, verify
 
 
 class DecodeError(Exception):
@@ -28,9 +28,10 @@ class Message:
     mentioned getter methods.
     """
 
-    message_type = None  # type: str
+    message_type = None  # type: str: Only used for Message objects, not Message classes
     request_params = None  # type: {str: type}
     response_params = None  # type: {str: type}
+    signature_formats = None  # type: {str: [str]}
 
     @classmethod
     def _check_class(cls):
@@ -38,12 +39,15 @@ class Message:
         Verify that the sub-class correctly implemented the abstract
         parameters of the Message class.
         """
-        if (not cls.request_params) or (not cls.response_params):
+        if not (cls.request_params and cls.response_params and cls.signature_formats):
             raise NotImplementedError('One or more class attributes were not initiated')
 
-        if (not isinstance(cls.request_params, dict)) or \
-                (not isinstance(cls.response_params, dict)):
+        if not (isinstance(cls.request_params, dict)
+                and isinstance(cls.response_params, dict)
+                and isinstance(cls.signature_formats, dict)):
             raise TypeError('One or more class attributes are of the wrong type')
+
+        return  # So PyCharm stops complaining that this is an abstract method...
 
     @classmethod
     def _get_parameters_for_message_type(cls, message_type):
@@ -158,4 +162,64 @@ class Message:
         for parameter in self._get_parameters_for_message_type(self.message_type):
             parameters[parameter] = getattr(self, parameter)
 
-        return json.dumps(parameters, cls=Base64Encoder)
+        return json.dumps(parameters)
+
+    @classmethod
+    def _order_signature_parameters(cls, signature_name, **parameters):
+        # raises KeyError if the signature_name isn't found in the Message sub-class
+        signature_format = cls.signature_formats[signature_name]
+
+        # make a list with all the parameters in the correct order
+        signature_values = []
+        for parameter_name in signature_format:
+            # TODO: check types, maybe?
+            try:
+                parameter = parameters[parameter_name]
+                signature_values.append(str(parameter))
+            except KeyError:
+                error_msg = "missing parameter '%s' required for '%s' signature"
+                raise AttributeError(error_msg % (parameter_name, signature_name))
+
+        return signature_values
+
+    @classmethod
+    def sign(cls, key, signature_name, **parameters):
+        """
+        Signs a single signature described in the class attribute "signatures_formats".
+        The signature to sign is chosen with "signature_name".
+        The values can be given in any order but they must be gives as keyword arguments
+        that match the names of the parameters present in the signature format.
+
+        :param key:
+        :param signature_name:
+        :param parameters:
+
+        :raises KeyError: signature_name is not the name of a signature for this class
+        :raises AttributeError: at least one signature parameter was not given
+        :raises TypeError: --Currently not implemented--
+        """
+        signature_values = cls._order_signature_parameters(signature_name, **parameters)
+
+        return sign(key, *signature_values)
+
+    @classmethod
+    def verify(cls, key, signature_name, signature, **parameters):
+        """
+        Verifies a single signature described in the class attribute "signatures_formats".
+        The signature to verify is chosen with "signature_name".
+        The values can be given in any order but they must be gives as keyword arguments
+        that match the names of the parameters present in the signature format.
+
+        :param key:
+        :param signature_name:
+        :param signature:
+        :param parameters:
+
+        :raises KeyError: signature_name is not the name of a signature for this class
+        :raises AttributeError: at least one signature parameter was not given
+        :raises TypeError: --Currently not implemented--
+        :raises InvalidSignature: the signature is invalid, either wrong key or wrong data
+        """
+        signature_values = cls._order_signature_parameters(signature_name, **parameters)
+
+        verify(key, signature, *signature_values)
