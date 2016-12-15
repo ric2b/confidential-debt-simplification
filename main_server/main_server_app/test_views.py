@@ -9,7 +9,8 @@ from collections import defaultdict
 from .models import Group, User, UOMe, UserDebt
 
 from utils.crypto.rsa import generate_keys, sign, verify
-from utils.messages import requests, responses
+from utils.crypto import example_keys
+from utils.messages import message_formats as msg
 
 # Create your tests here.
 
@@ -21,23 +22,21 @@ from utils.messages import requests, responses
 
 
 class RegisterGroupTests(TestCase):
-    def setUp(self):
-        self.private_key, self.key = generate_keys()
 
     # TODO: add proxy/name server address?
     def test_correct_inputs(self):
         group_name = 'test_name'
-        key = self.key
+        key = example_keys.G1_pub
 
-        signature = sign(self.private_key, group_name, key)
-        message_data = requests.RegisterGroup(group_name=group_name,
-                                              group_key=key,
-                                              group_signature=signature)
+        signature = sign(example_keys.G1_priv, group_name, key)
+        message_data = msg.RegisterGroup.make_request(group_name=group_name,
+                                                      group_key=key,
+                                                      group_signature=signature)
 
         raw_response = self.client.post(reverse('main_server_app:register_group'),
-                                        {'data': message_data.body})
+                                        {'data': message_data.dumps()})
 
-        response = responses.RegisterGroup.load(raw_response.content.decode())
+        response = msg.RegisterGroup.load_response(raw_response.content.decode())
 
         assert raw_response.status_code == 201
 
@@ -46,31 +45,31 @@ class RegisterGroupTests(TestCase):
 
     def test_invalid_message(self):
         group_name = 'test_name'
-        key = self.key
+        key = example_keys.G1_pub
 
-        signature = sign(self.private_key, group_name)
-        message_data = requests.RegisterGroup(group_name=group_name,
-                                              group_key=key,
-                                              group_signature=signature)
+        signature = sign(example_keys.G1_priv, group_name)
+        message_data = msg.RegisterGroup.make_request(group_name=group_name,
+                                                      group_key=key,
+                                                      group_signature=signature)
 
         message_data.group_key = 42
 
         raw_response = self.client.post(reverse('main_server_app:register_group'),
-                                        {'data': message_data.body})
+                                        {'data': message_data.dumps()})
 
         assert raw_response.status_code == 400
 
     def test_invalid_signature(self):
         group_name = 'test_name'
-        key = self.key
+        key = example_keys.G1_pub
 
-        signature = sign(self.private_key, group_name)
-        message_data = requests.RegisterGroup(group_name=group_name,
-                                              group_key=key,
-                                              group_signature=signature)
+        signature = sign(example_keys.G1_priv, group_name)
+        message_data = msg.RegisterGroup.make_request(group_name=group_name,
+                                                      group_key=key,
+                                                      group_signature=signature)
 
         raw_response = self.client.post(reverse('main_server_app:register_group'),
-                                        {'data': message_data.body})
+                                        {'data': message_data.dumps()})
 
         assert raw_response.status_code == 401
 

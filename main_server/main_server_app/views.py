@@ -9,7 +9,7 @@ from .models import Group, User, UOMe, UserDebt
 from .services import simplify_debt
 
 from utils.crypto.rsa import sign, verify, InvalidSignature
-from utils.messages import requests, responses
+from utils.messages import message_formats as msg
 from utils.messages.message import DecodeError
 
 # Create your views here.
@@ -21,7 +21,7 @@ from utils.messages.message import DecodeError
 def register_group(request):
     # convert the message into the request object
     try:
-        request = requests.RegisterGroup.load(request.POST['data'])
+        request = msg.RegisterGroup.load_request(request.POST['data'])
     except DecodeError:
         return HttpResponseBadRequest()
 
@@ -38,11 +38,11 @@ def register_group(request):
 
     # group created, create the response object
     signature = sign(settings.PRIVATE_KEY, group.uuid, group.name, group.key)
-    response = responses.RegisterGroup(group_uuid=str(group.uuid),
-                                       main_signature=signature)
+    response = msg.RegisterGroup.make_response(group_uuid=str(group.uuid),
+                                               main_signature=signature)
 
     # send the response, the status for success is 201 Created
-    return HttpResponse(response.body, status=201)
+    return HttpResponse(response.dumps(), status=201)
 
 
 def register_user(request):
