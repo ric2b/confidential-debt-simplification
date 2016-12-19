@@ -100,3 +100,130 @@ class MainServerJoin(Message):
         'group': ['group_uuid', 'user'],
         'main': ['group_uuid', 'user']
     }
+
+
+class IssueUOMe(Message):
+    """
+    Sent to the Main Server by a user to issue a new, unconfirmed, UOMe.
+    """
+
+    request_params = {
+        'group_uuid': str,
+        'user': str,
+        'borrower': str,
+        'value': int,
+        'description': str,
+        'user_signature': str
+    }
+
+    response_params = {
+        'uome_uuid': str,
+        'main_signature': str
+    }
+
+    signature_formats = {
+        'user': ['group_uuid', 'user', 'borrower', 'value', 'description'],
+        'main': ['uome_uuid', 'group_uuid', 'user', 'borrower', 'value', 'description']
+    }
+
+
+class CancelUOMe(Message):
+    """
+    Sent to the Main Server by a user to cancel a still unconfirmed UOMe issued by him.
+    This is mostly meant as a way to clean up old UOMe's that were never accepted.
+    After the UOMe is confirmed by the user it cannot be deleted and both users should
+    agree on issuing a UOMe in the opposite direction if it was indeed a mistake.
+    """
+
+    request_params = {
+        'group_uuid': str,
+        'user': str,
+        'uome_uuid': str,
+        'user_signature': str
+    }
+
+    response_params = {
+        'main_signature': str
+    }
+
+    signature_formats = {
+        'user': ['group_uuid', 'user', 'uome_uuid'],
+        'main': ['group_uuid', 'user', 'borrower', 'value', 'description', 'uome_uuid']
+    }
+
+
+class PendingUOMes(Message):
+    """
+    Sent to the Main Server by a user to get all pending UOMe's associated with him.
+    """
+
+    request_params = {
+        'group_uuid': str,
+        'user': str,
+        'user_signature': str
+    }
+
+    response_params = {
+        'uome_list': list,
+        'main_signature': str
+    }
+
+    signature_formats = {
+        'user': ['group_uuid', 'user'],
+        'main': ['group_uuid', 'user', 'uome_list'],
+        'uome': ['group_uuid', 'user', 'borrower', 'value', 'description']
+    }
+
+
+class AcceptUOMe(Message):
+    """
+    Sent to the Main Server by a user to accept a pending UOMe's associated with him.
+    """
+
+    request_params = {
+        'group_uuid': str,
+        'lender': str,
+        'user': str,
+        'value': int,
+        'uome_uuid': str,
+        'user_signature': str
+    }
+
+    response_params = {
+        'main_signature': str
+    }
+
+    signature_formats = {
+        'user': ['group_uuid', 'lender', 'user', 'value', 'description', 'uome_uuid'],
+        'main': ['group_uuid', 'user', 'uome_uuid']
+    }
+
+
+class CheckTotals(Message):
+    """
+    Sent to the Main Server by a user to get his total debt and the suggested amounts
+    he should pay to each person.
+    """
+    # TODO: From my experience in my group of friends it would also be useful to list
+    # the users to whom the user can pay his debt in full, trading global optimality for
+    # individual practicality. This of course could reveal more information about
+    # all the users in the group. Probably for after the course is done.
+
+    request_params = {
+        'group_uuid': str,
+        'user': str,
+        'user_signature': str
+    }
+
+    response_params = {
+        'user_balance': int,
+        'suggested_transactions': dict,
+        'main_signature': str
+    }
+
+    signature_formats = {
+        'user': ['group_uuid', 'user'],
+        'main': ['group_uuid', 'user', 'user_balance', 'suggested_transactions']
+    }
+
+    # Sign the JSON string version of 'suggested_transactions'.
