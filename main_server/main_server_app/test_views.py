@@ -215,8 +215,8 @@ class CancelUOMeTests(TestCase):
         assert raw_response.content.decode('utf-8') == 'UOMe #%i canceled' % uome.uuid
         assert UOMe.objects.filter(uuid=uome.uuid).first() is None
 
-        # TODO: test for the other cases: uome doesn't exist, the user isn't the issuer of the uome
-        # or the uome has already been confirmed
+        # TODO: test for the other cases: uome doesn't exist, the user isn't the
+        # issuer of the uome or the uome has already been confirmed
 
 
 class CheckUnconfirmedUOMesTests(TestCase):
@@ -244,45 +244,63 @@ class CheckUnconfirmedUOMesTests(TestCase):
         assert [item.object for item in response] == [uome]
 
 
-class ConfirmUOMeTests(TestCase):
+class AcceptTests(TestCase):
     def setUp(self):
-        group = Group(name='test', key='test')
-        group.save()
-        borrower = User(group=group, key='signature_key1')
-        borrower.save()
-        lender = User(group=group, key='signature_key2')
-        lender.save()
-
-        self.group, self.borrower, self.lender = group, borrower, lender
+        self.message_class = msg.AcceptUOMe
+        self.private_key, self.key = example_keys.C1_priv, example_keys.C1_pub
+        self.group = Group.objects.create(name='test', key=example_keys.G1_pub)
+        self.user = User.objects.create(group=self.group, key=self.key)
+        self.lender = User.objects.create(group=self.group, key=example_keys.C2_pub)
 
     def test_confirm_first_uome(self):
-        uome = UOMe(group=self.group, borrower=self.borrower, lender=self.lender,
-                    value=10, description="test")
-        uome.save()
-        self.assertIs(uome.confirmed, False)
+        uome = UOMe.objects.create(group=self.group, borrower=self.user,
+                                   lender=self.lender, value=100, description='test')
+        assert uome.confirmed is False
 
-        raw_response = self.client.post(reverse('main_server_app:confirm_uome'),
-                                        {'group_uuid': self.group.uuid,
-                                         'uome_uuid': uome.uuid,
-                                         'user_key': self.borrower.key})
+        signature = self.message_class.sign(self.private_key, 'user',
+                                            group_uuid=str(self.group.uuid),
+                                            lender=self.lender.key,
+                                            user=self.user.key,
+                                            value=uome.value,
+                                            description=uome.description,
+                                            uome_uuid=str(uome.uuid)
+                                            )
 
-        # Confirm uome is marked as confirmed
-        assert raw_response.content.decode() == 'UOMe confirmed'
-        assert UOMe.objects.filter(group=self.group, uuid=uome.uuid).first().confirmed == True
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid),
+                                                  lender=self.lender.key,
+                                                  user=self.user.key,
+                                                  value=uome.value,
+                                                  description=uome.description,
+                                                  uome_uuid=str(uome.uuid),
+                                                  user_signature=signature)
+
+        raw_response = self.client.post(reverse('main_server_app:accept_uome'),
+                                        {'data': request.dumps()})
+
+        assert raw_response.status_code == 200
+
+        uome = UOMe.objects.filter(group=self.group, uuid=uome.uuid).first()
+        assert uome.confirmed is True
+
+        response = self.message_class.load_response(raw_response.content.decode())
+
+        self.message_class.verify(settings.PUBLIC_KEY, 'main', response.main_signature,
+                                  group_uuid=str(self.group.uuid), user=self.user.key,
+                                  uome_uuid=str(uome.uuid))
 
         # Confirm totals
         totals = {}
         for user in User.objects.filter(group=self.group):
             totals[user] = user.balance
 
-        assert totals == {self.borrower: -uome.value, self.lender: uome.value}
+        assert totals == {self.user: -uome.value, self.lender: uome.value}
 
         # Confirm simplified debt
         simplified_debt = defaultdict(dict)
         for user_debt in UserDebt.objects.filter(group=self.group):
             simplified_debt[user_debt.borrower][user_debt.lender] = user_debt.value
 
-        assert simplified_debt == {self.borrower: {self.lender: uome.value}}
+        assert simplified_debt == {self.user: {self.lender: uome.value}}
 
 
 class CheckTotalsTests(TestCase):
@@ -321,7 +339,8 @@ class CheckTotalsTests(TestCase):
     def test_check_totals_one_confirmed_uome(self):
         debt_value = 1000
 
-        UserDebt.objects.create(group=self.group, borrower=self.borrower, lender=self.lender, value=debt_value)
+        UserDebt.objects.create(group=self.group, borrower=self.borrower,
+                                lender=self.lender, value=debt_value)
 
         self.borrower.balance = -debt_value
         self.borrower.save()
