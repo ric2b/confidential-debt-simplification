@@ -186,6 +186,7 @@ class AcceptUOMe(Message):
         'user': str,
         'value': int,
         'uome_uuid': str,
+        'description': str,
         'user_signature': str
     }
 
