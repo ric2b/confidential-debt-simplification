@@ -100,3 +100,29 @@ class MainServerJoin(Message):
         'group': ['group_uuid', 'user'],
         'main': ['group_uuid', 'user']
     }
+
+
+class IssueUOMe(Message):
+    """
+    Sent to the Main Server by a user to issue a new, unconfirmed, UOMe.
+    """
+
+    request_params = {
+        'group_uuid': str,
+        'user': str,
+        'borrower': str,
+        'value': int,
+        'description': str,
+        'user_signature': str
+    }
+
+    response_params = {
+        'uome_uuid': str,
+        'main_signature': str
+    }
+
+    signature_formats = {
+        'user': ['group_uuid', 'user', 'borrower', 'value', 'description'],
+        'main': ['uome_uuid', 'group_uuid', 'user', 'borrower', 'value', 'description']
+    }
+
