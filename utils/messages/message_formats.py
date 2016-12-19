@@ -198,3 +198,32 @@ class AcceptUOMe(Message):
         'main': ['group_uuid', 'user', 'uome_uuid']
     }
 
+
+class CheckTotals(Message):
+    """
+    Sent to the Main Server by a user to get his total debt and the suggested amounts
+    he should pay to each person.
+    """
+    # TODO: From my experience in my group of friends it would also be useful to list
+    # the users to whom the user can pay his debt in full, trading global optimality for
+    # individual practicality. This of course could reveal more information about
+    # all the users in the group. Probably for after the course is done.
+
+    request_params = {
+        'group_uuid': str,
+        'user': str,
+        'user_signature': str
+    }
+
+    response_params = {
+        'user_balance': int,
+        'suggested_transactions': dict,
+        'main_signature': str
+    }
+
+    signature_formats = {
+        'user': ['group_uuid', 'user'],
+        'main': ['group_uuid', 'user', 'user_balance', 'suggested_transactions']
+    }
+
+    # Sign the JSON string version of 'suggested_transactions'.
