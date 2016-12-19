@@ -126,3 +126,28 @@ class IssueUOMe(Message):
         'main': ['uome_uuid', 'group_uuid', 'user', 'borrower', 'value', 'description']
     }
 
+
+class CancelUOMe(Message):
+    """
+    Sent to the Main Server by a user to cancel a still unconfirmed UOMe issued by him.
+    This is mostly meant as a way to clean up old UOMe's that were never accepted.
+    After the UOMe is confirmed by the user it cannot be deleted and both users should
+    agree on issuing a UOMe in the opposite direction if it was indeed a mistake.
+    """
+
+    request_params = {
+        'group_uuid': str,
+        'user': str,
+        'uome_uuid': str,
+        'user_signature': str
+    }
+
+    response_params = {
+        'main_signature': str
+    }
+
+    signature_formats = {
+        'user': ['group_uuid', 'user', 'uome_uuid'],
+        'main': ['group_uuid', 'user', 'borrower', 'value', 'description', 'uome_uuid']
+    }
+
