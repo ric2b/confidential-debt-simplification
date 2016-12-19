@@ -37,8 +37,7 @@ def register_group(request):
 
     # signature is correct, create the group
     # TODO: limit the length of the group name?
-    group = Group(name=request.group_name, key=request.group_key)
-    group.save()
+    group = Group.objects.create(name=request.group_name, key=request.group_key)
 
     # group created, create the response object
     signature = msg.RegisterGroup.sign(settings.PRIVATE_KEY, 'main',
@@ -76,31 +75,65 @@ def join_group(request):
     except InvalidSignature:
         return HttpResponse('401 Unauthorized', status=401)
 
-    User.objects.create(group=group, key=request.user)
+    user = User.objects.create(group=group, key=request.user)
 
     # create the signature
     signature = message_class.sign(settings.PRIVATE_KEY, 'main', group_uuid=group.uuid,
                                    user=request.user)
 
     # user created, create the response object
-    response = message_class.make_response(group_uuid=str(group.uuid), user=request.user,
+    response = message_class.make_response(group_uuid=str(group.uuid), user=user.key,
                                            main_signature=signature)
 
     # send the response, the status for success is 201 Created
     return HttpResponse(response.dumps(), status=201)
 
 
-def add_uome(request):
-    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
-    lender = User.objects.filter(key=request.POST['lender']).first()
-    borrower = User.objects.filter(key=request.POST['borrower']).first()
-    value = request.POST['value']
-    description = request.POST['description']
+def issue_uome(request):
+    message_class = msg.IssueUOMe
 
-    UOMe.objects.create(group=group, lender=lender, borrower=borrower,
-                        value=value, description=description)
+    try:  # convert the message into the request object
+        request = message_class.load_request(request.POST['data'])
+    except DecodeError:
+        return HttpResponseBadRequest()
 
-    return HttpResponse('UOMe added')
+    try:  # check that the group exists and get it
+        group = Group.objects.get(pk=request.group_uuid)
+        user = User.objects.get(pk=request.user)
+        borrower = User.objects.get(pk=request.borrower)
+    except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
+        return HttpResponseBadRequest()
+
+    if request.value <= 0:  # So it's not possible to invert the direction of the UOMe
+        return HttpResponseBadRequest()
+
+    if request.user == request.borrower:  # That would just be weird...
+        return HttpResponseForbidden()
+
+    value = request.value
+    description = request.description[:settings.UOME_DESCRIPTION_MAX_LENGTH]
+
+    try:  # verify the signatures
+        message_class.verify(user.key, 'user', request.user_signature, value=value,
+                             description=description, group_uuid=str(group.uuid),
+                             user=user.key, borrower=borrower.key)
+    except InvalidSignature:
+        return HttpResponse('401 Unauthorized', status=401)
+
+    # TODO: the description can leak information, maybe it should be encrypted
+    uome = UOMe(group=group, lender=user, borrower=borrower, value=value,
+                description=description)
+
+    # create the signature
+    sig = message_class.sign(settings.PRIVATE_KEY, 'main', group_uuid=group.uuid,
+                             user=user.key, borrower=borrower.key, value=value,
+                             description=description, uome_uuid=uome.uuid)
+
+    # user created, create the response object
+    response = message_class.make_response(uome_uuid=str(uome.uuid), main_signature=sig)
+
+    # send the response, the status for success is 201 Created
+    return HttpResponse(response.dumps(), status=201)
 
 
 def cancel_uome(request):

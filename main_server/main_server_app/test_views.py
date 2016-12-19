@@ -148,28 +148,43 @@ class JoinGroupTests(TestCase):
                                   user=user_pub)
 
 
-class AddUOMeTests(TestCase):
+class IssueUOMeTests(TestCase):
     def setUp(self):
-        group = Group(name='test', key='test')
-        group.save()
-        borrower = User(group=group, key='signature_key1')
-        borrower.save()
-        lender = User(group=group, key='signature_key2')
-        lender.save()
-
-        self.group, self.borrower, self.lender = group, borrower, lender
+        self.message_class = msg.IssueUOMe
+        self.private_key, self.key = example_keys.C1_priv, example_keys.C1_pub
+        self.group = Group.objects.create(name='test', key=example_keys.G1_pub)
+        self.user = User.objects.create(group=self.group, key=self.key)
+        self.borrower = User.objects.create(group=self.group, key=example_keys.C2_pub)
 
     def test_add_first_uome(self):
-        raw_response = self.client.post(reverse('main_server_app:add_uome'),
-                                        {
-                                            'group_uuid': self.group.uuid,
-                                            'lender': self.lender.key,
-                                            'borrower': self.borrower.key,
-                                            'value': 10,
-                                            'description': 'test'
-                                        })
+        signature = self.message_class.sign(self.private_key, 'user',
+                                            group_uuid=str(self.group.uuid),
+                                            user=self.user.key,
+                                            borrower=self.borrower.key,
+                                            value=1000,
+                                            description='my description')
 
-        assert raw_response.content.decode() == 'UOMe added'
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid),
+                                                  user=self.user.key,
+                                                  borrower=self.borrower.key,
+                                                  value=1000,
+                                                  description='my description',
+                                                  user_signature=signature)
+
+        raw_response = self.client.post(reverse('main_server_app:issue_uome'),
+                                        {'data': request.dumps()})
+
+        assert raw_response.status_code == 201
+
+        response = self.message_class.load_response(raw_response.content.decode())
+
+        self.message_class.verify(settings.PUBLIC_KEY, 'main', response.main_signature,
+                                  uome_uuid=response.uome_uuid,
+                                  group_uuid=str(self.group.uuid),
+                                  user=self.user.key,
+                                  borrower=self.borrower.key,
+                                  value=1000,
+                                  description='my description')
 
 
 class CancelUOMeTests(TestCase):

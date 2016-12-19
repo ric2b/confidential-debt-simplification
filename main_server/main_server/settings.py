@@ -17,6 +17,7 @@ from utils.crypto.rsa import load_keys
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 PRIVATE_KEY, PUBLIC_KEY = load_keys(BASE_DIR + '/server_keys.pem')
+UOME_DESCRIPTION_MAX_LENGTH = 140  # we doin' it twitter style!
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
