@@ -174,3 +174,27 @@ class PendingUOMes(Message):
         'uome': ['group_uuid', 'user', 'borrower', 'value', 'description']
     }
 
+
+class AcceptUOMe(Message):
+    """
+    Sent to the Main Server by a user to accept a pending UOMe's associated with him.
+    """
+
+    request_params = {
+        'group_uuid': str,
+        'lender': str,
+        'user': str,
+        'value': int,
+        'uome_uuid': str,
+        'user_signature': str
+    }
+
+    response_params = {
+        'main_signature': str
+    }
+
+    signature_formats = {
+        'user': ['group_uuid', 'lender', 'user', 'value', 'description', 'uome_uuid'],
+        'main': ['group_uuid', 'user', 'uome_uuid']
+    }
+
