@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.core import serializers
 from django.conf import settings
 import json
+from uuid import uuid4
 
 from collections import defaultdict
 
@@ -11,6 +12,7 @@ from .models import Group, User, UOMe, UserDebt
 from utils.crypto.rsa import generate_keys, sign, verify
 from utils.crypto import example_keys
 from utils.messages import message_formats as msg
+
 
 # Create your tests here.
 
@@ -22,7 +24,6 @@ from utils.messages import message_formats as msg
 
 
 class RegisterGroupTests(TestCase):
-
     # TODO: add proxy/name server address?
     def test_correct_inputs(self):
         group_name = 'test_name'
@@ -74,22 +75,77 @@ class RegisterGroupTests(TestCase):
         assert raw_response.status_code == 401
 
 
-class RegisterUserTests(TestCase):
+class JoinGroupTests(TestCase):
     def setUp(self):
-        group = Group(name='test', key='test')
-        group.save()
-        self.group = group
+        self.message_class = msg.MainServerJoin
+        self.private_key, self.key = generate_keys()
+        self.group = Group.objects.create(name='test', key=example_keys.G1_pub)
 
-    def test_register_new_user_to_existing_group(self):
-        signing_key = 'test_signing_key'
+    def test_new_user_invalid_group_uuid(self):
+        user_priv, user_pub = example_keys.C1_priv, example_keys.C1_pub
 
-        raw_response = self.client.post(reverse('main_server_app:register_user'),
-                                        {
-                                            'group_uuid': self.group.uuid,
-                                            'user_key': signing_key,
-                                        })
+        user_sig = self.message_class.sign(user_priv, 'user', user=user_pub,
+                                           group_uuid='random_uuid')
 
-        assert raw_response.content.decode() == "User '%s' registered" % signing_key
+        group_sig = self.message_class.sign(example_keys.G2_priv, 'group', user=user_pub,
+                                            group_uuid='random_uuid')
+
+        request = self.message_class.make_request(group_uuid='random_uuid',
+                                                  user=user_pub,
+                                                  user_signature=user_sig,
+                                                  group_signature=group_sig)
+
+        raw_response = self.client.post(reverse('main_server_app:join-group'),
+                                        {'data': request.dumps()})
+
+        assert raw_response.status_code == 400
+
+    def test_new_user_non_existent_group(self):
+        user_priv, user_pub = example_keys.C1_priv, example_keys.C1_pub
+
+        group_uuid = str(uuid4())
+        user_sig = self.message_class.sign(user_priv, 'user', user=user_pub,
+                                           group_uuid=group_uuid)
+
+        group_sig = self.message_class.sign(example_keys.G2_priv, 'group', user=user_pub,
+                                            group_uuid=group_uuid)
+
+        request = self.message_class.make_request(group_uuid=group_uuid,
+                                                  user=user_pub,
+                                                  user_signature=user_sig,
+                                                  group_signature=group_sig)
+
+        raw_response = self.client.post(reverse('main_server_app:join-group'),
+                                        {'data': request.dumps()})
+
+        assert raw_response.status_code == 400
+
+    def test_new_user_to_existing_group(self):
+        user_priv, user_pub = example_keys.C1_priv, example_keys.C1_pub
+
+        user_sig = self.message_class.sign(user_priv, 'user', user=user_pub,
+                                           group_uuid=self.group.uuid)
+
+        group_sig = self.message_class.sign(example_keys.G1_priv, 'group', user=user_pub,
+                                            group_uuid=self.group.uuid)
+
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid),
+                                                  user=user_pub,
+                                                  user_signature=user_sig,
+                                                  group_signature=group_sig)
+
+        raw_response = self.client.post(reverse('main_server_app:join-group'),
+                                        {'data': request.dumps()})
+
+        assert raw_response.status_code == 201
+
+        response = self.message_class.load_response(raw_response.content.decode())
+        assert response.group_uuid == str(self.group.uuid)
+        assert response.user == user_pub
+
+        self.message_class.verify(settings.PUBLIC_KEY, 'main', response.main_signature,
+                                  group_uuid=self.group.uuid,
+                                  user=user_pub)
 
 
 class AddUOMeTests(TestCase):

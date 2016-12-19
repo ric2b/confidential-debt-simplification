@@ -9,5 +9,5 @@ urlpatterns = [
     url(r'^confirm-uome/$', views.confirm_uome, name='confirm_uome'),
     url(r'^total-debt/$', views.get_total_debt, name='total_debt'),
     url(r'^register-group/$', views.register_group, name='register_group'),
-    url(r'^register-user/$', views.register_user, name='register_user'),
+    url(r'^join-group/$', views.join_group, name='join-group'),
 ]

@@ -1,4 +1,5 @@
 from django.core.serializers import serialize
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.db import transaction
 from django.conf import settings
@@ -11,6 +12,7 @@ from .services import simplify_debt
 from utils.crypto.rsa import sign, verify, InvalidSignature
 from utils.messages import message_formats as msg
 from utils.messages.message import DecodeError
+
 
 # Create your views here.
 # TODO: crypto stuff!
@@ -34,6 +36,7 @@ def register_group(request):
         return HttpResponse('401 Unauthorized', status=401)  # There's no class for it
 
     # signature is correct, create the group
+    # TODO: limit the length of the group name?
     group = Group(name=request.group_name, key=request.group_key)
     group.save()
 
@@ -50,14 +53,41 @@ def register_group(request):
     return HttpResponse(response.dumps(), status=201)
 
 
-def register_user(request):
-    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
+def join_group(request):
+    message_class = msg.MainServerJoin
 
-    user = User(group=group,
-                key=request.POST['user_key'])
-    user.save()
+    try:  # convert the message into the request object
+        request = message_class.load_request(request.POST['data'])
+    except DecodeError:
+        return HttpResponseBadRequest()
 
-    return HttpResponse("User '%s' registered" % user.key)
+    try:  # check that the group exists and get it
+        group = Group.objects.get(pk=request.group_uuid)
+    except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
+        return HttpResponseBadRequest()
+
+    try:  # verify the signatures
+        message_class.verify(request.user, 'user', request.user_signature,
+                             group_uuid=group.uuid,
+                             user=request.user)
+        message_class.verify(group.key, 'group', request.group_signature,
+                             group_uuid=group.uuid,
+                             user=request.user)
+    except InvalidSignature:
+        return HttpResponse('401 Unauthorized', status=401)
+
+    User.objects.create(group=group, key=request.user)
+
+    # create the signature
+    signature = message_class.sign(settings.PRIVATE_KEY, 'main', group_uuid=group.uuid,
+                                   user=request.user)
+
+    # user created, create the response object
+    response = message_class.make_response(group_uuid=str(group.uuid), user=request.user,
+                                           main_signature=signature)
+
+    # send the response, the status for success is 201 Created
+    return HttpResponse(response.dumps(), status=201)
 
 
 def add_uome(request):
@@ -136,7 +166,7 @@ def confirm_uome(request):
 def get_total_debt(request):
     group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
     user = User.objects.filter(key=request.POST['user_key']).first()
-    
+
     user_debt = {}
 
     if user.balance < 0:  # filter by borrower
