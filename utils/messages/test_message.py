@@ -152,15 +152,30 @@ class TestMessageSignatures:
         signature = test_class.sign(example_key, 'a', a=10)
         test_class.verify(example_pub_key, 'a', signature, a=10)
 
-    def test_sign_verify_missing_parameter(self):
+    def test_sign_missing_parameter(self):
         test_class = type('TestClass', (Message,), {'request_params': {'a': str},
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
 
-        signature = test_class.sign(example_key, 'a', a=10)
+        with raises(AttributeError):
+            test_class.sign(example_key, 'a')
+
+    def test_verify_missing_parameter(self):
+        test_class = type('TestClass', (Message,), {'request_params': {'a': str},
+                                                    'response_params': {'a': str},
+                                                    'signature_formats': {'a': ['a']}})
 
         with raises(AttributeError):
-            test_class.verify(example_pub_key, 'a', signature)
+            test_class.verify(example_pub_key, 'a', "a")
+
+    def test_verify_wrong_signature(self):
+        test_class = type('TestClass', (Message,), {'request_params': {'a': str},
+                                                    'response_params': {'a': str},
+                                                    'signature_formats': {'a': ['a']}})
+
+        with raises(InvalidSignature):
+            test_class.verify(example_pub_key, 'a', "a", a=42)
+
 
 
 
