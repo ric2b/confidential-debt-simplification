@@ -1,0 +1,60 @@
+from django.test import TestCase  # TODO: check out pytest
+from django.urls import reverse
+from django.core import serializers
+from django.conf import settings
+import json
+from uuid import uuid4
+
+from collections import defaultdict
+
+from .models import Group, User, Invitation, ConfirmedInvitation
+
+from utils.crypto.rsa import generate_keys, sign, verify
+from utils.crypto import example_keys
+from utils.messages import message_formats as msg
+
+
+# Create your tests here.
+
+# Good rules-of-thumb include having:
+#
+# - a separate TestClass for each model or view
+# - a separate test method for each set of conditions you want to test
+# - test method names that describe their function
+
+
+class InviteUserTests(TestCase):
+    def setUp(self):
+        self.message_class = msg.UserInvite
+        self.private_key, self.key = example_keys.C1_priv, example_keys.C1_pub
+        self.group = Group.objects.create(name='test', key=example_keys.G1_pub)
+        self.group2 = Group.objects.create(name='test2', key=example_keys.G2_pub)
+        self.inviter = User.objects.create(group=self.group, key=self.key, email='c1@example.pt', confirmed=True)
+        
+    def test_correct_input(self):
+        signature = self.message_class.sign(self.private_key, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', inviter_signature=signature)
+        raw_response = self.client.post(reverse('group_server_app:invite_user'),{'data': request.dumps()})
+        assert raw_response.status_code == 201
+    
+    def test_inviter_different_group_error(self):
+        signature = self.message_class.sign(self.private_key, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
+        request = self.message_class.make_request(group_uuid=str(self.group2.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', inviter_signature=signature)
+        raw_response = self.client.post(reverse('group_server_app:invite_user'),{'data': request.dumps()})
+        assert raw_response.status_code == 400
+        
+    def test_invalid_signature(self):
+        signature = 'invalidsignature'
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', inviter_signature=signature)
+        raw_response = self.client.post(reverse('group_server_app:invite_user'),{'data': request.dumps()})
+        assert raw_response.status_code == 401
+        
+    def test_valid_user2_entry(self):
+        signature = self.message_class.sign(self.private_key, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', inviter_signature=signature)
+        
+        self.user2 = User.objects.create(group=self.group, key=request.invitee, email=request.invitee_email)
+        
+        assert self.user2.key == request.invitee
+        assert self.user2.email == request.invitee_email
+        

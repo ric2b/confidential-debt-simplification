@@ -16,9 +16,11 @@ class User(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     key = models.CharField(primary_key=True, max_length=key_length)
     email = models.EmailField(max_length=254)
+    confirmed = models.BooleanField(default=False)
 
     def __str__(self):
         return self.key
+        
 
 class Invitation(models.Model):
 	
