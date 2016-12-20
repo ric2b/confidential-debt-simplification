@@ -1,6 +1,6 @@
 from django.core.serializers import serialize
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, Http404
 from django.db import transaction
 from django.conf import settings
 from collections import defaultdict
@@ -99,8 +99,8 @@ def issue_uome(request):
 
     try:  # check that the group exists and get it
         group = Group.objects.get(pk=request.group_uuid)
-        user = User.objects.get(pk=request.user)
-        borrower = User.objects.get(pk=request.borrower)
+        user = User.objects.filter(group=group, key=request.user).first()
+        borrower = User.objects.filter(group=group, key=request.borrower).first()
     except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
         return HttpResponseBadRequest()
 
@@ -137,21 +137,47 @@ def issue_uome(request):
 
 
 def cancel_uome(request):
-    user = User.objects.filter(group=request.POST['group_uuid'],
-                               key=request.POST['user_key']).first()
+    message_class = msg.CancelUOMe
 
-    uome = UOMe.objects.filter(uuid=request.POST['uome_uuid']).first()
+    try:  # convert the message into the request object
+        request = message_class.load_request(request.POST['data'])
+    except DecodeError:
+        return HttpResponseBadRequest()
+
+    try:  # check that the group exists and get it
+        group = Group.objects.get(pk=request.group_uuid)
+        user = User.objects.filter(group=group, key=request.user).first()
+        uome = UOMe.objects.filter(group=group, uuid=request.uome_uuid).first()
+    except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
+        return HttpResponseBadRequest()
+
+    try:  # verify the signatures
+        message_class.verify(user.key, 'user', request.user_signature,
+                             user=user.key,
+                             group_uuid=str(group.uuid),
+                             uome_uuid=uome.uuid)
+    except InvalidSignature:
+        return HttpResponse('401 Unauthorized', status=401)
 
     if not uome:
-        return HttpResponse('UOMe #%i not found' % uome.uuid)
+        return Http404()
 
     else:
-        if user.key == uome.lender.key:
-            uome_uuid = uome.uuid
+        if user.key == uome.lender.key and not uome.confirmed:
+            signature = message_class.sign(settings.PRIVATE_KEY, 'main',
+                                           group_uuid=str(group.uuid),
+                                           user=user.key,
+                                           uome_uuid=uome.uuid)
+
+            response = message_class.make_response(group_uuid=str(group.uuid),
+                                                   user=user.key,
+                                                   uome_uuid=uome.uuid,
+                                                   main_signature=signature)
+
             uome.delete()
-            return HttpResponse('UOMe #%i canceled' % uome_uuid)
+            return HttpResponse(response.dumps(), status=200)
         else:
-            return HttpResponse('User is not the issuer of uuid #%i' % uome.uuid)
+            return HttpResponseForbidden()
 
 
 def get_unconfirmed_uomes(request):
@@ -175,9 +201,9 @@ def accept_uome(request):
 
     try:  # check that the group exists and get it
         group = Group.objects.get(pk=request.group_uuid)
-        lender = User.objects.get(pk=request.lender)
-        user = User.objects.get(pk=request.user)
-        uome = UOMe.objects.get(pk=request.uome_uuid)
+        lender = User.objects.filter(group=group, key=request.lender).first()
+        user = User.objects.filter(group=group, key=request.user).first()
+        uome = UOMe.objects.filter(group=group, uuid=request.uome_uuid).first()
     except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
         return HttpResponseBadRequest()
 

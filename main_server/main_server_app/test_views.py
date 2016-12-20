@@ -189,30 +189,37 @@ class IssueUOMeTests(TestCase):
 
 class CancelUOMeTests(TestCase):
     def setUp(self):
-        group = Group(name='test', key='test')
-        group.save()
-        borrower = User(group=group, key='signature_key1')
-        borrower.save()
-        lender = User(group=group, key='signature_key2')
-        lender.save()
-
-        self.group, self.borrower, self.lender = group, borrower, lender
+        self.message_class = msg.CancelUOMe
+        self.private_key, self.key = example_keys.C1_priv, example_keys.C1_pub
+        self.group = Group.objects.create(name='test', key=example_keys.G1_pub)
+        self.user = User.objects.create(group=self.group, key=self.key)
+        self.borrower = User.objects.create(group=self.group, key=example_keys.C2_pub)
 
     def test_cancel_unconfirmed_uome(self):
-        uome = UOMe(group=self.group, borrower=self.borrower, lender=self.lender,
-                    value=10, description="test")
-        uome.save()
+        uome = UOMe.objects.create(group=self.group, lender=self.user,
+                                   borrower=self.borrower, value=10, description='test')
 
-        assert UOMe.objects.filter(uuid=uome.uuid).first() == uome
+        signature = self.message_class.sign(self.private_key, 'user',
+                                            group_uuid=str(self.group.uuid),
+                                            user=self.user.key,
+                                            uome_uuid=str(uome.uuid))
+
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid),
+                                                  user=self.user.key,
+                                                  uome_uuid=str(uome.uuid),
+                                                  user_signature=signature)
 
         raw_response = self.client.post(reverse('main_server_app:cancel_uome'),
-                                        {
-                                            'group_uuid': self.group.uuid,
-                                            'user_key': self.lender.key,
-                                            'uome_uuid': uome.uuid
-                                        })
+                                        {'data': request.dumps()})
 
-        assert raw_response.content.decode('utf-8') == 'UOMe #%i canceled' % uome.uuid
+        assert raw_response.status_code == 200
+
+        response = self.message_class.load_response(raw_response.content.decode())
+        self.message_class.verify(settings.PUBLIC_KEY, 'main', response.main_signature,
+                                  group_uuid=str(self.group.uuid),
+                                  user=self.user.key,
+                                  uome_uuid=str(uome.uuid))
+
         assert UOMe.objects.filter(uuid=uome.uuid).first() is None
 
         # TODO: test for the other cases: uome doesn't exist, the user isn't the
