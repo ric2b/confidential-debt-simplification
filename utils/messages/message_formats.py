@@ -148,7 +148,7 @@ class CancelUOMe(Message):
 
     signature_formats = {
         'user': ['group_uuid', 'user', 'uome_uuid'],
-        'main': ['group_uuid', 'user', 'borrower', 'value', 'description', 'uome_uuid']
+        'main': ['group_uuid', 'user', 'uome_uuid']
     }
 
 
