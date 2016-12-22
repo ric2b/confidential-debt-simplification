@@ -3,8 +3,9 @@ import uuid
 
 
 description_length = 80
+signature_length = 400
 key_length = 400  # 2048 bit key in base 64? I don't know what I'm doing :)
-# TODO: Use correct key length
+# TODO: Use correct key length and signature_length
 # Create your models here.
 
 
@@ -46,10 +47,21 @@ class UOMe(models.Model):
     description = models.CharField(max_length=description_length)
     issuing_date = models.DateField('date issued', auto_now_add=True)
 
-    confirmed = models.BooleanField(default=False)
+    # TODO: add blank=False all over the place?
+    issuer_signature = models.CharField(max_length=signature_length, blank=False)
+    borrower_signature = models.CharField(max_length=signature_length, default="")
 
     def __str__(self):
         return "%.3f€ from %s to %s: %s" % (int(self.value)/100, self.borrower, self.lender, self.description)
+
+    def to_array_unconfirmed(self) -> tuple:
+        """
+        Returns an array/tuple of the relevant information of the UOMe without
+         the borrower signature
+        :return tuple:
+        """
+        return (str(self.group.uuid), self.lender.key, self.borrower.key, self.value,
+                self.description, self.issuer_signature, str(self.uuid))
 
 
 class UserDebt(models.Model):

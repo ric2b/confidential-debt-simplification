@@ -12,6 +12,7 @@ from .services import simplify_debt
 from utils.crypto.rsa import sign, verify, InvalidSignature
 from utils.messages import message_formats as msg
 from utils.messages.message import DecodeError
+from utils.messages.uome_tools import UOMeTools
 
 
 # Create your views here.
@@ -163,7 +164,7 @@ def cancel_uome(request):
         return Http404()
 
     else:
-        if user.key == uome.lender.key and not uome.confirmed:
+        if user.key == uome.lender.key and uome.borrower_signature == '':
             signature = message_class.sign(settings.PRIVATE_KEY, 'main',
                                            group_uuid=str(group.uuid),
                                            user=user.key,
@@ -212,13 +213,24 @@ def accept_uome(request):
 
     try:  # verify the signatures
         message_class.verify(user.key, 'user', request.user_signature,
-                             group_uuid=str(group.uuid), description=request.description,
-                             value=request.value, uome_uuid=str(uome.uuid),
-                             user=user.key, lender=lender.key)
+                             group_uuid=str(group.uuid),
+                             lender=lender.key,
+                             user=user.key,
+                             value=request.value,
+                             description=request.description,
+                             uome_uuid=str(uome.uuid))
+
+        UOMeTools.borrower_verify(user.key, request.user_signature,
+                                  group_uuid=str(group.uuid),
+                                  issuer=lender.key,
+                                  borrower=user.key,
+                                  value=request.value,
+                                  description=request.description,
+                                  uome_uuid=str(uome.uuid))
     except InvalidSignature:
         return HttpResponse('401 Unauthorized', status=401)
 
-    uome.confirmed = True
+    uome.borrower_signature = request.user_signature
     uome.save()
 
     # create the signature

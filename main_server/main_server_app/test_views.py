@@ -12,6 +12,7 @@ from .models import Group, User, UOMe, UserDebt
 from utils.crypto.rsa import generate_keys, sign, verify
 from utils.crypto import example_keys
 from utils.messages import message_formats as msg
+from utils.messages.uome_tools import UOMeTools
 
 
 # Create your tests here.
@@ -21,7 +22,7 @@ from utils.messages import message_formats as msg
 # - a separate TestClass for each model or view
 # - a separate test method for each set of conditions you want to test
 # - test method names that describe their function
-
+# TODO: check this out, looks cool: https://docs.djangoproject.com/en/1.10/ref/validators/
 
 class RegisterGroupTests(TestCase):
     # TODO: add proxy/name server address?
@@ -196,8 +197,18 @@ class CancelUOMeTests(TestCase):
         self.borrower = User.objects.create(group=self.group, key=example_keys.C2_pub)
 
     def test_cancel_unconfirmed_uome(self):
+        issuer_signature = UOMeTools.issuer_sign(self.private_key,
+                                                 group_uuid=str(self.group.uuid),
+                                                 issuer=self.user.key,
+                                                 borrower=self.borrower.key,
+                                                 value=10,
+                                                 description='test')
+
         uome = UOMe.objects.create(group=self.group, lender=self.user,
-                                   borrower=self.borrower, value=10, description='test')
+                                   borrower=self.borrower,
+                                   value=10,
+                                   description='test',
+                                   issuer_signature=issuer_signature)
 
         signature = self.message_class.sign(self.private_key, 'user',
                                             group_uuid=str(self.group.uuid),
@@ -260,9 +271,21 @@ class AcceptTests(TestCase):
         self.lender = User.objects.create(group=self.group, key=example_keys.C2_pub)
 
     def test_confirm_first_uome(self):
-        uome = UOMe.objects.create(group=self.group, borrower=self.user,
-                                   lender=self.lender, value=100, description='test')
-        assert uome.confirmed is False
+        issuer_signature = UOMeTools.issuer_sign(self.private_key,
+                                                 group_uuid=str(self.group.uuid),
+                                                 issuer=self.lender.key,
+                                                 borrower=self.user.key,
+                                                 value=10,
+                                                 description='test')
+
+        uome = UOMe.objects.create(group=self.group,
+                                   lender=self.lender,
+                                   borrower=self.user,
+                                   value=10,
+                                   description='test',
+                                   issuer_signature=issuer_signature)
+
+        assert uome.borrower_signature == ''
 
         signature = self.message_class.sign(self.private_key, 'user',
                                             group_uuid=str(self.group.uuid),
@@ -287,7 +310,7 @@ class AcceptTests(TestCase):
         assert raw_response.status_code == 200
 
         uome = UOMe.objects.filter(group=self.group, uuid=uome.uuid).first()
-        assert uome.confirmed is True
+        assert uome.borrower_signature == signature
 
         response = self.message_class.load_response(raw_response.content.decode())
 
