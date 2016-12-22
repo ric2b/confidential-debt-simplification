@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Group, User, Invitation, ConfirmedInvitation
+from .models import Group, User, Invitation
 
 
 
@@ -8,4 +8,4 @@ from .models import Group, User, Invitation, ConfirmedInvitation
 admin.site.register(Group)
 admin.site.register(User)
 admin.site.register(Invitation)
-admin.site.register(ConfirmedInvitation)
+

@@ -7,7 +7,7 @@ from collections import defaultdict
 import json
 import os
 
-from .models import Group, User, Invitation, ConfirmedInvitation
+from .models import Group, User, Invitation
 
 from utils.crypto.rsa import sign, verify, InvalidSignature
 from utils.messages import message_formats as msg
@@ -90,11 +90,11 @@ def join_group(request):
         invitation = Invitation.objects.get(secret_code=request.secret_code, invitee=user, group=group)
     except (ValueError, ObjectDoesNotExist):
         return HttpResponseForbiddenRequest()  
-        
-    #TODO: Confirm user registration now?
     
     # create the signature
     sig = message_class.sign(settings.PRIVATE_KEY, 'group', inviter_signature = invitation.signature_inviter)
+    invitation.signature_group = sig
+    invitation.save()
     response = message_class.make_response(inviter=invitation.inviter.key, user=user.key, user_email=user.email, inviter_signature=invitation.signature_inviter, group_signature=sig)
         
     return HttpResponse(response.dumps(), status=201)
@@ -116,8 +116,7 @@ def confirm_join(request):
         
     try:
         invitation = Invitation.objects.get(invitee=user, group=group)
-        sig = message_class.sign(settings.PRIVATE_KEY, 'group', inviter_signature = invitation.signature_inviter)
-        message_class.verify(user.key, 'user', request.user_signature, group_signature=sig)
+        message_class.verify(user.key, 'user', request.user_signature, group_signature=invitation.signature_group)
     except InvalidSignature:
         return HttpResponse('401 Unauthorized', status=401)  
         

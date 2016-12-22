@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from collections import defaultdict
 
-from .models import Group, User, Invitation, ConfirmedInvitation
+from .models import Group, User, Invitation
 
 from utils.crypto.rsa import generate_keys, sign, verify
 from utils.crypto import example_keys
@@ -86,7 +86,26 @@ class JoinGroupTests(TestCase):
         
         assert raw_response.status_code == 201
 
-
+class ConfirmJoinTests(TestCase): 
+    def setUp(self): 
+        self.message_class = msg.ConfirmJoin 
+        self.private_key2, self.key2 = example_keys.C2_priv, example_keys.C2_pub 
+        self.group = Group.objects.create(name='test', key=example_keys.G1_pub) 
+        self.user = User.objects.create(group=self.group, key=self.key2, email='c2@example.pt') 
+        self.private_key1, self.key1 = example_keys.C1_priv, example_keys.C1_pub 
+        self.inviter = User.objects.create(group=self.group, key=self.key1, email='c1@example.pt', confirmed=True) 
+         
+    def test_correct_input(self): 
+        inviter_signature = msg.UserInvite.sign(self.private_key1, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt')  
+        group_signature = msg.GroupServerJoin.sign(settings.PRIVATE_KEY, 'group', inviter_signature=inviter_signature)
+        invitation = Invitation.objects.create(group=self.group, invitee=self.user, inviter=self.inviter, signature_inviter=inviter_signature, signature_group=group_signature, secret_code='0000') 
+        invitee_signature = self.message_class.sign(self.private_key2, 'user', group_signature=invitation.signature_group) 
+         
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), user=self.user.key, user_signature=invitee_signature) 
+        raw_response = self.client.post(reverse('group_server_app:confirm_join'),{'data': request.dumps()}) 
+        assert raw_response.status_code == 200 
+        
+        
 
 
 
