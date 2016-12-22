@@ -26,7 +26,7 @@ class Invitation(models.Model):
 	
 	inviter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='inviter')
 	invitee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invitee')
-	
+	group = models.ForeignKey(Group, on_delete=models.CASCADE)
 	uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 	signature_inviter = models.CharField(max_length=key_length)
 	secret_code = models.CharField(max_length=20) #How long secret code?

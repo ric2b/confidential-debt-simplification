@@ -57,4 +57,38 @@ class InviteUserTests(TestCase):
         
         assert self.user2.key == request.invitee
         assert self.user2.email == request.invitee_email
+       
+    def test_invited_user_already_exists(self):
+        self.invitee = User.objects.create(group=self.group, key=example_keys.C2_pub, email='c2@example.pt')
+        signature = self.message_class.sign(self.private_key, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', inviter_signature=signature)
+        raw_response = self.client.post(reverse('group_server_app:invite_user'),{'data': request.dumps()})
         
+        assert raw_response.status_code == 409
+        
+class JoinGroupTests(TestCase):
+    def setUp(self):
+        self.message_class = msg.GroupServerJoin
+        self.private_key2, self.key2 = example_keys.C2_priv, example_keys.C2_pub
+        self.group = Group.objects.create(name='test', key=example_keys.G1_pub)
+        self.user = User.objects.create(group=self.group, key=self.key2, email='c2@example.pt')
+        self.private_key1, self.key1 = example_keys.C1_priv, example_keys.C1_pub
+        self.inviter = User.objects.create(group=self.group, key=self.key1, email='c1@example.pt', confirmed=True)
+        
+    
+    def test_correct_input(self):
+        signature = msg.UserInvite.sign(self.private_key1, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt')
+        invitation = Invitation.objects.create(group=self.group, invitee=self.user, inviter=self.inviter, signature_inviter=signature, secret_code='0000')
+        
+        signature2 = self.message_class.sign(self.private_key2, 'user', group_uuid=str(self.group.uuid), user=self.user.key, secret_code='0000')
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), user=self.user.key, secret_code='0000', user_signature=signature2)
+        raw_response = self.client.post(reverse('group_server_app:join_group'),{'data': request.dumps()})
+        
+        assert raw_response.status_code == 201
+
+
+
+
+
+
+    

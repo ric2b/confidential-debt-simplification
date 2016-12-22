@@ -74,6 +74,29 @@ class GroupServerJoin(Message):
         'group': ['inviter_signature']
     }
 
+class ConfirmJoin(Message):
+    """
+    User C2 received a correct response from the main server after a JOIN request and wants 
+    to confirm he is sucessfuly registerd in both the group server and the main server.
+    """
+
+    request_params = {
+        'group_uuid': str,
+        'user': str,
+        'user_signature': str,
+    }
+
+    response_params = {
+        'group_uuid': str,
+        'user': str,
+    }
+
+    signature_formats = {
+        'user': ['group_signature'],
+        'group': ['inviter_signature']
+    }
+
+
 
 class MainServerJoin(Message):
     """
