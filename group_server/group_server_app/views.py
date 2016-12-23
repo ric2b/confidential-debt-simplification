@@ -145,4 +145,38 @@ def confirm_join(request):
     return HttpResponse(response.dumps(), status=200)
 
 def email_key_map(request):
-    return
+
+    message_class = msg.EmailKeyMap
+    
+    try:  # convert the message into the request object
+        request = message_class.load_request(request.POST['data'])
+    except DecodeError:
+        return HttpResponseBadRequest()
+
+    try:  
+        user = User.objects.get(key=request.user, group_id=request.group_uuid)
+        group = Group.objects.get(pk=request.group_uuid)
+    except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
+        return HttpResponseBadRequest()
+
+    if not user.confirmed:
+        return HttpResponseForbiddenRequest()
+
+    try:
+        message_class.verify(user.key, 'user', request.signature,
+                                 group_uuid=request.group_uuid,
+                                 request_type='email-key-map')
+    except InvalidSignature:
+        return HttpResponse('401 Unauthorized', status=401)
+        
+    keymap = User.objects.filter(group_id=request.group_uuid, confirmed=True)
+    
+    mapkey = ''
+    
+    for person in keymap:
+        mapkey = mapkey + person.email + ':' + person.key + '\n'
+        
+    response = message_class.make_response(mapkey=mapkey)     
+      
+
+    return HttpResponse(response.dumps(), status=200)

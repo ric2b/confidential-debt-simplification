@@ -119,9 +119,19 @@ class ConfirmJoinTests(TestCase):
         raw_response = self.client.post(reverse('group_server_app:confirm_join'),{'data': request.dumps()}) 
         assert raw_response.status_code == 200 
         
+class EmailKeyMap(TestCase):
+    def setUp(self):   
+        self.message_class = msg.EmailKeyMap
+        self.private_key, self.key = example_keys.C1_priv, example_keys.C1_pub
+        self.group = Group.objects.create(name='test', key=example_keys.G1_pub)
+        self.user = User.objects.create(group=self.group, key=self.key, email='c1@example.pt', confirmed=True)
+        self.user2 = User.objects.create(group=self.group, key=example_keys.C2_pub, email='c2@example.pt', confirmed=True)
+        self.user3 = User.objects.create(group=self.group, key=example_keys.C3_pub, email='c3@example.pt', confirmed=True)
         
-
-
-
-
-    
+    def test_correct_input(self):
+        signature = self.message_class.sign(self.private_key, 'user', group_uuid=str(self.group.uuid), request_type='email-key-map')
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), user=self.user.key, request_type='email-key-map', signature=signature)
+        raw_response = self.client.post(reverse('group_server_app:email_key_map'),{'data': request.dumps()})
+        assert raw_response.status_code == 200
+        
+        

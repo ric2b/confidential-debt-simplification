@@ -95,6 +95,27 @@ class ConfirmJoin(Message):
         'user': ['group_signature'],
         'group': ['inviter_signature']
     }
+    
+    
+class EmailKeyMap(Message):
+    """
+    User C1 wants to know the mapping between email addresses and keys of his own group
+    """
+
+    request_params = {
+        'group_uuid': str,
+        'user': str,
+        'request_type': str,
+        'signature': str,
+    }
+
+    response_params = {
+        'mapkey': str,
+    }
+
+    signature_formats = {
+        'user': ['group_uuid','request_type'],
+    }
 
 
 
