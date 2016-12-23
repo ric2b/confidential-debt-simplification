@@ -26,7 +26,7 @@ def invite_user(request):
     try:  # check that the inviter belonging to group exists and return it
         inviter = User.objects.get(key=request.inviter, group_id=request.group_uuid)
         group = Group.objects.get(pk=request.group_uuid)
-    except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
+    except (ValueError, ObjectDoesNotExist):
         return HttpResponseBadRequest()
         
     try:
@@ -44,15 +44,18 @@ def invite_user(request):
     if User.objects.filter(key=request.invitee).exists():
         return HttpResponse('409 Conflict', status=409)
         
-    #Save invitee in the pending user database with his email
-    user2 = User.objects.create(group=group, key=request.invitee, email=request.invitee_email)
+    #Check if the inviter is a registered (confirmed) user
+    if not inviter.confirmed:
+        return HttpResponseForbidden()
+        
+    #Save invitee in the pending user database with his email (not yet confirmed)
+    invitee = User.objects.create(group=group, key=request.invitee, email=request.invitee_email)
     
     #Generate secret code
     secret_code = str(int.from_bytes(os.urandom(4), byteorder="big")) #Is it big enough?
     
-    #Get invitee object
-    invitee = User.objects.get(pk=request.invitee)
-    
+    #TODO: SEND EMAIL TO C2
+   
     #Create Invitation entry
     invitation = Invitation.objects.create(group=group, inviter=inviter, invitee=invitee, signature_inviter=request.inviter_signature, secret_code=secret_code)
     
@@ -72,10 +75,10 @@ def join_group(request):
     except DecodeError:
         return HttpResponseBadRequest()
         
-    try:  # check that the inviter belonging to group exists and return it
+    try:  
         user = User.objects.get(key=request.user, group_id=request.group_uuid)
         group = Group.objects.get(pk=request.group_uuid)
-    except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
+    except (ValueError, ObjectDoesNotExist):
         return HttpResponseBadRequest()
         
     try:
@@ -85,12 +88,17 @@ def join_group(request):
                                  secret_code=request.secret_code)
     except InvalidSignature:
         return HttpResponse('401 Unauthorized', status=401)  
-     
+        
+    #Check if user has already been registered before
+    if user.confirmed:
+        return HttpResponse('409 Conflict', status=409)
+    
+    #Check id the secret code is valid 
     try:    
         invitation = Invitation.objects.get(secret_code=request.secret_code, invitee=user, group=group)
     except (ValueError, ObjectDoesNotExist):
         return HttpResponseForbiddenRequest()  
-    
+        
     # create the signature
     sig = message_class.sign(settings.PRIVATE_KEY, 'group', inviter_signature = invitation.signature_inviter)
     invitation.signature_group = sig
@@ -126,6 +134,10 @@ def confirm_join(request):
     #Change user status to confirmed
     user.confirmed = True
     user.save()
+    
+    #Save user_signature
+    invitation.signature_invitee = request.user_signature
+    invitation.save()
 
     response = message_class.make_response(group_uuid=str(group.uuid), user=user.key)
 

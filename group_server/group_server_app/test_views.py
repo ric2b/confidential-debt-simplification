@@ -66,6 +66,14 @@ class InviteUserTests(TestCase):
         
         assert raw_response.status_code == 409
         
+    def test_inviter_not_confirmed(self):
+        inviter3 = User.objects.create(group=self.group, key=example_keys.C3_pub, email='c1@example.pt')
+        signature = self.message_class.sign(example_keys.C3_priv, 'inviter', group_uuid=str(self.group.uuid), inviter=inviter3.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), inviter=inviter3.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', inviter_signature=signature)
+        raw_response = self.client.post(reverse('group_server_app:invite_user'),{'data': request.dumps()})
+        
+        assert raw_response.status_code == 403        
+        
 class JoinGroupTests(TestCase):
     def setUp(self):
         self.message_class = msg.GroupServerJoin
@@ -74,6 +82,7 @@ class JoinGroupTests(TestCase):
         self.user = User.objects.create(group=self.group, key=self.key2, email='c2@example.pt')
         self.private_key1, self.key1 = example_keys.C1_priv, example_keys.C1_pub
         self.inviter = User.objects.create(group=self.group, key=self.key1, email='c1@example.pt', confirmed=True)
+        self.group2 = Group.objects.create(name='test2', key=example_keys.G2_pub)
         
     
     def test_correct_input(self):
@@ -85,6 +94,10 @@ class JoinGroupTests(TestCase):
         raw_response = self.client.post(reverse('group_server_app:join_group'),{'data': request.dumps()})
         
         assert raw_response.status_code == 201
+        
+        
+    
+        
 
 class ConfirmJoinTests(TestCase): 
     def setUp(self): 
@@ -94,6 +107,7 @@ class ConfirmJoinTests(TestCase):
         self.user = User.objects.create(group=self.group, key=self.key2, email='c2@example.pt') 
         self.private_key1, self.key1 = example_keys.C1_priv, example_keys.C1_pub 
         self.inviter = User.objects.create(group=self.group, key=self.key1, email='c1@example.pt', confirmed=True) 
+        
          
     def test_correct_input(self): 
         inviter_signature = msg.UserInvite.sign(self.private_key1, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt')  
