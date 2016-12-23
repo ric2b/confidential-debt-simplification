@@ -152,7 +152,7 @@ class CancelUOMe(Message):
     }
 
 
-class PendingUOMes(Message):
+class GetPendingUOMes(Message):
     """
     Sent to the Main Server by a user to get all pending UOMe's associated with him.
     """
@@ -164,14 +164,14 @@ class PendingUOMes(Message):
     }
 
     response_params = {
-        'uome_list': list,
+        'issued_by_user': list,
+        'waiting_for_user': list,
         'main_signature': str
     }
 
     signature_formats = {
         'user': ['group_uuid', 'user'],
-        'main': ['group_uuid', 'user', 'uome_list'],
-        'uome': ['group_uuid', 'user', 'borrower', 'value', 'description']
+        'main': ['group_uuid', 'user', 'issued_by_user', 'waiting_for_user'],
     }
 
 
