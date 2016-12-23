@@ -1,6 +1,7 @@
 from django.core.serializers import serialize
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, Http404
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, \
+    Http404
 from django.db import transaction
 from django.conf import settings
 from collections import defaultdict
@@ -181,13 +182,50 @@ def cancel_uome(request):
             return HttpResponseForbidden()
 
 
-def get_unconfirmed_uomes(request):
-    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
-    user = User.objects.filter(key=request.POST['user_key']).first()
+def get_pending_uomes(request):
+    message_class = msg.GetPendingUOMes
 
-    unconfirmed_uomes = UOMe.objects.filter(group=group, borrower=user, confirmed=False)
+    try:  # convert the message into the request object
+        request = message_class.load_request(request.POST['data'])
+    except DecodeError:
+        return HttpResponseBadRequest()
 
-    return HttpResponse(serialize('json', unconfirmed_uomes), content_type='application/json')
+    try:  # check that the group exists and get it
+        group = Group.objects.get(pk=request.group_uuid)
+        user = User.objects.filter(group=group, key=request.user).first()
+    except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
+        return HttpResponseBadRequest()
+
+    try:  # verify the signatures
+        message_class.verify(user.key, 'user', request.user_signature,
+                             group_uuid=str(group.uuid), user=user.key, )
+    except InvalidSignature:
+        return HttpResponse('401 Unauthorized', status=401)
+
+    uomes_by_user = UOMe.objects.filter(group=group, borrower_signature='',
+                                        lender=user)
+    uomes_for_user = UOMe.objects.filter(group=group, borrower_signature='',
+                                         borrower=user)
+    issued_by_user = []
+    for uome in uomes_by_user:
+        issued_by_user.append(uome.to_array_unconfirmed())
+    waiting_for_user = []
+    for uome in uomes_for_user:
+        waiting_for_user.append(uome.to_array_unconfirmed())
+
+    signature = message_class.sign(settings.PRIVATE_KEY, 'main',
+                                   group_uuid=str(group.uuid),
+                                   user=user.key,
+                                   issued_by_user=json.dumps(issued_by_user),
+                                   waiting_for_user=json.dumps(waiting_for_user))
+
+    response = message_class.make_response(group_uuid=str(group.uuid),
+                                           user=user.key,
+                                           issued_by_user=issued_by_user,
+                                           waiting_for_user=waiting_for_user,
+                                           main_signature=signature)
+
+    return HttpResponse(response.dumps(), status=200)
 
 
 # TODO: Think about data races a lot more

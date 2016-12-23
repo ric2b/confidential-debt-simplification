@@ -237,29 +237,82 @@ class CancelUOMeTests(TestCase):
         # issuer of the uome or the uome has already been confirmed
 
 
-class CheckUnconfirmedUOMesTests(TestCase):
+class GetPendingUOMesTests(TestCase):
     def setUp(self):
-        group = Group(name='test', key='test')
-        group.save()
-        borrower = User(group=group, key='signature_key1')
-        borrower.save()
-        lender = User(group=group, key='signature_key2')
-        lender.save()
+        self.message_class = msg.GetPendingUOMes
+        self.private_key, self.key = example_keys.C1_priv, example_keys.C1_pub
+        self.group = Group.objects.create(name='test', key=example_keys.G1_pub)
+        self.user = User.objects.create(group=self.group, key=self.key)
+        self.other_user = User.objects.create(group=self.group, key=example_keys.C2_pub)
 
-        self.group, self.borrower, self.lender = group, borrower, lender
+    def test_one_by_user_uome_and_one_for_user_uome(self):
+        by_user_sig = UOMeTools.issuer_sign(self.private_key,
+                                            group_uuid=str(self.group.uuid),
+                                            issuer=self.user.key,
+                                            borrower=self.other_user.key,
+                                            value=30,
+                                            description="by user")
 
-    def test_one_unconfirmed_uome(self):
-        uome = UOMe(group=self.group, borrower=self.borrower, lender=self.lender,
-                    value=10, description="test")
-        uome.save()
+        uome_by_user = UOMe.objects.create(group=self.group, lender=self.user,
+                                           borrower=self.other_user, value=30,
+                                           description="by user",
+                                           issuer_signature=by_user_sig)
 
-        raw_response = self.client.post(reverse('main_server_app:get_unconfirmed_uomes'),
-                                        {'group_uuid': self.group.uuid,
-                                         'user_key': self.borrower.key})
+        for_user_sig = UOMeTools.issuer_sign(example_keys.C2_priv,
+                                             group_uuid=str(self.group.uuid),
+                                             issuer=self.other_user.key,
+                                             borrower=self.user.key,
+                                             value=20,
+                                             description="for user")
 
-        # https://docs.djangoproject.com/en/1.10/topics/serialization/
-        response = serializers.deserialize('json', raw_response.content)
-        assert [item.object for item in response] == [uome]
+        uome_for_user = UOMe.objects.create(group=self.group, lender=self.other_user,
+                                            borrower=self.user, value=20,
+                                            description="for user",
+                                            issuer_signature=for_user_sig)
+
+        assert uome_by_user.borrower_signature == ''
+        assert uome_by_user.issuer_signature != ''
+
+        assert uome_for_user.borrower_signature == ''
+        assert uome_for_user.issuer_signature != ''
+
+        signature = self.message_class.sign(self.private_key, 'user',
+                                            group_uuid=str(self.group.uuid),
+                                            user=self.user.key)
+
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid),
+                                                  user=self.user.key,
+                                                  user_signature=signature)
+
+        raw_response = self.client.post(reverse('main_server_app:get_pending_uomes'),
+                                        {'data': request.dumps()})
+
+        assert raw_response.status_code == 200
+
+        response = self.message_class.load_response(raw_response.content.decode())
+
+        response.verify(settings.PUBLIC_KEY, 'main', response.main_signature,
+                        group_uuid=str(self.group.uuid),
+                        user=self.user.key,
+                        issued_by_user=json.dumps([uome_by_user.to_array_unconfirmed()]),
+                        waiting_for_user=json.dumps(
+                            [uome_for_user.to_array_unconfirmed()]))
+
+        for uome in response.issued_by_user:
+            UOMeTools.issuer_verify(uome[1], uome[5],
+                                    group_uuid=uome[0],
+                                    issuer=uome[1],
+                                    borrower=uome[2],
+                                    value=uome[3],
+                                    description=uome[4])
+
+        for uome in response.waiting_for_user:
+            UOMeTools.issuer_verify(uome[1], uome[5],
+                                    group_uuid=uome[0],
+                                    issuer=uome[1],
+                                    borrower=uome[2],
+                                    value=uome[3],
+                                    description=uome[4])
 
 
 class AcceptTests(TestCase):
