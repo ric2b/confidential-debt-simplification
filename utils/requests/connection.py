@@ -3,6 +3,36 @@ import http.client as http
 from utils.messages.message import Message
 
 
+class BadRequestError(Exception):
+    """ Raised when the response's status code is '400 Bad Request' """
+    pass
+
+
+class UnauthorizedError(Exception):
+    """ Raised when the response's status code is '401 Unauthorized' """
+    pass
+
+
+class ForbiddenError(Exception):
+    """ Raised when the response's status code is '403 Forbidden' """
+    pass
+
+
+class ConflictError(Exception):
+    """ Raised when the response's status code is '409 Conflict' """
+    pass
+
+
+class NotFoundError(Exception):
+    """ Raised when the response's status code is '404 Not Found' """
+    pass
+
+
+class UnknownError(Exception):
+    """ Raised when the response's status code is not none of the expected """
+    pass
+
+
 def connect(server_url):
     """ Entry method to connect to a server using an URL """
     return Connection(server_url)
