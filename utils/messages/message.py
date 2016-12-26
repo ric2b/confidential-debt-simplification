@@ -39,8 +39,12 @@ class Message:
         Verify that the sub-class correctly implemented the abstract
         parameters of the Message class.
         """
-        if not (cls.request_params and cls.response_params and cls.signature_formats):
-            raise NotImplementedError('One or more class attributes were not initiated')
+        if cls.request_params is None \
+                or cls.response_params is None \
+                or cls.signature_formats is None:
+
+            raise NotImplementedError('One or more class attributes were '
+                                      'not initiated')
 
         if not (isinstance(cls.request_params, dict)
                 and isinstance(cls.response_params, dict)
