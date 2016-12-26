@@ -227,3 +227,15 @@ class Message:
         signature_values = cls._order_signature_parameters(signature_name, **parameters)
 
         verify(key, signature, *signature_values)
+
+    def __str__(self):
+        return self.message_type + str(self.__dict__)
+
+    def __repr__(self):
+        return str(self)
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+
+        return self.__dict__ == other.__dict__
