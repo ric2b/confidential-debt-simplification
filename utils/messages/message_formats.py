@@ -75,6 +75,29 @@ class GroupServerJoin(Message):
     }
 
 
+class ConfirmJoin(Message):
+    """
+    Sent to the Group server by a user to join a group in the Group server.
+    This can only be done after the user receives his secret code by the e-mail the
+    Group server sends after another user invites him.
+    """
+
+    request_params = {
+        'group_uuid': str,
+        'user': str,
+        'signature': str
+    }
+
+    response_params = {
+        'group_uuid': str,
+        'user': str,
+    }
+
+    signature_formats = {
+        'user': ['group_server_signature'],
+    }
+
+
 class MainServerJoin(Message):
     """
     Sent to the Main Server by a user to join a group in the Main server.
@@ -85,7 +108,6 @@ class MainServerJoin(Message):
     request_params = {
         'group_uuid': str,
         'user': str,
-        'user_signature': str,
         'group_signature': str
     }
 
@@ -96,7 +118,6 @@ class MainServerJoin(Message):
     }
 
     signature_formats = {
-        'user': ['group_uuid', 'user'],
         'group': ['group_uuid', 'user'],
         'main': ['group_uuid', 'user']
     }
