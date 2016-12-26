@@ -1,15 +1,17 @@
 from unittest.mock import Mock, MagicMock
 
 from pytest import fixture
+from pytest import raises
 
 import client.client as c
 import utils.messages.message as m
 from client.client import Client
+from utils.messages.connection import ConflictError, ForbiddenError, \
+    UnauthorizedError
 from utils.messages.message_formats import UserInvite
 
 
 class TestClient:
-
     @fixture
     def client(self):
         return Client(
@@ -51,3 +53,23 @@ class TestClient:
             )
         )
 
+    def test_invite_UserC2WhichAlreadyExists_RaisesClientExistsError(
+            self, client, mock_connection):
+        mock_connection.get_response = Mock(side_effect=ConflictError())
+
+        with raises(c.ClientExistsError):
+            client.invite("C2", "c2@email.com")
+
+    def test_invite_UserC2ButInviterIsNotRegistered_RaisesForbiddenError(
+            self, client, mock_connection):
+        mock_connection.get_response = Mock(side_effect=ForbiddenError())
+
+        with raises(c.PermissionDeniedError):
+            client.invite("C2", "c2@email.com")
+
+    def test_invite_UserC2ButSignatureWasNotAccepted_RaisesSecurityError(
+            self, client, mock_connection):
+        mock_connection.get_response = Mock(side_effect=UnauthorizedError())
+
+        with raises(c.SecurityError):
+            client.invite("C2", "c2@email.com")

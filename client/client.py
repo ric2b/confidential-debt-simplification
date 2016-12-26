@@ -1,20 +1,37 @@
 import logging
 
-from cryptography.exceptions import InvalidSignature
-
 from utils.crypto import rsa
-from utils.messages.connection import connect
+from utils.messages.connection import connect, ConflictError, ForbiddenError, \
+    UnauthorizedError
 from utils.messages.message_formats import UserInvite
 
 
-class SecurityError(Exception):
+class ProtocolError(Exception):
+    """ Raised when an error anticipated in the protocol """
+
+    def __init__(self, message):
+        self.message = message
+
+
+class ClientExistsError(ProtocolError):
+    """ Raised when trying to add a client that already exists """
+    pass
+
+
+class PermissionDeniedError(ProtocolError):
+    """
+    Raised when a client does not have permission to execute some
+    operation.
+    """
+    pass
+
+
+class SecurityError(ProtocolError):
     """
     Raised by the client to indicate an error due to security as
     occurred.
     """
-
-    def __init__(self, message):
-        self.message = message
+    pass
 
 
 logger = logging.Logger(__name__)
@@ -51,10 +68,11 @@ class Client:
 
     def invite(self, invitee_id: str, invitee_email: str):
         """
-        Invites a new client to the group.
+        Invites a new user to the group.
 
-        :param invitee_id: invited client's ID.
-        :param invitee_email: invited client's email.
+        :param invitee_id: invited user's ID.
+        :param invitee_email: invited user's email.
+        :raise ClientExistsError: if invitee is already registered
         """
         request = UserInvite.make_request(
             group_uuid="1",  # FIXME add support for multiple groups
@@ -74,8 +92,16 @@ class Client:
         with connect(self.group_server_url) as connection:
             connection.request(request)
 
-            # response can be ignored since it is only an acknowledgement
-            connection.get_response(UserInvite)
+            try:
+                # response can be ignored since it is only an acknowledgement
+                connection.get_response(UserInvite)
+
+            except ConflictError:
+                raise ClientExistsError("Invited client is already registered")
+            except ForbiddenError:
+                raise PermissionDeniedError("Inviter is not registered")
+            except UnauthorizedError:
+                raise SecurityError("Signature verification failed")
 
     def join(self, secret_code: str, inviter_id: str):
         """
