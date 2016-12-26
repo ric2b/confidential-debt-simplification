@@ -3,6 +3,8 @@ import logging
 from cryptography.exceptions import InvalidSignature
 
 from utils.crypto import rsa
+from utils.messages.connection import connect
+from utils.messages.message_formats import UserInvite
 
 
 class SecurityError(Exception):
@@ -26,7 +28,7 @@ class Client:
     def __init__(self, group_server_url: str,
                  group_server_pubkey: str,
                  main_server_pubkey: str,
-                 email: str, key_filepath=None):
+                 email: str, key_filepath=None, keys=("", "")):
 
         self.group_server_url = group_server_url
         self.group_server_pubkey = group_server_pubkey
@@ -34,9 +36,11 @@ class Client:
         self.email = email
 
         if key_filepath:
-            self.privkey, self.pubkey = rsa.load_keys(key_filepath)
+            self.key, self.pubkey = rsa.load_keys(key_filepath)
+        elif keys:
+            self.key, self.pubkey = keys
         else:
-            self.privkey, self.pubkey = rsa.generate_keys()
+            self.key, self.pubkey = rsa.generate_keys()
 
         self.proxy_server_address = ""
         self.proxy_server_pubkey = ""
@@ -52,7 +56,26 @@ class Client:
         :param invitee_id: invited client's ID.
         :param invitee_email: invited client's email.
         """
-        pass
+        request = UserInvite.make_request(
+            group_uuid="1",  # FIXME add support for multiple groups
+            inviter=self.id,
+            invitee=invitee_id,
+            invitee_email=invitee_email,
+            inviter_signature=UserInvite.sign(
+                key=self.key,
+                signature_name="inviter",
+                group_uuid="1",  # FIXME add support for multiple groups
+                inviter=self.id,
+                invitee=invitee_id,
+                invitee_email=invitee_email,
+            )
+        )
+
+        with connect(self.group_server_url) as connection:
+            connection.request(request)
+
+            # response can be ignored since it is only an acknowledgement
+            connection.get_response(UserInvite)
 
     def join(self, secret_code: str, inviter_id: str):
         """
