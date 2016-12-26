@@ -35,26 +35,33 @@ class UnknownError(Exception):
 
 def connect(server_url):
     """ Entry method to connect to a server using an URL """
-    return Connection(server_url)
+    return Connection(server_url, http.HTTPConnection(server_url))
 
 
 class Connection:
     """
     Abstraction of an HTTP or HTTPS connection which supports our own request
     and response API.
+
+    IMPORTANT: To create a connection object do not use its initializer
+    directly, instead use the 'connect' factory method.
+    Might seem silly, but this separation facilitates testing.
     """
 
-    def __init__(self, server_url):
+    def __init__(self, server_url, http_connection):
         """
-        Initializes a connection with the HTTP server listening in the given
-        URL. It really creates a connection that should be closed after
-        it is no longer required.
+        THIS INITIALIZER SHOULD NOT BE USED - use the 'connect' function instead
+
+        Initializes a connection to the server with the given URL. It takes
+        an already established http connection with the corresponding server.
+        This connection will be used underneath to send and receive messages.
 
         :param server_url: URL of the HTTP server to connect to in the format
                            "address:port"
+        :param http_connection: established HTTP connection with the server
         """
         self.server_url = server_url
-        self._http_connection = http.HTTPConnection(server_url)
+        self._http_connection = http_connection
 
     def close(self):
         """
