@@ -33,6 +33,16 @@ class UnknownError(Exception):
     pass
 
 
+# Maps an error status code to the respective exception class
+error_exception = {
+    400: BadRequestError,
+    401: UnauthorizedError,
+    403: ForbiddenError,
+    409: ConflictError,
+    404: NotFoundError,
+}
+
+
 def connect(server_url):
     """ Entry method to connect to a server using an URL """
     return Connection(server_url, http.HTTPConnection(server_url))
@@ -109,12 +119,25 @@ class Connection:
         must be provided. The main job of this method is to take an
         HTTPResponse and load the respective response message object. In case
         of an unsuccessful response from the server an exception is raised
-        accordingly to the HTTP error code.
+        according to the HTTP error code.
 
         :param response_type: type for the expected response
         :return: response message from the server.
         """
         http_response = self._http_connection.getresponse()
-        body = http_response.read()
+        status = http_response.status
 
-        return response_type.load_response(body)
+        if status == 200 or status == 201 or status == 202:
+            # request was successful
+            body = http_response.read().decode()
+            return response_type.load_response(body)
+
+        else:
+            try:
+                exception = error_exception[status]
+            except KeyError:
+                # unknown status code
+                exception = UnknownError
+
+            error_message = http_response.read()
+            raise exception(error_message)
