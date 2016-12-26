@@ -85,7 +85,6 @@ class MainServerJoin(Message):
     request_params = {
         'group_uuid': str,
         'user': str,
-        'user_signature': str,
         'group_signature': str
     }
 
@@ -96,7 +95,6 @@ class MainServerJoin(Message):
     }
 
     signature_formats = {
-        'user': ['group_uuid', 'user'],
         'group': ['group_uuid', 'user'],
         'main': ['group_uuid', 'user']
     }
