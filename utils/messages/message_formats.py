@@ -200,7 +200,7 @@ class AcceptUOMe(Message):
     }
 
 
-class CheckTotals(Message):
+class GetTotals(Message):
     """
     Sent to the Main Server by a user to get his total debt and the suggested amounts
     he should pay to each person.
@@ -218,10 +218,11 @@ class CheckTotals(Message):
 
     response_params = {
         'user_balance': int,
-        'suggested_transactions': dict,
+        'suggested_transactions': str,  # dict encoded as json string, to keep the order.
         'main_signature': str
     }
 
+    # TODO: Check if the signature can be abused by the Group Server, if it's the same
     signature_formats = {
         'user': ['group_uuid', 'user'],
         'main': ['group_uuid', 'user', 'user_balance', 'suggested_transactions']

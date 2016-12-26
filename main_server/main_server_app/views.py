@@ -304,23 +304,51 @@ def accept_uome(request):
     return HttpResponse(response.dumps(), status=200)
 
 
-def get_total_debt(request):
-    group = Group.objects.filter(uuid=request.POST['group_uuid']).first()
-    user = User.objects.filter(key=request.POST['user_key']).first()
+def get_totals(request):
+    message_class = msg.GetTotals
 
-    user_debt = {}
+    try:  # convert the message into the request object
+        request = message_class.load_request(request.POST['data'])
+    except DecodeError:
+        return HttpResponseBadRequest()
+
+    try:  # check that the group exists and get it
+        group = Group.objects.get(pk=request.group_uuid)
+        user = User.objects.filter(group=group, key=request.user).first()
+    except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
+        return HttpResponseBadRequest()
+
+    try:  # verify the signatures
+        message_class.verify(user.key, 'user', request.user_signature,
+                             group_uuid=str(group.uuid), user=user.key, )
+    except InvalidSignature:
+        return HttpResponse('401 Unauthorized', status=401)
+
+    # example: {'user1': val1, 'user2': val2}
+    suggested_transactions = {}
 
     if user.balance < 0:  # filter by borrower
         for debt in UserDebt.objects.filter(group=group, borrower=user):
-            user_debt[debt.lender.key] = debt.value
+            suggested_transactions[debt.lender.key] = debt.value
 
     elif user.balance > 0:  # filter by lender
         for debt in UserDebt.objects.filter(group=group, lender=user):
-            user_debt[debt.borrower.key] = debt.value
+            suggested_transactions[debt.borrower.key] = debt.value
 
-    # example: {is_borrower: True, user_debt: {'user1': val1, 'user2': val2}}
-    json_payload = json.dumps({'balance': user.balance,
-                               'user_debt': user_debt,
-                               })
+    # convert to json string because the dict doesn't maintain the order, so it would
+    # make the signature unreliable
+    suggested_transactions = json.dumps(suggested_transactions)
 
-    return HttpResponse(json_payload, content_type='application/json')
+    signature = message_class.sign(settings.PRIVATE_KEY, 'main',
+                                   group_uuid=str(group.uuid),
+                                   user=user.key,
+                                   user_balance=user.balance,
+                                   suggested_transactions=suggested_transactions)
+
+    response = message_class.make_response(group_uuid=str(group.uuid),
+                                           user=user.key,
+                                           user_balance=user.balance,
+                                           suggested_transactions=suggested_transactions,
+                                           main_signature=signature)
+
+    return HttpResponse(response.dumps(), status=200)

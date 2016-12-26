@@ -386,54 +386,100 @@ class AcceptTests(TestCase):
         assert simplified_debt == {self.user: {self.lender: uome.value}}
 
 
-class CheckTotalsTests(TestCase):
+class GetTotalsTests(TestCase):
     def setUp(self):
-        group = Group(name='test', key='test')
-        group.save()
-        borrower = User(group=group, key='signature_key1')
-        borrower.save()
-        lender = User(group=group, key='signature_key2')
-        lender.save()
+        self.message_class = msg.GetTotals
+        self.private_key, self.key = example_keys.C1_priv, example_keys.C1_pub
+        self.group = Group.objects.create(name='test', key=example_keys.G1_pub)
+        self.user1 = User.objects.create(group=self.group, key=example_keys.C1_pub)
+        self.user2 = User.objects.create(group=self.group, key=example_keys.C2_pub)
+        self.user3 = User.objects.create(group=self.group, key=example_keys.C3_pub)
 
-        self.group, self.borrower, self.lender = group, borrower, lender
+    def test_get_totals_no_uome(self):
+        signature = self.message_class.sign(self.private_key, 'user',
+                                            group_uuid=str(self.group.uuid),
+                                            user=self.user1.key
+                                            )
 
-    def test_check_totals_no_uome(self):
-        raw_response = self.client.post(reverse('main_server_app:total_debt'),
-                                        {'group_uuid': self.group.uuid,
-                                         'user_key': self.borrower.key})
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid),
+                                                  user=self.user1.key,
+                                                  user_signature=signature)
 
-        response = json.loads(raw_response.content.decode())
-        assert response['balance'] == 0
-        assert response['user_debt'] == {}
+        raw_response = self.client.post(reverse('main_server_app:get_totals'),
+                                        {'data': request.dumps()})
 
-    def test_check_totals_one_unconfirmed_uome(self):
-        uome = UOMe(group=self.group, borrower=self.borrower, lender=self.lender,
-                    value=10, description="test")
-        uome.save()
+        assert raw_response.status_code == 200
+        response = self.message_class.load_response(raw_response.content.decode())
 
-        raw_response = self.client.post(reverse('main_server_app:total_debt'),
-                                        {'group_uuid': self.group.uuid,
-                                         'user_key': self.borrower.key})
+        self.message_class.verify(settings.PUBLIC_KEY, 'main', response.main_signature,
+                                  group_uuid=str(self.group.uuid),
+                                  user=self.user1.key,
+                                  user_balance=response.user_balance,
+                                  suggested_transactions=response.suggested_transactions
+                                  )
 
-        response = json.loads(str(raw_response.content.decode()))
-        assert response['balance'] == 0
-        assert response['user_debt'] == {}
+        assert response.user_balance == 0
+        assert json.loads(response.suggested_transactions) == {}
 
-    def test_check_totals_one_confirmed_uome(self):
-        debt_value = 1000
+    def test_get_totals_one_unconfirmed_uome(self):
+        UOMe.objects.create(group=self.group, lender=self.user2, borrower=self.user1,
+                            value=10, description="test", issuer_signature='meh')
 
-        UserDebt.objects.create(group=self.group, borrower=self.borrower,
-                                lender=self.lender, value=debt_value)
+        signature = self.message_class.sign(self.private_key, 'user',
+                                            group_uuid=str(self.group.uuid),
+                                            user=self.user1.key
+                                            )
 
-        self.borrower.balance = -debt_value
-        self.borrower.save()
-        self.lender.balance = debt_value
-        self.lender.save()
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid),
+                                                  user=self.user1.key,
+                                                  user_signature=signature)
 
-        raw_response = self.client.post(reverse('main_server_app:total_debt'),
-                                        {'group_uuid': self.group.uuid,
-                                         'user_key': self.borrower.key})
+        raw_response = self.client.post(reverse('main_server_app:get_totals'),
+                                        {'data': request.dumps()})
 
-        response = json.loads(str(raw_response.content.decode()))
-        assert response['balance'] == -debt_value
-        assert response['user_debt'] == {self.lender.key: debt_value}
+        assert raw_response.status_code == 200
+        response = self.message_class.load_response(raw_response.content.decode())
+
+        self.message_class.verify(settings.PUBLIC_KEY, 'main', response.main_signature,
+                                  group_uuid=str(self.group.uuid),
+                                  user=self.user1.key,
+                                  user_balance=response.user_balance,
+                                  suggested_transactions=response.suggested_transactions
+                                  )
+
+        assert response.user_balance == 0
+        assert json.loads(response.suggested_transactions) == {}
+
+    def test_get_totals_one_confirmed_uome(self):
+        uome = UserDebt.objects.create(group=self.group, lender=self.user1,
+                                       borrower=self.user2, value=1000)
+
+        self.user1.balance = +uome.value
+        self.user1.save()
+        self.user2.balance = -uome.value
+        self.user2.save()
+
+        signature = self.message_class.sign(example_keys.C2_priv, 'user',
+                                            group_uuid=str(self.group.uuid),
+                                            user=self.user2.key
+                                            )
+
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid),
+                                                  user=self.user2.key,
+                                                  user_signature=signature)
+
+        raw_response = self.client.post(reverse('main_server_app:get_totals'),
+                                        {'data': request.dumps()})
+
+        assert raw_response.status_code == 200
+        response = self.message_class.load_response(raw_response.content.decode())
+
+        self.message_class.verify(settings.PUBLIC_KEY, 'main', response.main_signature,
+                                  group_uuid=str(self.group.uuid),
+                                  user=self.user2.key,
+                                  user_balance=response.user_balance,
+                                  suggested_transactions=response.suggested_transactions
+                                  )
+
+        assert response.user_balance == -uome.value
+        assert json.loads(response.suggested_transactions) == {self.user1.key: uome.value}

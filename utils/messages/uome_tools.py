@@ -29,5 +29,4 @@ class UOMeTools:
                         description, uome_uuid):
 
         array = [group_uuid, issuer, borrower, str(value), description, uome_uuid]
-        print(json.dumps(array))
         return rsa.verify(public_key, signature, *array)
