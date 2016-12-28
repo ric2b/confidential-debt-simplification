@@ -4,6 +4,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbid
 from django.db import transaction
 from django.conf import settings
 from collections import defaultdict
+from django.core.mail import send_mail
 import json
 import os
 
@@ -54,7 +55,18 @@ def invite_user(request):
     #Generate secret code
     secret_code = str(int.from_bytes(os.urandom(4), byteorder="big")) #Is it big enough?
     
+    #Set proxy URL
+    proxy_url = 'proxy.com'
+    
     #TODO: SEND EMAIL TO C2
+    send_mail(
+    'MutualDebt Registration',
+    inviter.key + ' ' + secret_code + ' ' + proxy_url,
+    'registration@example.com',
+    [invitee.email],
+    fail_silently=False, 
+    )
+    
    
     #Create Invitation entry
     invitation = Invitation.objects.create(group=group, inviter=inviter, invitee=invitee, signature_inviter=request.inviter_signature, secret_code=secret_code)
