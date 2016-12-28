@@ -62,7 +62,7 @@ class Connection:
         self._http_connection.request(
             method='POST',
             url='/fakeserver/' + request.message_type,
-            body=request.body
+            body=request.dumps
         )
 
     def get_response(self, response_impl):

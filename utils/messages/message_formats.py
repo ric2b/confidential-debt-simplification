@@ -93,10 +93,10 @@ class ConfirmJoin(Message):
 
     signature_formats = {
         'user': ['group_signature'],
-        'group': ['inviter_signature']
+        'group': ['inviter_signature'],
     }
-    
-    
+
+
 class EmailKeyMap(Message):
     """
     User C1 wants to know the mapping between email addresses and keys of his own group
@@ -129,20 +129,19 @@ class MainServerJoin(Message):
     request_params = {
         'group_uuid': str,
         'user': str,
-        'user_signature': str,
-        'group_signature': str
+        'group_signature': str,
+        'group_server':str,
     }
 
     response_params = {
         'group_uuid': str,
         'user': str,
-        'main_signature': str
+        'main_signature': str,
     }
 
     signature_formats = {
-        'user': ['group_uuid', 'user'],
-        'group': ['group_uuid', 'user'],
-        'main': ['group_uuid', 'user']
+        'group': ['group_uuid', 'user','group_server'],
+        'main': ['group_uuid', 'user'],
     }
 
 

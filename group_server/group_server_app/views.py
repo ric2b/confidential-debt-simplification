@@ -5,6 +5,7 @@ from django.db import transaction
 from django.conf import settings
 from collections import defaultdict
 from django.core.mail import send_mail
+from utils.messages.connection import Connection
 import json
 import os
 
@@ -58,7 +59,8 @@ def invite_user(request):
     #Set proxy URL
     proxy_url = 'proxy.com'
     
-    #TODO: SEND EMAIL TO C2
+    # SEND EMAIL TO C2
+    
     send_mail(
     'MutualDebt Registration',
     inviter.key + ' ' + secret_code + ' ' + proxy_url,
@@ -67,7 +69,6 @@ def invite_user(request):
     fail_silently=False, 
     )
     
-   
     #Create Invitation entry
     invitation = Invitation.objects.create(group=group, inviter=inviter, invitee=invitee, signature_inviter=request.inviter_signature, secret_code=secret_code)
     
@@ -143,13 +144,34 @@ def confirm_join(request):
     if user.confirmed:
         return HttpResponse('409 Conflict', status=409)
         
-    #Change user status to confirmed
-    user.confirmed = True
-    user.save()
+    #Confirm to main server successfull registration of user
+    main_server_url = 'address/' 
+    
+    group_signature = msg.MainServerJoin.sign(settings.PRIVATE_KEY, 'group', group_uuid=str(group.uuid), group_server=settings.PUBLIC_KEY, user=user.key)
+    
+    with Connection(main_server_url) as connection:
+        request_main = msg.MainServerJoin.make_request(group_uuid=str(group.uuid), user=user.key, group_signature=group_signature, group_server=settings.PUBLIC_KEY)
+        connection.request(request_main)
+        
+        
+        try:
+            response = connection.get_response(MainServerJoin)   
+
+        except DecodeError:
+            raise   #Put something here
+            
+        try:
+            msg.MainServerJoin.verify(settings.MAIN_PUBLIC_KEY, 'main', response.main_signature, group_uuid=str(group.uuid), user=user.key)
+        except InvalidSignature:
+            raise #Put something here    
     
     #Save user_signature
     invitation.signature_invitee = request.user_signature
     invitation.save()
+        
+    #Change user status to confirmed
+    user.confirmed = True
+    user.save()
 
     response = message_class.make_response(group_uuid=str(group.uuid), user=user.key)
 
