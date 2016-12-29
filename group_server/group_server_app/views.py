@@ -17,6 +17,10 @@ from utils.messages.message import DecodeError
 
 # Create your views here.
 
+class SecurityException(Exception):
+    pass
+
+
 def invite_user(request):
     message_class = msg.UserInvite
     
@@ -57,7 +61,7 @@ def invite_user(request):
     secret_code = str(int.from_bytes(os.urandom(4), byteorder="big")) #Is it big enough?
     
     #Set proxy URL
-    proxy_url = 'proxy.com'
+    proxy_url = 'proxy.com' #TODO: change to proxy address
     
     # SEND EMAIL TO C2
     
@@ -137,7 +141,7 @@ def confirm_join(request):
         
     try:
         invitation = Invitation.objects.get(invitee=user, group=group)
-        message_class.verify(user.key, 'user', request.user_signature, group_signature=invitation.signature_group)
+        message_class.verify(user.key, 'user', request.signature, group_server_signature=invitation.signature_group)
     except InvalidSignature:
         return HttpResponse('401 Unauthorized', status=401)  
         
@@ -145,25 +149,24 @@ def confirm_join(request):
         return HttpResponse('409 Conflict', status=409)
         
     #Confirm to main server successfull registration of user
-    main_server_url = 'address/' 
+    main_server_url = 'address/join-group' #TODO: change to real address
     
-    group_signature = msg.MainServerJoin.sign(settings.PRIVATE_KEY, 'group', group_uuid=str(group.uuid), group_server=settings.PUBLIC_KEY, user=user.key)
+    group_signature = msg.MainServerJoin.sign(settings.PRIVATE_KEY, 'group', group_uuid=str(group.uuid), user=user.key)
     
     with Connection(main_server_url) as connection:
-        request_main = msg.MainServerJoin.make_request(group_uuid=str(group.uuid), user=user.key, group_signature=group_signature, group_server=settings.PUBLIC_KEY)
+        request_main = msg.MainServerJoin.make_request(group_uuid=str(group.uuid), user=user.key, group_signature=group_signature)
         connection.request(request_main)
-        
         
         try:
             response = connection.get_response(MainServerJoin)   
 
         except DecodeError:
-            raise   #Put something here
+            raise SecurityException('Response format not correct')
             
         try:
             msg.MainServerJoin.verify(settings.MAIN_PUBLIC_KEY, 'main', response.main_signature, group_uuid=str(group.uuid), user=user.key)
         except InvalidSignature:
-            raise #Put something here    
+            raise SecurityException('Signature of the response is invalid')    
     
     #Save user_signature
     invitation.signature_invitee = request.user_signature

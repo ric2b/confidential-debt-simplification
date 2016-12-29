@@ -73,17 +73,19 @@ class GroupServerJoin(Message):
         'invite': ['group_uuid', 'inviter', 'user', 'user_email'],
         'group': ['inviter_signature']
     }
+    
 
 class ConfirmJoin(Message):
     """
-    User C2 received a correct response from the main server after a JOIN request and wants 
-    to confirm he is sucessfuly registerd in both the group server and the main server.
+    Sent to the Group server by a user to join a group in the Group server.
+    This can only be done after the user receives his secret code by the e-mail the
+    Group server sends after another user invites him.
     """
 
     request_params = {
         'group_uuid': str,
         'user': str,
-        'user_signature': str,
+        'signature': str,
     }
 
     response_params = {
@@ -92,8 +94,7 @@ class ConfirmJoin(Message):
     }
 
     signature_formats = {
-        'user': ['group_signature'],
-        'group': ['inviter_signature'],
+        'user': ['group_server_signature'],
     }
 
 
@@ -130,7 +131,6 @@ class MainServerJoin(Message):
         'group_uuid': str,
         'user': str,
         'group_signature': str,
-        'group_server':str,
     }
 
     response_params = {
@@ -140,7 +140,7 @@ class MainServerJoin(Message):
     }
 
     signature_formats = {
-        'group': ['group_uuid', 'user','group_server'],
+        'group': ['group_uuid', 'user'],
         'main': ['group_uuid', 'user'],
     }
 

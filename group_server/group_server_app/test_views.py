@@ -113,9 +113,9 @@ class ConfirmJoinTests(TestCase):
         inviter_signature = msg.UserInvite.sign(self.private_key1, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt')  
         group_signature = msg.GroupServerJoin.sign(settings.PRIVATE_KEY, 'group', inviter_signature=inviter_signature)
         invitation = Invitation.objects.create(group=self.group, invitee=self.user, inviter=self.inviter, signature_inviter=inviter_signature, signature_group=group_signature, secret_code='0000') 
-        invitee_signature = self.message_class.sign(self.private_key2, 'user', group_signature=invitation.signature_group) 
+        invitee_signature = self.message_class.sign(self.private_key2, 'user', group_server_signature=invitation.signature_group) 
          
-        request = self.message_class.make_request(group_uuid=str(self.group.uuid), user=self.user.key, user_signature=invitee_signature) 
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), user=self.user.key, signature=invitee_signature) 
         raw_response = self.client.post(reverse('group_server_app:confirm_join'),{'data': request.dumps()}) 
         assert raw_response.status_code == 200 
         
