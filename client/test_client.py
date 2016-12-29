@@ -76,11 +76,11 @@ class TestClient:
             )
         )
 
-    def test_invite_UserC2WhichAlreadyExists_RaisesClientExistsError(
+    def test_invite_UserC2WhichAlreadyExists_RaisesUserExistsError(
             self, client, mock_connection, predictable_signatures):
         mock_connection.get_response.side_effect = ConflictError()
 
-        with raises(c.ClientExistsError):
+        with raises(c.UserExistsError):
             client.invite("C2", "c2@email.com")
 
     def test_invite_UserC2ButInviterIsNotRegistered_RaisesForbiddenError(
@@ -177,9 +177,9 @@ class TestClient:
         with raises(c.PermissionDeniedError):
             client.join(secret_code="#123", inviter_id="C2")
 
-    def test_join_C1IsAlreadyRegistered_RaisesClientExistsError(
+    def test_join_C1IsAlreadyRegistered_RaisesUserExistsError(
             self, client, mock_connection, predictable_signatures):
         mock_connection.get_response.side_effect = ConflictError()
 
-        with raises(c.ClientExistsError):
+        with raises(c.UserExistsError):
             client.join(secret_code="#123", inviter_id="C2")

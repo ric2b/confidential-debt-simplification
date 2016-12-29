@@ -13,7 +13,7 @@ class ProtocolError(Exception):
         self.message = message
 
 
-class ClientExistsError(ProtocolError):
+class UserExistsError(ProtocolError):
     """ Raised when trying to add a client that already exists """
     pass
 
@@ -100,7 +100,7 @@ class Client:
                 connection.get_response(msg.UserInvite)
 
             except ConflictError:
-                raise ClientExistsError("Invited client is already registered")
+                raise UserExistsError("Invited client is already registered")
             except ForbiddenError:
                 raise PermissionDeniedError("Inviter is not registered")
             except UnauthorizedError:
@@ -133,7 +133,7 @@ class Client:
                 response = connection.get_response(msg.GroupServerJoin)
 
             except ConflictError:
-                raise ClientExistsError("User is already registered")
+                raise UserExistsError("User is already registered")
             except ForbiddenError:
                 raise PermissionDeniedError("Secret code was not accepted")
             except UnauthorizedError:
