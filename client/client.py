@@ -42,6 +42,9 @@ logger.setLevel(logging.DEBUG)
 class Client:
     """ Interface for the client """
 
+    # default group ID
+    GROUP_ID = "1"  # FIXME add support for multiple groups
+
     def __init__(self, group_server_url: str,
                  group_server_pubkey: str,
                  main_server_pubkey: str,
@@ -75,14 +78,14 @@ class Client:
         :raise ClientExistsError: if invitee is already registered
         """
         request = msg.UserInvite.make_request(
-            group_uuid="1",  # FIXME add support for multiple groups
+            group_uuid=self.GROUP_ID,
             inviter=self.id,
             invitee=invitee_id,
             invitee_email=invitee_email,
             inviter_signature=msg.UserInvite.sign(
                 key=self.key,
                 signature_name="inviter",
-                group_uuid="1",  # FIXME add support for multiple groups
+                group_uuid=self.GROUP_ID,
                 inviter=self.id,
                 invitee=invitee_id,
                 invitee_email=invitee_email,
