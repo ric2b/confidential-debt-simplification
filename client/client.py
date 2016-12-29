@@ -1,9 +1,9 @@
 import logging
 
+import utils.messages.message_formats as msg
 from utils.crypto import rsa
 from utils.messages.connection import connect, ConflictError, ForbiddenError, \
     UnauthorizedError
-from utils.messages.message_formats import UserInvite
 
 
 class ProtocolError(Exception):
@@ -45,15 +45,15 @@ class Client:
     def __init__(self, group_server_url: str,
                  group_server_pubkey: str,
                  main_server_pubkey: str,
-                 email: str, key_filepath=None, keys=("", "")):
+                 email: str, key_path=None, keys=("", "")):
 
         self.group_server_url = group_server_url
         self.group_server_pubkey = group_server_pubkey
         self.main_server_pubkey = main_server_pubkey
         self.email = email
 
-        if key_filepath:
-            self.key, self.pubkey = rsa.load_keys(key_filepath)
+        if key_path:
+            self.key, self.pubkey = rsa.load_keys(key_path)
         elif keys:
             self.key, self.pubkey = keys
         else:
@@ -74,12 +74,12 @@ class Client:
         :param invitee_email: invited user's email.
         :raise ClientExistsError: if invitee is already registered
         """
-        request = UserInvite.make_request(
+        request = msg.UserInvite.make_request(
             group_uuid="1",  # FIXME add support for multiple groups
             inviter=self.id,
             invitee=invitee_id,
             invitee_email=invitee_email,
-            inviter_signature=UserInvite.sign(
+            inviter_signature=msg.UserInvite.sign(
                 key=self.key,
                 signature_name="inviter",
                 group_uuid="1",  # FIXME add support for multiple groups
@@ -94,7 +94,7 @@ class Client:
 
             try:
                 # response can be ignored since it is only an acknowledgement
-                connection.get_response(UserInvite)
+                connection.get_response(msg.UserInvite)
 
             except ConflictError:
                 raise ClientExistsError("Invited client is already registered")
