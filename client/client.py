@@ -150,6 +150,8 @@ class Client:
                     user_email=self.email,
                 )
 
+                # TODO store signature
+
             except rsa.InvalidSignature:
                 raise SecurityError("Inviter signature is invalid")
 
@@ -161,6 +163,8 @@ class Client:
                     group_uuid=self.GROUP_ID,
                     inviter_signature=response.inviter_signature,
                 )
+
+                # TODO store signature
 
             except rsa.InvalidSignature:
                 raise SecurityError("Group server signature is invalid")
