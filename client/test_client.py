@@ -96,3 +96,90 @@ class TestClient:
 
         with raises(c.SecurityError):
             client.invite("C2", "c2@email.com")
+
+    def test_join_NewUserC1WithSecretCode123_SendsJoinRequestWithSignedCode123(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.return_value = \
+            msg.GroupServerJoin.make_response(
+                inviter="C2",
+                user="C1",
+                user_email="c1@email.com",
+                inviter_signature="pC2:1-C2-C1-c1@email.com",
+                group_signature="pG:pC2:1-C2-C1-c1@email.com",
+            )
+
+        client.join(secret_code="#123", inviter_id="C2")
+
+        mock_connection.request.assert_called_once_with(
+            msg.GroupServerJoin.make_request(
+                group_uuid="1",
+                user="C1",
+                secret_code="#123",
+                user_signature="pC1:1-C1-#123"
+            )
+        )
+
+    def test_join_ResponseHasCorrectSignatures_DoesNotRaiseAnyException(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.return_value = \
+            msg.GroupServerJoin.make_response(
+                inviter="C2",
+                user="C1",
+                user_email="c1@email.com",
+                inviter_signature="pC2:1-C2-C1-c1@email.com",
+                group_signature="pG:pC2:1-C2-C1-c1@email.com",
+            )
+
+        # assert does not raise anything
+        client.join(secret_code="#123", inviter_id="C2")
+
+    def test_join_ResponseHasInvalidInviterSignature_RaisesSecurityError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.return_value = \
+            msg.GroupServerJoin.make_response(
+                inviter="C2",
+                user="C1",
+                user_email="c1@email.com",
+                # signed by inviter C3 instead of C2
+                inviter_signature="pC3:1-C2-C1-c1@email.com",
+                group_signature="pG:pC2:1-C2-C1-c1@email.com",
+            )
+
+        with raises(c.SecurityError):
+            client.join(secret_code="#123", inviter_id="C2")
+
+    def test_join_ResponseHasInvalidGroupSignature_RaisesSecurityError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.return_value = \
+            msg.GroupServerJoin.make_response(
+                inviter="C2",
+                user="C1",
+                user_email="c1@email.com",
+                inviter_signature="pC2:1-C2-C1-c1@email.com",
+                # signed with invalid group server key
+                group_signature="pG1:pC2:1-C2-C1-c1@email.com",
+            )
+
+        with raises(c.SecurityError):
+            client.join(secret_code="#123", inviter_id="C2")
+
+    def test_join_RequestSignatureWasNotAcceptedByTheServer_RaisesSecurityError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.side_effect = UnauthorizedError()
+
+        with raises(c.SecurityError):
+            client.join(secret_code="#123", inviter_id="C2")
+
+    def test_join_SecretCodeWasNotAcceptedByTheServer_RaisesPermissionDeniedError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.side_effect = ForbiddenError()
+
+        with raises(c.PermissionDeniedError):
+            client.join(secret_code="#123", inviter_id="C2")
+
+    def test_join_C1IsAlreadyRegistered_RaisesClientExistsError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.side_effect = ConflictError()
+
+        with raises(c.ClientExistsError):
+            client.join(secret_code="#123", inviter_id="C2")

@@ -108,14 +108,62 @@ class Client:
 
     def join(self, secret_code: str, inviter_id: str):
         """
-        Tries to have the client join to a group.
+        Tries to have the client join a group.
 
         :param secret_code: secret code provided by email.
         :param inviter_id: ID of the inviter.
-        :raise SecurityError: if the main server signature or the inviter
-                              signature do not verify.
         """
-        pass
+        request = msg.GroupServerJoin.make_request(
+            group_uuid=self.GROUP_ID,
+            user=self.id,
+            secret_code=secret_code,
+            user_signature=msg.GroupServerJoin.sign(
+                key=self.key,
+                signature_name='user',
+                group_uuid=self.GROUP_ID,
+                user=self.id,
+                secret_code=secret_code
+            )
+        )
+
+        with connect(self.group_server_url) as connection:
+            connection.request(request)
+
+            try:
+                response = connection.get_response(msg.GroupServerJoin)
+
+            except ConflictError:
+                raise ClientExistsError("User is already registered")
+            except ForbiddenError:
+                raise PermissionDeniedError("Secret code was not accepted")
+            except UnauthorizedError:
+                raise SecurityError("Signature verification failed")
+
+            try:
+                msg.GroupServerJoin.verify(
+                    key=inviter_id,
+                    signature_name='invite',
+                    signature=response.inviter_signature,
+                    group_uuid=self.GROUP_ID,
+                    inviter=inviter_id,
+                    user=self.id,
+                    user_email=self.email,
+                )
+
+            except rsa.InvalidSignature:
+                raise SecurityError("Inviter signature is invalid")
+
+            try:
+                msg.GroupServerJoin.verify(
+                    key=self.group_server_pubkey,
+                    signature_name='group',
+                    signature=response.group_signature,
+                    group_uuid=self.GROUP_ID,
+                    inviter_signature=response.inviter_signature,
+                )
+
+            except rsa.InvalidSignature:
+                raise SecurityError("Group server signature is invalid")
 
     def issue_UOMe(self, borrower, amount):
         pass
