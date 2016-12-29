@@ -183,3 +183,37 @@ class TestClient:
 
         with raises(c.UserExistsError):
             client.join(secret_code="#123", inviter_id="C2")
+
+    def test_confirm_join_C1ConfirmsJoinBySendingInviteSignedByTheInviterTheGroupServerAnC1(
+            self, client, mock_connection, predictable_signatures):
+
+        client.confirm_join(group_signature="pG:pC2:1-C2-C1-c1@email.com")
+
+        mock_connection.request.assert_called_once_with(
+            msg.ConfirmJoin.make_request(
+                group_uuid="1",
+                user="C1",
+                signature="pC1:pG:pC2:1-C2-C1-c1@email.com"
+            )
+        )
+
+    def test_confirm_join_RequestSignatureWasNotAcceptedByTheServer_RaisesSecurityError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.side_effect = UnauthorizedError()
+
+        with raises(c.SecurityError):
+            client.confirm_join(group_signature="pG:pC2:1-C2-C1-c1@email.com")
+
+    def test_confirm_join_UserC2ConfirmsJoinForUserC3_RaisesPermissionDeniedError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.side_effect = ForbiddenError()
+
+        with raises(c.PermissionDeniedError):
+            client.confirm_join(group_signature="pG:pC2:1-C2-C1-c1@email.com")
+
+    def test_confirm_join_C1IsAlreadyRegistered_RaisesUserExistsError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.side_effect = ConflictError()
+
+        with raises(c.UserExistsError):
+            client.confirm_join(group_signature="pG:pC2:1-C2-C1-c1@email.com")

@@ -169,6 +169,40 @@ class Client:
             except rsa.InvalidSignature:
                 raise SecurityError("Group server signature is invalid")
 
+    def confirm_join(self, group_signature):
+        """
+        Sends a confirm join to the group server. This completes the joining
+        process. It assumes that both the inviter and group signatures have
+        already been verified. DO NOT CALL THIS METHOD WITH NON-VERIFIED
+        SIGNATURES!
+
+        :param group_signature: invite signed by the group server
+        """
+        request = msg.ConfirmJoin.make_request(
+            group_uuid=self.GROUP_ID,
+            user=self.id,
+            signature=msg.ConfirmJoin.sign(
+                key=self.key,
+                signature_name='user',
+                group_server_signature=group_signature
+            )
+        )
+
+        with connect(self.group_server_url) as connection:
+            connection.request(request)
+
+            try:
+                # response can be ignored since it is only an acknowledgement
+                connection.get_response(msg.UserInvite)
+
+            except ConflictError:
+                raise UserExistsError("User is already confirmed")
+            except ForbiddenError:
+                raise PermissionDeniedError("User can not confirm join of "
+                                            "another user")
+            except UnauthorizedError:
+                raise SecurityError("Signature verification failed")
+
     def issue_UOMe(self, borrower, amount):
         pass
 
