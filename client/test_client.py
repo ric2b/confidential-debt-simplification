@@ -310,3 +310,48 @@ class TestClient:
 
         with raises(c.SecurityError):
             client.cancel_UOMe(UOMe_number="#1234")
+
+    def test_accept_UOMe_WithValidUOMeID_SendsCorrectRequestAndSignatureVerifies(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.return_value = \
+            msg.AcceptUOMe.make_response(
+                uome_uuid="#1234",
+                main_signature="pM:1-C1-#1234",
+            )
+
+        client.accept_UOMe(UOMe_number="#1234")
+
+        mock_connection.request.assert_called_once_with(
+            msg.AcceptUOMe.make_request(
+                group_uuid="1",
+                user="C1",
+                uome_uuid="#1234",
+                user_signature="pC1:1-C1-#1234"
+            )
+        )
+
+    def test_accept_UOMe_RequestSignatureWasNotAcceptedByTheServer_RaisesSecurityError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.side_effect = UnauthorizedError()
+
+        with raises(c.SecurityError):
+            client.accept_UOMe(UOMe_number="#1234")
+
+    def test_accept_UOMe_UserDidNotHavePermissionToAcceptUOMe_RaisesPermissionDeniedError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.side_effect = ForbiddenError()
+
+        with raises(c.PermissionDeniedError):
+            client.accept_UOMe(UOMe_number="#1234")
+
+    def test_accept_UOMe_ResponseHasInvalidSignature_RaisesSecurityError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.return_value = \
+            msg.AcceptUOMe.make_response(
+                uome_uuid="#1234",
+                # signed by group server instead of main server
+                main_signature="pG:1-C1-#1234",
+            )
+
+        with raises(c.SecurityError):
+            client.accept_UOMe(UOMe_number="#1234")
