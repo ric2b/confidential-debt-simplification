@@ -5,19 +5,20 @@ from pytest import raises
 
 import client.client as c
 import utils.messages.message as m
+import utils.messages.message_formats as msg
 from client.client import Client
 from utils.messages.connection import ConflictError, ForbiddenError, \
     UnauthorizedError
-from utils.messages.message_formats import UserInvite
 
 
 class TestClient:
+
     @fixture
     def client(self):
         return Client(
             group_server_url="http://register.com",
-            group_server_pubkey="group1234",
-            main_server_pubkey="main1234",
+            group_server_pubkey="G",
+            main_server_pubkey="M",
             email="c1@email.com",
             keys=("pC1", "C1")
         )
@@ -44,7 +45,7 @@ class TestClient:
         client.invite("C2", "c2@email.com")
 
         mock_connection.request.assert_called_once_with(
-            UserInvite.make_request(
+            msg.UserInvite.make_request(
                 group_uuid="1",
                 inviter="C1",
                 invitee="C2",
@@ -55,21 +56,21 @@ class TestClient:
 
     def test_invite_UserC2WhichAlreadyExists_RaisesClientExistsError(
             self, client, mock_connection):
-        mock_connection.get_response = Mock(side_effect=ConflictError())
+        mock_connection.get_response.side_effect = ConflictError()
 
         with raises(c.ClientExistsError):
             client.invite("C2", "c2@email.com")
 
     def test_invite_UserC2ButInviterIsNotRegistered_RaisesForbiddenError(
             self, client, mock_connection):
-        mock_connection.get_response = Mock(side_effect=ForbiddenError())
+        mock_connection.get_response.side_effect = ForbiddenError()
 
         with raises(c.PermissionDeniedError):
             client.invite("C2", "c2@email.com")
 
     def test_invite_UserC2ButSignatureWasNotAccepted_RaisesSecurityError(
             self, client, mock_connection):
-        mock_connection.get_response = Mock(side_effect=UnauthorizedError())
+        mock_connection.get_response.side_effect = UnauthorizedError()
 
         with raises(c.SecurityError):
             client.invite("C2", "c2@email.com")
