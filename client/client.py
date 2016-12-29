@@ -3,7 +3,7 @@ import logging
 import utils.messages.message_formats as msg
 from utils.crypto import rsa
 from utils.messages.connection import connect, ConflictError, ForbiddenError, \
-    UnauthorizedError
+    UnauthorizedError, NotFoundError
 
 
 class ProtocolError(Exception):
@@ -31,6 +31,11 @@ class SecurityError(ProtocolError):
     Raised by the client to indicate an error due to security as
     occurred.
     """
+    pass
+
+
+class UOMeNotFoundError(ProtocolError):
+    """ Raised when trying to access an UOMe-ID that does not exist """
     pass
 
 
@@ -258,7 +263,47 @@ class Client:
         pass
 
     def cancel_UOMe(self, UOMe_number):
-        pass
+        request = msg.CancelUOMe.make_request(
+            group_uuid=self.GROUP_ID,
+            user=self.id,
+            uome_uuid=UOMe_number,
+            user_signature=msg.CancelUOMe.sign(
+                key=self.key,
+                signature_name='user',
+                group_uuid=self.GROUP_ID,
+                user=self.id,
+                uome_uuid=UOMe_number
+            )
+        )
+
+        with connect(self.group_server_url) as connection:
+            connection.request(request)
+
+            try:
+                response = connection.get_response(msg.CancelUOMe)
+
+            except NotFoundError:
+                raise UOMeNotFoundError("There is not UOMe with that ID")
+            except ForbiddenError:
+                raise PermissionDeniedError("User can not cancel the UOMe")
+            except UnauthorizedError:
+                raise SecurityError("Signature verification failed")
+
+            try:
+                msg.CancelUOMe.verify(
+                    key=self.main_server_pubkey,
+                    signature_name='main',
+                    signature=response.main_signature,
+                    group_uuid=self.GROUP_ID,
+                    user=self.id,
+                    uome_uuid=UOMe_number,
+                )
+
+                # TODO store signature
+                # TODO store the UOMe-ID
+
+            except rsa.InvalidSignature:
+                raise SecurityError("Main server signature is invalid")
 
     def totals(self):
         pass
