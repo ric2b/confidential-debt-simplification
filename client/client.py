@@ -203,8 +203,53 @@ class Client:
             except UnauthorizedError:
                 raise SecurityError("Signature verification failed")
 
-    def issue_UOMe(self, borrower, amount):
-        pass
+    def issue_UOMe(self, borrower: str, value: int, description: str):
+        request = msg.IssueUOMe.make_request(
+            group_uuid=self.GROUP_ID,
+            user=self.id,
+            borrower=borrower,
+            value=value,
+            description=description,
+            user_signature=msg.IssueUOMe.sign(
+                key=self.key,
+                signature_name='user',
+                group_uuid=self.GROUP_ID,
+                user=self.id,
+                borrower=borrower,
+                value=str(value),
+                description=description
+            )
+        )
+
+        with connect(self.group_server_url) as connection:
+            connection.request(request)
+
+            try:
+                response = connection.get_response(msg.IssueUOMe)
+
+            except ForbiddenError:
+                raise PermissionDeniedError("User can not issue UOMes")
+            except UnauthorizedError:
+                raise SecurityError("Signature verification failed")
+
+            try:
+                msg.IssueUOMe.verify(
+                    key=self.main_server_pubkey,
+                    signature_name='main',
+                    signature=response.main_signature,
+                    uome_uuid=response.uome_uuid,
+                    group_uuid=self.GROUP_ID,
+                    user=self.id,
+                    borrower=borrower,
+                    value=str(value),
+                    description=description,
+                )
+
+                # TODO store signature
+                # TODO store the UOMe-ID
+
+            except rsa.InvalidSignature:
+                raise SecurityError("Main server signature is invalid")
 
     def pending_UOMes(self):
         pass

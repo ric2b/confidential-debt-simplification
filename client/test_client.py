@@ -12,6 +12,7 @@ from utils.messages.connection import ConflictError, ForbiddenError, \
     UnauthorizedError
 
 
+# noinspection PyUnusedLocal
 class TestClient:
 
     @fixture
@@ -217,3 +218,50 @@ class TestClient:
 
         with raises(c.UserExistsError):
             client.confirm_join(group_signature="pG:pC2:1-C2-C1-c1@email.com")
+
+    def test_issue_UOMe_WithUserC2WithValue10_SendsUOMeAndSignedUOMe(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.return_value = \
+            msg.IssueUOMe.make_response(
+                uome_uuid="#1234",
+                main_signature="pM:#1234-1-C1-C2-10-debt",
+            )
+
+        client.issue_UOMe(borrower="C2", value=10, description="debt")
+
+        mock_connection.request.assert_called_once_with(
+            msg.IssueUOMe.make_request(
+                group_uuid="1",
+                user="C1",
+                borrower="C2",
+                value=10,
+                description="debt",
+                user_signature="pC1:1-C1-C2-10-debt"
+            )
+        )
+
+    def test_issue_UOMe_RequestSignatureWasNotAcceptedByTheServer_RaisesSecurityError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.side_effect = UnauthorizedError()
+
+        with raises(c.SecurityError):
+            client.issue_UOMe(borrower="C2", value=10, description="debt")
+
+    def test_issue_UOMe_UserDidNotHavePermissionToIssueUOMe_RaisesPermissionDeniedError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.side_effect = ForbiddenError()
+
+        with raises(c.PermissionDeniedError):
+            client.issue_UOMe(borrower="C2", value=10, description="debt")
+
+    def test_issue_UOMe_ResponseHasInvalidSignature_RaisesSecurityError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.return_value = \
+            msg.IssueUOMe.make_response(
+                uome_uuid="#1234",
+                # signed by group server instead of main server
+                main_signature="pG:#1234-1-C1-C2-10-debt",
+            )
+
+        with raises(c.SecurityError):
+            client.issue_UOMe(borrower="C2", value=10, description="debt")
