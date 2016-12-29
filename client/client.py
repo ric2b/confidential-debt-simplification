@@ -48,7 +48,7 @@ class Client:
     def __init__(self, group_server_url: str,
                  group_server_pubkey: str,
                  main_server_pubkey: str,
-                 email: str, key_path=None, keys=("", "")):
+                 email: str, key_path=None, keys=None):
 
         self.group_server_url = group_server_url
         self.group_server_pubkey = group_server_pubkey
