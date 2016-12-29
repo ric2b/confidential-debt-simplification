@@ -203,11 +203,8 @@ class AcceptUOMe(Message):
 
     request_params = {
         'group_uuid': str,
-        'lender': str,
         'user': str,
-        'value': int,
         'uome_uuid': str,
-        'description': str,
         'user_signature': str
     }
 
@@ -216,7 +213,7 @@ class AcceptUOMe(Message):
     }
 
     signature_formats = {
-        'user': ['group_uuid', 'lender', 'user', 'value', 'description', 'uome_uuid'],
+        'user': ['group_uuid', 'user', 'uome_uuid'],
         'main': ['group_uuid', 'user', 'uome_uuid']
     }
 
