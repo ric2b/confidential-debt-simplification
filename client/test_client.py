@@ -8,6 +8,7 @@ import utils.messages.message as m
 import utils.messages.message_formats as msg
 import utils.crypto.rsa as rsa
 from client.client import Client
+from client.uome import UOMe
 from utils.messages.connection import ConflictError, ForbiddenError, \
     UnauthorizedError
 
@@ -355,3 +356,58 @@ class TestClient:
 
         with raises(c.AuthenticationError):
             client.accept_UOMe(UOMe_number="#1234")
+
+    def test_pending_UOMes_SendsCorrectRequest(
+            self, client, mock_connection, predictable_signatures):
+
+        mock_connection.get_response.return_value = \
+            msg.GetPendingUOMes.make_response(
+                issued_by_user=[],
+                waiting_for_user=[],
+                main_signature="ignored"
+            )
+
+        client.pending_UOMes()
+
+        mock_connection.request.assert_called_once_with(
+            msg.GetPendingUOMes.make_request(
+                group_uuid="1",
+                user="C1",
+                user_signature="pC1:1-C1"
+            )
+        )
+
+    def test_pending_UOMes_ResponseContainsTwoUOMes_ReturnListWithTheTwoUOMes(
+            self, client, mock_connection, predictable_signatures):
+
+        mock_connection.get_response.return_value = \
+            msg.GetPendingUOMes.make_response(
+                issued_by_user=[
+                    ["1", "C1", "C2", 10, "debtC1C2", "sign1", "#1"],
+                    ["1", "C1", "C4", 10, "debtC1C4", "sign2", "#2"]
+                ],
+                waiting_for_user=[
+                    ["1", "C3", "C1", 10, "debtC3C1", "sign3", "#3"],
+                    ["1", "C5", "C1", 10, "debtC5C1", "sign4", "#4"]
+                ],
+                main_signature="ignored"
+            )
+
+        issued, waiting = client.pending_UOMes()
+
+        assert issued == [
+            UOMe("1", "C1", "C2", 10, "debtC1C2", "sign1", "#1"),
+            UOMe("1", "C1", "C4", 10, "debtC1C4", "sign2", "#2")
+        ]
+
+        assert waiting == [
+            UOMe("1", "C3", "C1", 10, "debtC3C1", "sign3", "#3"),
+            UOMe("1", "C5", "C1", 10, "debtC5C1", "sign4", "#4")
+        ]
+
+    def test_pending_UOMes_RequestSignatureWasNotAcceptedByTheServer_RaisesAuthenticationError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.side_effect = UnauthorizedError()
+
+        with raises(c.AuthenticationError):
+            client.pending_UOMes()

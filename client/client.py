@@ -1,6 +1,7 @@
 import logging
 
 import utils.messages.message_formats as msg
+from client import uome
 from utils.crypto import rsa
 from utils.messages.connection import connect, ConflictError, ForbiddenError, \
     UnauthorizedError, NotFoundError
@@ -238,7 +239,21 @@ class Client:
                 raise AuthenticationError("Main server signature is invalid")
 
     def pending_UOMes(self):
-        pass
+        request = self._make_request(request_type=msg.GetPendingUOMes)
+
+        with connect(self.group_server_url) as connection:
+            connection.request(request)
+
+            try:
+                response = connection.get_response(msg.GetPendingUOMes)
+
+            except UnauthorizedError:
+                raise AuthenticationError("Signature verification failed")
+
+            issued_by_user = list(map(uome.from_list, response.issued_by_user))
+            waiting_for_user = list(map(uome.from_list, response.waiting_for_user))
+
+            return issued_by_user, waiting_for_user
 
     def accept_UOMe(self, UOMe_number):
         # parameters that are common to the request and user signature
