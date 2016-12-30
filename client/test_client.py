@@ -70,10 +70,10 @@ class TestClient:
         mock_connection.request.assert_called_once_with(
             msg.UserInvite.make_request(
                 group_uuid="1",
-                inviter="C1",
+                user="C1",
                 invitee="C2",
                 invitee_email="c2@email.com",
-                inviter_signature="pC1:1-C1-C2-c2@email.com"
+                user_signature="pC1:1-C1-C2-c2@email.com"
             )
         )
 

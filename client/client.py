@@ -82,19 +82,16 @@ class Client:
         :param invitee_email: invited user's email.
         :raise ClientExistsError: if invitee is already registered
         """
-        request = msg.UserInvite.make_request(
-            group_uuid=self.GROUP_ID,
-            inviter=self.id,
-            invitee=invitee_id,
-            invitee_email=invitee_email,
-            inviter_signature=msg.UserInvite.sign(
-                key=self.key,
-                signature_name="inviter",
-                group_uuid=self.GROUP_ID,
-                inviter=self.id,
-                invitee=invitee_id,
-                invitee_email=invitee_email,
-            )
+        # parameters that are common to the request and user signature
+        parameters = {
+            'invitee': invitee_id,
+            'invitee_email': invitee_email
+        }
+
+        request = self._make_request(
+            request_type=msg.UserInvite,
+            request_params=parameters,
+            signature_params=parameters
         )
 
         with connect(self.group_server_url) as connection:
