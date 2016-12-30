@@ -32,26 +32,26 @@ class InviteUserTests(TestCase):
         self.inviter = User.objects.create(group=self.group, key=self.key, email='c1@example.pt', confirmed=True)
         
     def test_correct_input(self):
-        signature = self.message_class.sign(self.private_key, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
-        request = self.message_class.make_request(group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', inviter_signature=signature)
+        signature = self.message_class.sign(self.private_key, 'user', group_uuid=str(self.group.uuid), user=self.inviter.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), user=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', user_signature=signature)
         raw_response = self.client.post(reverse('group_server_app:invite_user'),{'data': request.dumps()})
         assert raw_response.status_code == 201
     
     def test_inviter_different_group_error(self):
-        signature = self.message_class.sign(self.private_key, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
-        request = self.message_class.make_request(group_uuid=str(self.group2.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', inviter_signature=signature)
+        signature = self.message_class.sign(self.private_key, 'user', group_uuid=str(self.group.uuid), user=self.inviter.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
+        request = self.message_class.make_request(group_uuid=str(self.group2.uuid), user=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', user_signature=signature)
         raw_response = self.client.post(reverse('group_server_app:invite_user'),{'data': request.dumps()})
         assert raw_response.status_code == 400
         
     def test_invalid_signature(self):
         signature = 'invalidsignature'
-        request = self.message_class.make_request(group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', inviter_signature=signature)
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), user=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', user_signature=signature)
         raw_response = self.client.post(reverse('group_server_app:invite_user'),{'data': request.dumps()})
         assert raw_response.status_code == 401
         
     def test_valid_user2_entry(self):
-        signature = self.message_class.sign(self.private_key, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
-        request = self.message_class.make_request(group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', inviter_signature=signature)
+        signature = self.message_class.sign(self.private_key, 'user', group_uuid=str(self.group.uuid), user=self.inviter.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), user=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', user_signature=signature)
         
         self.user2 = User.objects.create(group=self.group, key=request.invitee, email=request.invitee_email)
         
@@ -60,16 +60,16 @@ class InviteUserTests(TestCase):
        
     def test_invited_user_already_exists(self):
         self.invitee = User.objects.create(group=self.group, key=example_keys.C2_pub, email='c2@example.pt')
-        signature = self.message_class.sign(self.private_key, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
-        request = self.message_class.make_request(group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', inviter_signature=signature)
+        signature = self.message_class.sign(self.private_key, 'user', group_uuid=str(self.group.uuid), user=self.inviter.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), user=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', user_signature=signature)
         raw_response = self.client.post(reverse('group_server_app:invite_user'),{'data': request.dumps()})
         
         assert raw_response.status_code == 409
         
     def test_inviter_not_confirmed(self):
         inviter3 = User.objects.create(group=self.group, key=example_keys.C3_pub, email='c1@example.pt')
-        signature = self.message_class.sign(example_keys.C3_priv, 'inviter', group_uuid=str(self.group.uuid), inviter=inviter3.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
-        request = self.message_class.make_request(group_uuid=str(self.group.uuid), inviter=inviter3.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', inviter_signature=signature)
+        signature = self.message_class.sign(example_keys.C3_priv, 'user', group_uuid=str(self.group.uuid), user=inviter3.key, invitee=example_keys.C2_pub,invitee_email='c2@example.pt')
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), user=inviter3.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt', user_signature=signature)
         raw_response = self.client.post(reverse('group_server_app:invite_user'),{'data': request.dumps()})
         
         assert raw_response.status_code == 403        
@@ -86,7 +86,7 @@ class JoinGroupTests(TestCase):
         
     
     def test_correct_input(self):
-        signature = msg.UserInvite.sign(self.private_key1, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt')
+        signature = msg.UserInvite.sign(self.private_key1, 'user', group_uuid=str(self.group.uuid), user=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt')
         invitation = Invitation.objects.create(group=self.group, invitee=self.user, inviter=self.inviter, signature_inviter=signature, secret_code='0000')
         
         signature2 = self.message_class.sign(self.private_key2, 'user', group_uuid=str(self.group.uuid), user=self.user.key, secret_code='0000')
@@ -110,12 +110,12 @@ class ConfirmJoinTests(TestCase):
         
          
     def test_correct_input(self): 
-        inviter_signature = msg.UserInvite.sign(self.private_key1, 'inviter', group_uuid=str(self.group.uuid), inviter=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt')  
+        inviter_signature = msg.UserInvite.sign(self.private_key1, 'user', group_uuid=str(self.group.uuid), user=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt')  
         group_signature = msg.GroupServerJoin.sign(settings.PRIVATE_KEY, 'group', inviter_signature=inviter_signature)
         invitation = Invitation.objects.create(group=self.group, invitee=self.user, inviter=self.inviter, signature_inviter=inviter_signature, signature_group=group_signature, secret_code='0000') 
-        invitee_signature = self.message_class.sign(self.private_key2, 'user', group_server_signature=invitation.signature_group) 
+        invitee_signature = self.message_class.sign(self.private_key2, 'user', group_uuid=str(self.group.uuid), user=self.key2, group_server_signature=invitation.signature_group) 
          
-        request = self.message_class.make_request(group_uuid=str(self.group.uuid), user=self.user.key, signature=invitee_signature) 
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid), user=self.user.key, user_signature=invitee_signature) 
         raw_response = self.client.post(reverse('group_server_app:confirm_join'),{'data': request.dumps()}) 
         assert raw_response.status_code == 200 
         

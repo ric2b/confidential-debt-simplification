@@ -30,15 +30,15 @@ def invite_user(request):
         return HttpResponseBadRequest()
         
     try:  # check that the inviter belonging to group exists and return it
-        inviter = User.objects.get(key=request.inviter, group_id=request.group_uuid)
+        user = User.objects.get(key=request.user, group_id=request.group_uuid)
         group = Group.objects.get(pk=request.group_uuid)
     except (ValueError, ObjectDoesNotExist):
         return HttpResponseBadRequest()
         
     try:
-        message_class.verify(inviter.key, 'inviter', request.inviter_signature,
+        message_class.verify(user.key, 'user', request.user_signature,
                                  group_uuid=request.group_uuid,
-                                 inviter=request.inviter,
+                                 user=request.user,
                                  invitee=request.invitee,
                                  invitee_email=request.invitee_email)
     except InvalidSignature:
@@ -51,7 +51,7 @@ def invite_user(request):
         return HttpResponse('409 Conflict', status=409)
         
     #Check if the inviter is a registered (confirmed) user
-    if not inviter.confirmed:
+    if not user.confirmed:
         return HttpResponseForbidden()
         
     #Save invitee in the pending user database with his email (not yet confirmed)
@@ -67,18 +67,18 @@ def invite_user(request):
     
     send_mail(
     'MutualDebt Registration',
-    inviter.key + ' ' + secret_code + ' ' + proxy_url,
+    user.key + ' ' + secret_code + ' ' + proxy_url,
     'registration@example.com',
     [invitee.email],
     fail_silently=False, 
     )
     
     #Create Invitation entry
-    invitation = Invitation.objects.create(group=group, inviter=inviter, invitee=invitee, signature_inviter=request.inviter_signature, secret_code=secret_code)
+    invitation = Invitation.objects.create(group=group, inviter=user, invitee=invitee, signature_inviter=request.user_signature, secret_code=secret_code)
     
     # create the signature
     sig = message_class.sign(settings.PRIVATE_KEY, 'group', group_uuid=group.uuid,
-                             inviter=inviter.key, invitee=request.invitee, invitee_email=request.invitee_email)
+                             user=user.key, invitee=request.invitee, invitee_email=request.invitee_email)
 
     response = message_class.make_response(group_signature=sig)
     
@@ -141,7 +141,7 @@ def confirm_join(request):
         
     try:
         invitation = Invitation.objects.get(invitee=user, group=group)
-        message_class.verify(user.key, 'user', request.signature, group_server_signature=invitation.signature_group)
+        message_class.verify(user.key, 'user', request.user_signature, group_uuid=str(group.uuid), user=user.key, group_server_signature=invitation.signature_group)
     except InvalidSignature:
         return HttpResponse('401 Unauthorized', status=401)  
         
