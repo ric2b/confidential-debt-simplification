@@ -411,3 +411,65 @@ class TestClient:
 
         with raises(c.AuthenticationError):
             client.pending_UOMes()
+
+    def test_totals_SendsCorrectRequest(
+            self, client, mock_connection, predictable_signatures):
+
+        mock_connection.get_response.return_value = \
+            msg.CheckTotals.make_response(
+                user_balance=0,
+                suggested_transactions={},
+                main_signature="ignored"
+            )
+
+        client.totals()
+
+        mock_connection.request.assert_called_once_with(
+            msg.CheckTotals.make_request(
+                group_uuid="1",
+                user="C1",
+                user_signature="pC1:1-C1"
+            )
+        )
+
+    def test_totals_ResponseBalanceIs10AndUserMayPay5ToC2And5ToC3_ReturnedBalanceIs10(
+            self, client, mock_connection, predictable_signatures):
+
+        mock_connection.get_response.return_value = \
+            msg.CheckTotals.make_response(
+                user_balance=10,
+                suggested_transactions={"C2": 5, "C3": 5},
+                main_signature="ignored"
+            )
+
+        balance, transactions = client.totals()
+
+        assert balance == 10
+
+    def test_totals_ResponseBalanceIs10AndUserMayPay5ToC2And5ToC3_ReturnedTransactionAre5ToC2And5ToC3(
+            self, client, mock_connection, predictable_signatures):
+
+        mock_connection.get_response.return_value = \
+            msg.CheckTotals.make_response(
+                user_balance=10,
+                suggested_transactions={"C2": 5, "C3": 5},
+                main_signature="ignored"
+            )
+
+        balance, transactions = client.totals()
+
+        assert transactions == {"C2": 5, "C3": 5}
+
+    def test_totals_RequestSignatureWasNotAcceptedByTheServer_RaisesAuthenticationError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.side_effect = UnauthorizedError()
+
+        with raises(c.AuthenticationError):
+            client.totals()
+
+    def test_totals_UserDidNotHavePermissionToCheckTotals_RaisesPermissionDeniedError(
+            self, client, mock_connection, predictable_signatures):
+        mock_connection.get_response.side_effect = ForbiddenError()
+
+        with raises(c.PermissionDeniedError):
+            client.totals()

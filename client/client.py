@@ -334,7 +334,20 @@ class Client:
                 raise AuthenticationError("Main server signature is invalid")
 
     def totals(self):
-        pass
+        request = self._make_request(request_type=msg.CheckTotals)
+
+        with connect(self.group_server_url) as connection:
+            connection.request(request)
+
+            try:
+                response = connection.get_response(msg.CheckTotals)
+
+            except ForbiddenError:
+                raise PermissionDeniedError("User can not check totals")
+            except UnauthorizedError:
+                raise AuthenticationError("Signature verification failed")
+
+            return response.user_balance, response.suggested_transactions
 
     def _make_request(self, request_type, request_params=None,
                       signature_params=None):
