@@ -176,14 +176,9 @@ class Client:
 
         :param group_signature: invite signed by the group server
         """
-        request = msg.ConfirmJoin.make_request(
-            group_uuid=self.GROUP_ID,
-            user=self.id,
-            signature=msg.ConfirmJoin.sign(
-                key=self.key,
-                signature_name='user',
-                group_server_signature=group_signature
-            )
+        request = self._make_request(
+            request_type=msg.ConfirmJoin,
+            signature_params={'group_server_signature': group_signature}
         )
 
         with connect(self.group_server_url) as connection:
@@ -191,7 +186,7 @@ class Client:
 
             try:
                 # response can be ignored since it is only an acknowledgement
-                connection.get_response(msg.UserInvite)
+                connection.get_response(msg.ConfirmJoin)
 
             except ConflictError:
                 raise UserExistsError("User is already confirmed")
@@ -329,7 +324,14 @@ class Client:
     def totals(self):
         pass
 
-    def _make_request(self, request_type, request_params, signature_params):
+    def _make_request(self, request_type, request_params=None,
+                      signature_params=None):
+
+        if request_params is None:
+            request_params = {}
+        if signature_params is None:
+            signature_params = {}
+
         signature_params['group_uuid'] = self.GROUP_ID
         signature_params['user'] = self.id
 

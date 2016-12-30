@@ -194,7 +194,7 @@ class TestClient:
             msg.ConfirmJoin.make_request(
                 group_uuid="1",
                 user="C1",
-                signature="pC1:pG:pC2:1-C2-C1-c1@email.com"
+                user_signature="pC1:1-C1-pG:pC2:1-C2-C1-c1@email.com"
             )
         )
 
