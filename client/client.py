@@ -51,11 +51,13 @@ class Client:
     def __init__(self, group_server_url: str,
                  group_server_pubkey: str,
                  main_server_pubkey: str,
+                 proxy_server_url: str,
                  email: str, key_path=None, keys=None):
 
         self.group_server_url = group_server_url
         self.group_server_pubkey = group_server_pubkey
         self.main_server_pubkey = main_server_pubkey
+        self.proxy_server_url = proxy_server_url
         self.email = email
 
         if key_path:
@@ -64,9 +66,6 @@ class Client:
             self.key, self.pubkey = keys
         else:
             self.key, self.pubkey = rsa.generate_keys()
-
-        self.proxy_server_address = ""
-        self.proxy_server_pubkey = ""
 
     @property
     def id(self) -> str:
@@ -208,7 +207,7 @@ class Client:
             signature_params=parameters
         )
 
-        with connect(self.group_server_url) as connection:
+        with connect(self.proxy_server_url) as connection:
             connection.request(request)
 
             try:
@@ -241,7 +240,7 @@ class Client:
     def pending_UOMes(self):
         request = self._make_request(request_type=msg.GetPendingUOMes)
 
-        with connect(self.group_server_url) as connection:
+        with connect(self.proxy_server_url) as connection:
             connection.request(request)
 
             try:
@@ -265,7 +264,7 @@ class Client:
             signature_params=parameters
         )
 
-        with connect(self.group_server_url) as connection:
+        with connect(self.proxy_server_url) as connection:
             connection.request(request)
 
             try:
@@ -304,7 +303,7 @@ class Client:
             signature_params=parameters
         )
 
-        with connect(self.group_server_url) as connection:
+        with connect(self.proxy_server_url) as connection:
             connection.request(request)
 
             try:
@@ -336,7 +335,7 @@ class Client:
     def totals(self):
         request = self._make_request(request_type=msg.CheckTotals)
 
-        with connect(self.group_server_url) as connection:
+        with connect(self.proxy_server_url) as connection:
             connection.request(request)
 
             try:
