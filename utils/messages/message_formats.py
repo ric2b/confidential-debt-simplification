@@ -30,10 +30,10 @@ class UserInvite(Message):
 
     request_params = {
         'group_uuid': str,
-        'inviter': str,
+        'user': str,
         'invitee': str,
         'invitee_email': str,
-        'inviter_signature': str
+        'user_signature': str
     }
 
     response_params = {
@@ -41,8 +41,8 @@ class UserInvite(Message):
     }
 
     signature_formats = {
-        'inviter': ['group_uuid', 'inviter', 'invitee', 'invitee_email'],
-        'group': ['group_uuid', 'inviter', 'invitee', 'invitee_email']
+        'user': ['group_uuid', 'user', 'invitee', 'invitee_email'],
+        'group': ['group_uuid', 'user', 'invitee', 'invitee_email']
     }
 
 
@@ -85,7 +85,7 @@ class ConfirmJoin(Message):
     request_params = {
         'group_uuid': str,
         'user': str,
-        'signature': str
+        'user_signature': str
     }
 
     response_params = {
@@ -94,7 +94,7 @@ class ConfirmJoin(Message):
     }
 
     signature_formats = {
-        'user': ['group_server_signature'],
+        'user': ['group_uuid', 'user', 'group_server_signature'],
     }
 
 
