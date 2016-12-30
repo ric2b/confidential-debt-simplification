@@ -85,7 +85,7 @@ class ConfirmJoin(Message):
     request_params = {
         'group_uuid': str,
         'user': str,
-        'signature': str
+        'user_signature': str
     }
 
     response_params = {
@@ -94,7 +94,7 @@ class ConfirmJoin(Message):
     }
 
     signature_formats = {
-        'user': ['group_server_signature'],
+        'user': ['group_uuid', 'user', 'group_server_signature'],
     }
 
 
