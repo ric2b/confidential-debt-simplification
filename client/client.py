@@ -118,17 +118,13 @@ class Client:
         :param secret_code: secret code provided by email.
         :param inviter_id: ID of the inviter.
         """
-        request = msg.GroupServerJoin.make_request(
-            group_uuid=self.GROUP_ID,
-            user=self.id,
-            secret_code=secret_code,
-            user_signature=msg.GroupServerJoin.sign(
-                key=self.key,
-                signature_name='user',
-                group_uuid=self.GROUP_ID,
-                user=self.id,
-                secret_code=secret_code
-            )
+        # parameters that are common to the request and user signature
+        parameters = {'secret_code': secret_code}
+
+        request = self._make_request(
+            request_type=msg.GroupServerJoin,
+            request_params=parameters,
+            signature_params=parameters
         )
 
         with connect(self.group_server_url) as connection:
@@ -209,21 +205,17 @@ class Client:
                 raise SecurityError("Signature verification failed")
 
     def issue_UOMe(self, borrower: str, value: int, description: str):
-        request = msg.IssueUOMe.make_request(
-            group_uuid=self.GROUP_ID,
-            user=self.id,
-            borrower=borrower,
-            value=value,
-            description=description,
-            user_signature=msg.IssueUOMe.sign(
-                key=self.key,
-                signature_name='user',
-                group_uuid=self.GROUP_ID,
-                user=self.id,
-                borrower=borrower,
-                value=str(value),
-                description=description
-            )
+        # parameters that are common to the request and user signature
+        parameters = {
+            'borrower': borrower,
+            'value': value,
+            'description': description
+        }
+
+        request = self._make_request(
+            request_type=msg.IssueUOMe,
+            request_params=parameters,
+            signature_params=parameters
         )
 
         with connect(self.group_server_url) as connection:
@@ -260,17 +252,13 @@ class Client:
         pass
 
     def accept_UOMe(self, UOMe_number):
-        request = msg.AcceptUOMe.make_request(
-            group_uuid=self.GROUP_ID,
-            user=self.id,
-            uome_uuid=UOMe_number,
-            user_signature=msg.AcceptUOMe.sign(
-                key=self.key,
-                signature_name='user',
-                group_uuid=self.GROUP_ID,
-                user=self.id,
-                uome_uuid=UOMe_number
-            )
+        # parameters that are common to the request and user signature
+        parameters = {'uome_uuid': UOMe_number}
+
+        request = self._make_request(
+            request_type=msg.AcceptUOMe,
+            request_params=parameters,
+            signature_params=parameters
         )
 
         with connect(self.group_server_url) as connection:
@@ -303,17 +291,13 @@ class Client:
                 raise SecurityError("Main server signature is invalid")
 
     def cancel_UOMe(self, UOMe_number):
-        request = msg.CancelUOMe.make_request(
-            group_uuid=self.GROUP_ID,
-            user=self.id,
-            uome_uuid=UOMe_number,
-            user_signature=msg.CancelUOMe.sign(
-                key=self.key,
-                signature_name='user',
-                group_uuid=self.GROUP_ID,
-                user=self.id,
-                uome_uuid=UOMe_number
-            )
+        # parameters that are common to the request and user signature
+        parameters = {'uome_uuid': UOMe_number}
+
+        request = self._make_request(
+            request_type=msg.CancelUOMe,
+            request_params=parameters,
+            signature_params=parameters
         )
 
         with connect(self.group_server_url) as connection:
@@ -347,3 +331,17 @@ class Client:
 
     def totals(self):
         pass
+
+    def _make_request(self, request_type, request_params, signature_params):
+        signature_params['group_uuid'] = self.GROUP_ID
+        signature_params['user'] = self.id
+
+        request_params['group_uuid'] = self.GROUP_ID
+        request_params['user'] = self.id
+        request_params['user_signature'] = request_type.sign(
+            key=self.key,
+            signature_name='user',
+            **signature_params
+        )
+
+        return request_type.make_request(**request_params)
