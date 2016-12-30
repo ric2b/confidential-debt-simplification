@@ -91,11 +91,11 @@ class TestClient:
         with raises(c.PermissionDeniedError):
             client.invite("C2", "c2@email.com")
 
-    def test_invite_UserC2ButSignatureWasNotAccepted_RaisesSecurityError(
+    def test_invite_UserC2ButSignatureWasNotAccepted_RaisesAuthenticationError(
             self, client, mock_connection, predictable_signatures):
         mock_connection.get_response.side_effect = UnauthorizedError()
 
-        with raises(c.SecurityError):
+        with raises(c.AuthenticationError):
             client.invite("C2", "c2@email.com")
 
     def test_join_NewUserC1WithSecretCode123_SendsJoinRequestWithSignedCode123(
@@ -134,7 +134,7 @@ class TestClient:
         # assert does not raise anything
         client.join(secret_code="#123", inviter_id="C2")
 
-    def test_join_ResponseHasInvalidInviterSignature_RaisesSecurityError(
+    def test_join_ResponseHasInvalidInviterSignature_RaisesAuthenticationError(
             self, client, mock_connection, predictable_signatures):
         mock_connection.get_response.return_value = \
             msg.GroupServerJoin.make_response(
@@ -146,10 +146,10 @@ class TestClient:
                 group_signature="pG:pC2:1-C2-C1-c1@email.com",
             )
 
-        with raises(c.SecurityError):
+        with raises(c.AuthenticationError):
             client.join(secret_code="#123", inviter_id="C2")
 
-    def test_join_ResponseHasInvalidGroupSignature_RaisesSecurityError(
+    def test_join_ResponseHasInvalidGroupSignature_RaisesAuthenticationError(
             self, client, mock_connection, predictable_signatures):
         mock_connection.get_response.return_value = \
             msg.GroupServerJoin.make_response(
@@ -161,14 +161,14 @@ class TestClient:
                 group_signature="pG1:pC2:1-C2-C1-c1@email.com",
             )
 
-        with raises(c.SecurityError):
+        with raises(c.AuthenticationError):
             client.join(secret_code="#123", inviter_id="C2")
 
-    def test_join_RequestSignatureWasNotAcceptedByTheServer_RaisesSecurityError(
+    def test_join_RequestSignatureWasNotAcceptedByTheServer_RaisesAuthenticationError(
             self, client, mock_connection, predictable_signatures):
         mock_connection.get_response.side_effect = UnauthorizedError()
 
-        with raises(c.SecurityError):
+        with raises(c.AuthenticationError):
             client.join(secret_code="#123", inviter_id="C2")
 
     def test_join_SecretCodeWasNotAcceptedByTheServer_RaisesPermissionDeniedError(
@@ -198,11 +198,11 @@ class TestClient:
             )
         )
 
-    def test_confirm_join_RequestSignatureWasNotAcceptedByTheServer_RaisesSecurityError(
+    def test_confirm_join_RequestSignatureWasNotAcceptedByTheServer_RaisesAuthenticationError(
             self, client, mock_connection, predictable_signatures):
         mock_connection.get_response.side_effect = UnauthorizedError()
 
-        with raises(c.SecurityError):
+        with raises(c.AuthenticationError):
             client.confirm_join(group_signature="pG:pC2:1-C2-C1-c1@email.com")
 
     def test_confirm_join_UserC2ConfirmsJoinForUserC3_RaisesPermissionDeniedError(
@@ -240,11 +240,11 @@ class TestClient:
             )
         )
 
-    def test_issue_UOMe_RequestSignatureWasNotAcceptedByTheServer_RaisesSecurityError(
+    def test_issue_UOMe_RequestSignatureWasNotAcceptedByTheServer_RaisesAuthenticationError(
             self, client, mock_connection, predictable_signatures):
         mock_connection.get_response.side_effect = UnauthorizedError()
 
-        with raises(c.SecurityError):
+        with raises(c.AuthenticationError):
             client.issue_UOMe(borrower="C2", value=10, description="debt")
 
     def test_issue_UOMe_UserDidNotHavePermissionToIssueUOMe_RaisesPermissionDeniedError(
@@ -254,7 +254,7 @@ class TestClient:
         with raises(c.PermissionDeniedError):
             client.issue_UOMe(borrower="C2", value=10, description="debt")
 
-    def test_issue_UOMe_ResponseHasInvalidSignature_RaisesSecurityError(
+    def test_issue_UOMe_ResponseHasInvalidSignature_RaisesAuthenticationError(
             self, client, mock_connection, predictable_signatures):
         mock_connection.get_response.return_value = \
             msg.IssueUOMe.make_response(
@@ -263,7 +263,7 @@ class TestClient:
                 main_signature="pG:#1234-1-C1-C2-10-debt",
             )
 
-        with raises(c.SecurityError):
+        with raises(c.AuthenticationError):
             client.issue_UOMe(borrower="C2", value=10, description="debt")
 
     def test_cancel_UOMe_WithValidUOMeID_SendsCorrectRequestAndSignatureVerifies(
@@ -285,11 +285,11 @@ class TestClient:
             )
         )
 
-    def test_cancel_UOMe_RequestSignatureWasNotAcceptedByTheServer_RaisesSecurityError(
+    def test_cancel_UOMe_RequestSignatureWasNotAcceptedByTheServer_RaisesAuthenticationError(
             self, client, mock_connection, predictable_signatures):
         mock_connection.get_response.side_effect = UnauthorizedError()
 
-        with raises(c.SecurityError):
+        with raises(c.AuthenticationError):
             client.cancel_UOMe(UOMe_number="#1234")
 
     def test_cancel_UOMe_UserDidNotHavePermissionToCancelUOMe_RaisesPermissionDeniedError(
@@ -299,7 +299,7 @@ class TestClient:
         with raises(c.PermissionDeniedError):
             client.cancel_UOMe(UOMe_number="#1234")
 
-    def test_cancel_UOMe_ResponseHasInvalidSignature_RaisesSecurityError(
+    def test_cancel_UOMe_ResponseHasInvalidSignature_RaisesAuthenticationError(
             self, client, mock_connection, predictable_signatures):
         mock_connection.get_response.return_value = \
             msg.CancelUOMe.make_response(
@@ -308,7 +308,7 @@ class TestClient:
                 main_signature="pG:1-C1-#1234",
             )
 
-        with raises(c.SecurityError):
+        with raises(c.AuthenticationError):
             client.cancel_UOMe(UOMe_number="#1234")
 
     def test_accept_UOMe_WithValidUOMeID_SendsCorrectRequestAndSignatureVerifies(
@@ -330,11 +330,11 @@ class TestClient:
             )
         )
 
-    def test_accept_UOMe_RequestSignatureWasNotAcceptedByTheServer_RaisesSecurityError(
+    def test_accept_UOMe_RequestSignatureWasNotAcceptedByTheServer_RaisesAuthenticationError(
             self, client, mock_connection, predictable_signatures):
         mock_connection.get_response.side_effect = UnauthorizedError()
 
-        with raises(c.SecurityError):
+        with raises(c.AuthenticationError):
             client.accept_UOMe(UOMe_number="#1234")
 
     def test_accept_UOMe_UserDidNotHavePermissionToAcceptUOMe_RaisesPermissionDeniedError(
@@ -344,7 +344,7 @@ class TestClient:
         with raises(c.PermissionDeniedError):
             client.accept_UOMe(UOMe_number="#1234")
 
-    def test_accept_UOMe_ResponseHasInvalidSignature_RaisesSecurityError(
+    def test_accept_UOMe_ResponseHasInvalidSignature_RaisesAuthenticationError(
             self, client, mock_connection, predictable_signatures):
         mock_connection.get_response.return_value = \
             msg.AcceptUOMe.make_response(
@@ -353,5 +353,5 @@ class TestClient:
                 main_signature="pG:1-C1-#1234",
             )
 
-        with raises(c.SecurityError):
+        with raises(c.AuthenticationError):
             client.accept_UOMe(UOMe_number="#1234")

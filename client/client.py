@@ -26,11 +26,8 @@ class PermissionDeniedError(ProtocolError):
     pass
 
 
-class SecurityError(ProtocolError):
-    """
-    Raised by the client to indicate an error due to security as
-    occurred.
-    """
+class AuthenticationError(ProtocolError):
+    """ Raised when the client fails to authenticate with the server """
     pass
 
 
@@ -106,7 +103,7 @@ class Client:
             except ForbiddenError:
                 raise PermissionDeniedError("Inviter is not registered")
             except UnauthorizedError:
-                raise SecurityError("Signature verification failed")
+                raise AuthenticationError("Signature verification failed")
 
     def join(self, secret_code: str, inviter_id: str):
         """
@@ -135,7 +132,7 @@ class Client:
             except ForbiddenError:
                 raise PermissionDeniedError("Secret code was not accepted")
             except UnauthorizedError:
-                raise SecurityError("Signature verification failed")
+                raise AuthenticationError("Signature verification failed")
 
             try:
                 msg.GroupServerJoin.verify(
@@ -151,7 +148,7 @@ class Client:
                 # TODO store signature
 
             except rsa.InvalidSignature:
-                raise SecurityError("Inviter signature is invalid")
+                raise AuthenticationError("Inviter signature is invalid")
 
             try:
                 msg.GroupServerJoin.verify(
@@ -165,7 +162,7 @@ class Client:
                 # TODO store signature
 
             except rsa.InvalidSignature:
-                raise SecurityError("Group server signature is invalid")
+                raise AuthenticationError("Group server signature is invalid")
 
     def confirm_join(self, group_signature):
         """
@@ -194,7 +191,7 @@ class Client:
                 raise PermissionDeniedError("User can not confirm join of "
                                             "another user")
             except UnauthorizedError:
-                raise SecurityError("Signature verification failed")
+                raise AuthenticationError("Signature verification failed")
 
     def issue_UOMe(self, borrower: str, value: int, description: str):
         # parameters that are common to the request and user signature
@@ -219,7 +216,7 @@ class Client:
             except ForbiddenError:
                 raise PermissionDeniedError("User can not issue UOMes")
             except UnauthorizedError:
-                raise SecurityError("Signature verification failed")
+                raise AuthenticationError("Signature verification failed")
 
             try:
                 msg.IssueUOMe.verify(
@@ -238,7 +235,7 @@ class Client:
                 # TODO store the UOMe-ID
 
             except rsa.InvalidSignature:
-                raise SecurityError("Main server signature is invalid")
+                raise AuthenticationError("Main server signature is invalid")
 
     def pending_UOMes(self):
         pass
@@ -264,7 +261,7 @@ class Client:
             except ForbiddenError:
                 raise PermissionDeniedError("User can not accept the UOMe")
             except UnauthorizedError:
-                raise SecurityError("Signature verification failed")
+                raise AuthenticationError("Signature verification failed")
 
             try:
                 msg.AcceptUOMe.verify(
@@ -280,7 +277,7 @@ class Client:
                 # TODO store the UOMe-ID
 
             except rsa.InvalidSignature:
-                raise SecurityError("Main server signature is invalid")
+                raise AuthenticationError("Main server signature is invalid")
 
     def cancel_UOMe(self, UOMe_number):
         # parameters that are common to the request and user signature
@@ -303,7 +300,7 @@ class Client:
             except ForbiddenError:
                 raise PermissionDeniedError("User can not cancel the UOMe")
             except UnauthorizedError:
-                raise SecurityError("Signature verification failed")
+                raise AuthenticationError("Signature verification failed")
 
             try:
                 msg.CancelUOMe.verify(
@@ -319,7 +316,7 @@ class Client:
                 # TODO store the UOMe-ID
 
             except rsa.InvalidSignature:
-                raise SecurityError("Main server signature is invalid")
+                raise AuthenticationError("Main server signature is invalid")
 
     def totals(self):
         pass
