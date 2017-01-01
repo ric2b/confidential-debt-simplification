@@ -159,6 +159,7 @@ class ConfirmUOMe(Message):
     request_params = {
         'group_uuid': str,
         'user': str,
+        'uome_uuid': str,
         'user_signature': str
     }
 
