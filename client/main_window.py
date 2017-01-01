@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
     def issue_uome(self):
         if not self._uome_dialog:
             self._uome_dialog = UOMeDialog(self.client)
-            self._uome_dialog.show()
+        self._uome_dialog.show()
 
     def invite(self):
         print("invite")
