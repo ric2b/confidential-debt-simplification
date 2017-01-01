@@ -1,4 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow
+
+from invite_dialog import InviteDialog
 from main_design import Ui_MainWindow
 from uome_dialog import UOMeDialog
 
@@ -14,6 +16,7 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
 
         self._uome_dialog = None
+        self._invite_dialog = None
 
         self.ui.uome_button.clicked.connect(self.issue_uome)
         self.ui.invite_button.clicked.connect(self.invite)
@@ -27,7 +30,9 @@ class MainWindow(QMainWindow):
         self._uome_dialog.show()
 
     def invite(self):
-        print("invite")
+        if not self._invite_dialog:
+            self._invite_dialog = InviteDialog(self.client)
+        self._invite_dialog.show()
 
     def refresh(self):
         print("refresh")
