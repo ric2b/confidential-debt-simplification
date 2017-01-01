@@ -168,7 +168,7 @@ class ConfirmUOMe(Message):
     }
 
     signature_formats = {
-        'user': ['uome_uuid', 'group_uuid', 'user', 'borrower', 'value', 'description']
+        'user': ['group_uuid', 'user', 'borrower', 'value', 'description', 'uome_uuid']
     }
 
 
@@ -237,7 +237,7 @@ class AcceptUOMe(Message):
     }
 
     signature_formats = {
-        'user': ['group_uuid', 'user', 'uome_uuid'],
+        'user': ['group_uuid', 'issuer', 'user', 'value', 'description', 'uome_uuid'],
         'main': ['group_uuid', 'user', 'uome_uuid']
     }
 
