@@ -47,8 +47,8 @@ class PendingDialog(QDialog):
                 self.client.accept_UOMe(item.text())
                 remove_rows.append(row)
 
-        for row in remove_rows:
-            self.ui.table.removeRow(row)
+        for i, row in enumerate(remove_rows):
+            self.ui.table.removeRow(row - i)
 
     def select_all(self):
         for row in range(self.ui.table.rowCount()):
