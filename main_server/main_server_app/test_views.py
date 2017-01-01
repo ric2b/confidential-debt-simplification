@@ -149,10 +149,7 @@ class IssueUOMeTests(TestCase):
     def test_add_first_uome(self):
         signature = self.message_class.sign(self.private_key, 'user',
                                             group_uuid=str(self.group.uuid),
-                                            user=self.user.key,
-                                            borrower=self.borrower.key,
-                                            value=1000,
-                                            description='my description')
+                                            user=self.user.key)
 
         request = self.message_class.make_request(group_uuid=str(self.group.uuid),
                                                   user=self.user.key,
@@ -175,6 +172,50 @@ class IssueUOMeTests(TestCase):
                                   borrower=self.borrower.key,
                                   value=1000,
                                   description='my description')
+
+        uome = UOMe.objects.get(pk=response.uome_uuid)
+        assert uome.issuer_signature == ''
+
+
+class ConfirmUOMeTests(TestCase):
+    def setUp(self):
+        self.message_class = msg.ConfirmUOMe
+        self.private_key, self.key = example_keys.C1_priv, example_keys.C1_pub
+        self.group = Group.objects.create(name='test', key=example_keys.G1_pub)
+        self.user = User.objects.create(group=self.group, key=self.key)
+        self.borrower = User.objects.create(group=self.group, key=example_keys.C2_pub)
+
+    def test_confirm_first_uome(self):
+        uome = UOMe.objects.create(group=self.group, lender=self.user,
+                                   borrower=self.borrower,
+                                   value=10,
+                                   description='test')
+
+        issuer_signature = UOMeTools.sign(self.private_key,
+                                          group_uuid=str(self.group.uuid),
+                                          issuer=self.user.key,
+                                          borrower=self.borrower.key,
+                                          value=10,
+                                          description='test',
+                                          uome_uuid=str(uome.uuid))
+
+        request = self.message_class.make_request(group_uuid=str(self.group.uuid),
+                                                  user=self.user.key,
+                                                  uome_uuid=str(uome.uuid),
+                                                  user_signature=issuer_signature)
+
+        raw_response = self.client.post(reverse('main_server_app:confirm_uome'),
+                                        {'data': request.dumps()})
+
+        assert raw_response.status_code == 200
+
+        response = self.message_class.load_response(raw_response.content.decode())
+
+        assert response.group_uuid == str(self.group.uuid)
+        assert response.user == self.user.key
+
+        uome = UOMe.objects.get(pk=uome.uuid)
+        assert uome.issuer_signature == issuer_signature
 
 
 class CancelUOMeTests(TestCase):

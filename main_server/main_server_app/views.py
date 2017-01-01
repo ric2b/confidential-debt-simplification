@@ -116,15 +116,15 @@ def issue_uome(request):
     description = request.description[:settings.UOME_DESCRIPTION_MAX_LENGTH]
 
     try:  # verify the signatures
-        message_class.verify(user.key, 'user', request.user_signature, value=value,
-                             description=description, group_uuid=str(group.uuid),
-                             user=user.key, borrower=borrower.key)
+        message_class.verify(user.key, 'user', request.user_signature,
+                             group_uuid=str(group.uuid),
+                             user=user.key)
     except InvalidSignature:
         return HttpResponse('401 Unauthorized', status=401)
 
     # TODO: the description can leak information, maybe it should be encrypted
-    uome = UOMe(group=group, lender=user, borrower=borrower, value=value,
-                description=description)
+    uome = UOMe.objects.create(group=group, lender=user, borrower=borrower, value=value,
+                               description=description)
 
     # create the signature
     sig = message_class.sign(settings.PRIVATE_KEY, 'main', group_uuid=group.uuid,
@@ -136,6 +136,44 @@ def issue_uome(request):
 
     # send the response, the status for success is 201 Created
     return HttpResponse(response.dumps(), status=201)
+
+
+@require_POST
+def confirm_uome(request):
+    message_class = msg.ConfirmUOMe
+
+    try:  # convert the message into the request object
+        request = message_class.load_request(request.POST['data'])
+    except DecodeError:
+        return HttpResponseBadRequest()
+
+    try:  # check that the group exists and get it
+        group = Group.objects.get(pk=request.group_uuid)
+        user = User.objects.filter(group=group, key=request.user).first()
+        uome = UOMe.objects.get(pk=request.uome_uuid)
+    except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
+        return HttpResponseBadRequest()
+
+    try:  # verify the signatures
+        message_class.verify(user.key, 'user', request.user_signature,
+                             group_uuid=str(uome.group.uuid),
+                             user=uome.lender.key,
+                             borrower=uome.borrower.key,
+                             value=uome.value,
+                             description=uome.description,
+                             uome_uuid=str(uome.uuid))
+    except InvalidSignature:
+        return HttpResponse('401 Unauthorized', status=401)
+
+    # TODO: the description can leak information, maybe it should be encrypted
+    uome.issuer_signature = request.user_signature
+    uome.save()
+
+    # user created, create the response object
+    response = message_class.make_response(group_uuid=str(group.uuid), user=user.key)
+
+    # send the response, the status for success is 200 OK
+    return HttpResponse(response.dumps(), status=200)
 
 
 @require_POST

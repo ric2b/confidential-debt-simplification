@@ -48,8 +48,8 @@ class UOMe(models.Model):
     issuing_date = models.DateField('date issued', auto_now_add=True)
 
     # TODO: add blank=False all over the place?
-    issuer_signature = models.CharField(max_length=signature_length, blank=False)
-    borrower_signature = models.CharField(max_length=signature_length, default="")
+    issuer_signature = models.CharField(max_length=signature_length, default='')
+    borrower_signature = models.CharField(max_length=signature_length, default='')
 
     def __str__(self):
         return "%.3f€ from %s to %s: %s" % (int(self.value)/100, self.borrower, self.lender, self.description)
