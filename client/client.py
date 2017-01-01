@@ -1,7 +1,7 @@
 import logging
 
 import utils.messages.message_formats as msg
-from client import uome
+import uome
 from utils.crypto import rsa
 from utils.messages.connection import connect, ConflictError, ForbiddenError, \
     UnauthorizedError, NotFoundError
