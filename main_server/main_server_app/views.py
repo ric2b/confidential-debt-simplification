@@ -4,6 +4,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbid
     Http404
 from django.db import transaction
 from django.conf import settings
+from django.views.decorators.http import require_POST, require_GET
 from collections import defaultdict
 import json
 
@@ -21,7 +22,7 @@ from utils.messages.uome_tools import UOMeTools
 # TODO: RESTify this stuff: adequate error codes, http verbs and reponses:
 # https://github.com/dsi-dev-sessions/02-rest-microservices/blob/master/slides.pdf
 
-
+@require_POST
 def register_group(request):
     # convert the message into the request object
     try:
@@ -54,6 +55,7 @@ def register_group(request):
     return HttpResponse(response.dumps(), status=201)
 
 
+@require_POST
 def join_group(request):
     message_class = msg.MainServerJoin
 
@@ -91,6 +93,7 @@ def join_group(request):
     return HttpResponse(response.dumps(), status=201)
 
 
+@require_POST
 def issue_uome(request):
     message_class = msg.IssueUOMe
 
@@ -138,6 +141,7 @@ def issue_uome(request):
     return HttpResponse(response.dumps(), status=201)
 
 
+@require_POST
 def cancel_uome(request):
     message_class = msg.CancelUOMe
 
@@ -182,6 +186,7 @@ def cancel_uome(request):
             return HttpResponseForbidden()
 
 
+@require_POST
 def get_pending_uomes(request):
     message_class = msg.GetPendingUOMes
 
@@ -230,6 +235,7 @@ def get_pending_uomes(request):
 
 # TODO: Think about data races a lot more
 @transaction.atomic
+@require_POST
 def accept_uome(request):
     message_class = msg.AcceptUOMe
 
@@ -304,6 +310,7 @@ def accept_uome(request):
     return HttpResponse(response.dumps(), status=200)
 
 
+@require_POST
 def get_totals(request):
     message_class = msg.GetTotals
 
