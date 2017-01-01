@@ -6,6 +6,8 @@ class RegisterGroup(Message):
     Message sent to the Main server to register a new group and it's signing key
     """
 
+    url = "register-group"
+
     request_params = {
         'group_name': str,
         'group_key': str,
@@ -27,6 +29,8 @@ class UserInvite(Message):
     """
     Invite request sent by a valid user to invite a new user into the group.
     """
+
+    url = "invite-user"
 
     request_params = {
         'group_uuid': str,
@@ -52,6 +56,8 @@ class GroupServerJoin(Message):
     This can only be done after the user receives his secret code by the e-mail the
     Group server sends after another user invites him.
     """
+
+    url = "join-group"
 
     request_params = {
         'group_uuid': str,
@@ -82,6 +88,8 @@ class ConfirmJoin(Message):
     Group server sends after another user invites him.
     """
 
+    url = "confirm-join"
+
     request_params = {
         'group_uuid': str,
         'user': str,
@@ -104,6 +112,8 @@ class MainServerJoin(Message):
     This can only be allowed after the user does a GroupServerJoin, so that the user
     can get his key signed by the group server.
     """
+
+    url = "join-group"
 
     request_params = {
         'group_uuid': str,
@@ -131,6 +141,8 @@ class IssueUOMe(Message):
     which would be possible if the signature didn't include the uuid.
     """
 
+    url = "issue-uome"
+
     request_params = {
         'group_uuid': str,
         'user': str,
@@ -155,6 +167,8 @@ class ConfirmUOMe(Message):
     """
     Sent to the Main Server by a user to confirm a just issued UOMe.
     """
+
+    url = "confirm-uome"
 
     request_params = {
         'group_uuid': str,
@@ -181,6 +195,8 @@ class CancelUOMe(Message):
     agree on issuing a UOMe in the opposite direction if it was indeed a mistake.
     """
 
+    url = "cancel-uome"
+
     request_params = {
         'group_uuid': str,
         'user': str,
@@ -202,6 +218,8 @@ class GetPendingUOMes(Message):
     """
     Sent to the Main Server by a user to get all pending UOMe's associated with him.
     """
+
+    url = "get-pending-uomes"
 
     request_params = {
         'group_uuid': str,
@@ -225,6 +243,8 @@ class AcceptUOMe(Message):
     """
     Sent to the Main Server by a user to accept a pending UOMe's associated with him.
     """
+
+    url = "accept-uome"
 
     request_params = {
         'group_uuid': str,
@@ -252,6 +272,8 @@ class CheckTotals(Message):
     # the users to whom the user can pay his debt in full, trading global optimality for
     # individual practicality. This of course could reveal more information about
     # all the users in the group. Probably for after the course is done.
+
+    url = "get-totals"
 
     request_params = {
         'group_uuid': str,
