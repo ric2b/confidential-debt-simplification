@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QMainWindow
 
 from invite_dialog import InviteDialog
-from main_design import Ui_MainWindow
 from pending_dialog import PendingDialog
+from ui_main import Ui_MainWindow
 from uome_dialog import UOMeDialog
 from waiting_dialog import WaitingDialog
 
@@ -39,7 +39,14 @@ class MainWindow(QMainWindow):
         self._invite_dialog.show()
 
     def refresh(self):
-        print("refresh")
+        balance, transactions = self.client.totals()
+
+        self.ui.balance_value.setText("%0.2f" % (balance / 100.0))
+        pattern = "Pay %0.2f to %s" if balance < 0 else "Receive %0.2f from %s"
+
+        self.ui.transactions_list.clear()
+        for user, value in transactions.items():
+            self.ui.transactions_list.addItem(pattern % (value / 100.0, user))
 
     def pending(self):
         if not self._pending_dialog:

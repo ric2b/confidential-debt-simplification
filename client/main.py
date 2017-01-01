@@ -25,6 +25,7 @@ def main():
                     keys=user_keys)
 
     window = MainWindow(client)
+    window.refresh()
     window.adjustSize()
     window.show()
     sys.exit(app.exec_())
