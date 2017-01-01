@@ -126,6 +126,9 @@ class MainServerJoin(Message):
 class IssueUOMe(Message):
     """
     Sent to the Main Server by a user to issue a new, unconfirmed, UOMe.
+    He doesn't sign it yet, since he doesn't have the uome_uuid yet.
+    This is to prevent the main server from creating multiple copies of the same UOMe,
+    which would be possible if the signature didn't include the uuid.
     """
 
     request_params = {
@@ -143,8 +146,29 @@ class IssueUOMe(Message):
     }
 
     signature_formats = {
-        'user': ['group_uuid', 'user', 'borrower', 'value', 'description'],
+        'user': ['group_uuid', 'user'],
         'main': ['uome_uuid', 'group_uuid', 'user', 'borrower', 'value', 'description']
+    }
+
+
+class ConfirmUOMe(Message):
+    """
+    Sent to the Main Server by a user to confirm a just issued UOMe.
+    """
+
+    request_params = {
+        'group_uuid': str,
+        'user': str,
+        'user_signature': str
+    }
+
+    response_params = {
+        'group_uuid': str,
+        'user': str,
+    }
+
+    signature_formats = {
+        'user': ['uome_uuid', 'group_uuid', 'user', 'borrower', 'value', 'description']
     }
 
 
