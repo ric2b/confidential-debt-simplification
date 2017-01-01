@@ -39,8 +39,12 @@ class Message:
         Verify that the sub-class correctly implemented the abstract
         parameters of the Message class.
         """
-        if not (cls.request_params and cls.response_params and cls.signature_formats):
-            raise NotImplementedError('One or more class attributes were not initiated')
+        if cls.request_params is None \
+                or cls.response_params is None \
+                or cls.signature_formats is None:
+
+            raise NotImplementedError('One or more class attributes were '
+                                      'not initiated')
 
         if not (isinstance(cls.request_params, dict)
                 and isinstance(cls.response_params, dict)
@@ -223,3 +227,15 @@ class Message:
         signature_values = cls._order_signature_parameters(signature_name, **parameters)
 
         verify(key, signature, *signature_values)
+
+    def __str__(self):
+        return self.message_type + str(self.__dict__)
+
+    def __repr__(self):
+        return str(self)
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+
+        return self.__dict__ == other.__dict__
