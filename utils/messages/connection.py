@@ -109,7 +109,7 @@ class Connection:
         """
         self._http_connection.request(
             method='POST',
-            url='/' + request.message_type,
+            url='/' + request.url,
             body=request.dumps()
         )
 
