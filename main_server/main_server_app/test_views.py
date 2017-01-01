@@ -85,15 +85,11 @@ class JoinGroupTests(TestCase):
     def test_new_user_invalid_group_uuid(self):
         user_priv, user_pub = example_keys.C1_priv, example_keys.C1_pub
 
-        user_sig = self.message_class.sign(user_priv, 'user', user=user_pub,
-                                           group_uuid='random_uuid')
-
         group_sig = self.message_class.sign(example_keys.G2_priv, 'group', user=user_pub,
                                             group_uuid='random_uuid')
 
         request = self.message_class.make_request(group_uuid='random_uuid',
                                                   user=user_pub,
-                                                  user_signature=user_sig,
                                                   group_signature=group_sig)
 
         raw_response = self.client.post(reverse('main_server_app:join-group'),
@@ -105,15 +101,12 @@ class JoinGroupTests(TestCase):
         user_priv, user_pub = example_keys.C1_priv, example_keys.C1_pub
 
         group_uuid = str(uuid4())
-        user_sig = self.message_class.sign(user_priv, 'user', user=user_pub,
-                                           group_uuid=group_uuid)
 
         group_sig = self.message_class.sign(example_keys.G2_priv, 'group', user=user_pub,
                                             group_uuid=group_uuid)
 
         request = self.message_class.make_request(group_uuid=group_uuid,
                                                   user=user_pub,
-                                                  user_signature=user_sig,
                                                   group_signature=group_sig)
 
         raw_response = self.client.post(reverse('main_server_app:join-group'),
@@ -124,15 +117,11 @@ class JoinGroupTests(TestCase):
     def test_new_user_to_existing_group(self):
         user_priv, user_pub = example_keys.C1_priv, example_keys.C1_pub
 
-        user_sig = self.message_class.sign(user_priv, 'user', user=user_pub,
-                                           group_uuid=self.group.uuid)
-
         group_sig = self.message_class.sign(example_keys.G1_priv, 'group', user=user_pub,
                                             group_uuid=self.group.uuid)
 
         request = self.message_class.make_request(group_uuid=str(self.group.uuid),
                                                   user=user_pub,
-                                                  user_signature=user_sig,
                                                   group_signature=group_sig)
 
         raw_response = self.client.post(reverse('main_server_app:join-group'),
@@ -197,18 +186,21 @@ class CancelUOMeTests(TestCase):
         self.borrower = User.objects.create(group=self.group, key=example_keys.C2_pub)
 
     def test_cancel_unconfirmed_uome(self):
-        issuer_signature = UOMeTools.issuer_sign(self.private_key,
-                                                 group_uuid=str(self.group.uuid),
-                                                 issuer=self.user.key,
-                                                 borrower=self.borrower.key,
-                                                 value=10,
-                                                 description='test')
-
         uome = UOMe.objects.create(group=self.group, lender=self.user,
                                    borrower=self.borrower,
                                    value=10,
-                                   description='test',
-                                   issuer_signature=issuer_signature)
+                                   description='test')
+
+        issuer_signature = UOMeTools.sign(self.private_key,
+                                          group_uuid=str(self.group.uuid),
+                                          issuer=self.user.key,
+                                          borrower=self.borrower.key,
+                                          value=10,
+                                          description='test',
+                                          uome_uuid=str(uome.uuid))
+
+        uome.issuer_signature = issuer_signature
+        uome.save()
 
         signature = self.message_class.sign(self.private_key, 'user',
                                             group_uuid=str(self.group.uuid),
@@ -246,29 +238,36 @@ class GetPendingUOMesTests(TestCase):
         self.other_user = User.objects.create(group=self.group, key=example_keys.C2_pub)
 
     def test_one_by_user_uome_and_one_for_user_uome(self):
-        by_user_sig = UOMeTools.issuer_sign(self.private_key,
-                                            group_uuid=str(self.group.uuid),
-                                            issuer=self.user.key,
-                                            borrower=self.other_user.key,
-                                            value=30,
-                                            description="by user")
 
         uome_by_user = UOMe.objects.create(group=self.group, lender=self.user,
                                            borrower=self.other_user, value=30,
-                                           description="by user",
-                                           issuer_signature=by_user_sig)
+                                           description="by user")
 
-        for_user_sig = UOMeTools.issuer_sign(example_keys.C2_priv,
-                                             group_uuid=str(self.group.uuid),
-                                             issuer=self.other_user.key,
-                                             borrower=self.user.key,
-                                             value=20,
-                                             description="for user")
+        by_user_sig = UOMeTools.sign(self.private_key,
+                                     group_uuid=str(self.group.uuid),
+                                     issuer=self.user.key,
+                                     borrower=self.other_user.key,
+                                     value=30,
+                                     description="by user",
+                                     uome_uuid=str(uome_by_user.uuid))
+
+        uome_by_user.issuer_signature = by_user_sig
+        uome_by_user.save()
 
         uome_for_user = UOMe.objects.create(group=self.group, lender=self.other_user,
                                             borrower=self.user, value=20,
-                                            description="for user",
-                                            issuer_signature=for_user_sig)
+                                            description="for user")
+
+        for_user_sig = UOMeTools.sign(example_keys.C2_priv,
+                                      group_uuid=str(self.group.uuid),
+                                      issuer=self.other_user.key,
+                                      borrower=self.user.key,
+                                      value=20,
+                                      description="for user",
+                                      uome_uuid=str(uome_for_user.uuid))
+
+        uome_for_user.issuer_signature = for_user_sig
+        uome_for_user.save()
 
         assert uome_by_user.borrower_signature == ''
         assert uome_by_user.issuer_signature != ''
@@ -299,20 +298,22 @@ class GetPendingUOMesTests(TestCase):
                             [uome_for_user.to_array_unconfirmed()]))
 
         for uome in response.issued_by_user:
-            UOMeTools.issuer_verify(uome[1], uome[5],
-                                    group_uuid=uome[0],
-                                    issuer=uome[1],
-                                    borrower=uome[2],
-                                    value=uome[3],
-                                    description=uome[4])
+            UOMeTools.verify(uome[1], uome[5],
+                             group_uuid=uome[0],
+                             issuer=uome[1],
+                             borrower=uome[2],
+                             value=uome[3],
+                             description=uome[4],
+                             uome_uuid=uome[6])
 
         for uome in response.waiting_for_user:
-            UOMeTools.issuer_verify(uome[1], uome[5],
-                                    group_uuid=uome[0],
-                                    issuer=uome[1],
-                                    borrower=uome[2],
-                                    value=uome[3],
-                                    description=uome[4])
+            UOMeTools.verify(uome[1], uome[5],
+                             group_uuid=uome[0],
+                             issuer=uome[1],
+                             borrower=uome[2],
+                             value=uome[3],
+                             description=uome[4],
+                             uome_uuid=uome[6])
 
 
 class AcceptTests(TestCase):
@@ -324,36 +325,36 @@ class AcceptTests(TestCase):
         self.lender = User.objects.create(group=self.group, key=example_keys.C2_pub)
 
     def test_confirm_first_uome(self):
-        issuer_signature = UOMeTools.issuer_sign(self.private_key,
-                                                 group_uuid=str(self.group.uuid),
-                                                 issuer=self.lender.key,
-                                                 borrower=self.user.key,
-                                                 value=10,
-                                                 description='test')
 
         uome = UOMe.objects.create(group=self.group,
                                    lender=self.lender,
                                    borrower=self.user,
                                    value=10,
-                                   description='test',
-                                   issuer_signature=issuer_signature)
+                                   description='test')
+
+        issuer_signature = UOMeTools.sign(example_keys.C2_priv,
+                                          group_uuid=str(self.group.uuid),
+                                          issuer=self.lender.key,
+                                          borrower=self.user.key,
+                                          value=10,
+                                          description='test',
+                                          uome_uuid=str(uome.uuid))
+
+        uome.issuer_signature = issuer_signature
+        uome.save()
 
         assert uome.borrower_signature == ''
 
-        signature = self.message_class.sign(self.private_key, 'user',
-                                            group_uuid=str(self.group.uuid),
-                                            lender=self.lender.key,
-                                            user=self.user.key,
-                                            value=uome.value,
-                                            description=uome.description,
-                                            uome_uuid=str(uome.uuid)
-                                            )
+        signature = UOMeTools.sign(self.private_key,
+                                   group_uuid=str(self.group.uuid),
+                                   issuer=self.lender.key,
+                                   borrower=self.user.key,
+                                   value=10,
+                                   description='test',
+                                   uome_uuid=str(uome.uuid))
 
         request = self.message_class.make_request(group_uuid=str(self.group.uuid),
-                                                  lender=self.lender.key,
                                                   user=self.user.key,
-                                                  value=uome.value,
-                                                  description=uome.description,
                                                   uome_uuid=str(uome.uuid),
                                                   user_signature=signature)
 
