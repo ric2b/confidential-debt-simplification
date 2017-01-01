@@ -2,7 +2,9 @@ from PyQt5.QtWidgets import QMainWindow
 
 from invite_dialog import InviteDialog
 from main_design import Ui_MainWindow
+from pending_dialog import PendingDialog
 from uome_dialog import UOMeDialog
+from waiting_dialog import WaitingDialog
 
 
 class MainWindow(QMainWindow):
@@ -17,6 +19,8 @@ class MainWindow(QMainWindow):
 
         self._uome_dialog = None
         self._invite_dialog = None
+        self._pending_dialog = None
+        self._waiting_dialog = None
 
         self.ui.uome_button.clicked.connect(self.issue_uome)
         self.ui.invite_button.clicked.connect(self.invite)
@@ -38,7 +42,11 @@ class MainWindow(QMainWindow):
         print("refresh")
 
     def pending(self):
-        print("pending")
+        if not self._pending_dialog:
+            self._pending_dialog = PendingDialog(self.client)
+        self._pending_dialog.show()
 
     def waiting(self):
-        print("waiting")
+        if not self._waiting_dialog:
+            self._waiting_dialog = WaitingDialog(self.client)
+        self._waiting_dialog.show()
