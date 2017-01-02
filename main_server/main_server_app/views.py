@@ -149,7 +149,7 @@ def confirm_uome(request):
 
     try:  # check that the group exists and get it
         group = Group.objects.get(pk=request.group_uuid)
-        user = User.objects.filter(group=group, key=request.user).first()
+        user = User.objects.get(group=group, key=request.user)
         uome = UOMe.objects.get(pk=request.uome_uuid)
     except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
         return HttpResponseBadRequest()
@@ -187,8 +187,8 @@ def cancel_uome(request):
 
     try:  # check that the group exists and get it
         group = Group.objects.get(pk=request.group_uuid)
-        user = User.objects.filter(group=group, key=request.user).first()
-        uome = UOMe.objects.filter(group=group, uuid=request.uome_uuid).first()
+        user = User.objects.get(group=group, key=request.user)
+        uome = UOMe.objects.get(group=group, uuid=request.uome_uuid)
     except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
         return HttpResponseBadRequest()
 
@@ -232,7 +232,7 @@ def get_pending_uomes(request):
 
     try:  # check that the group exists and get it
         group = Group.objects.get(pk=request.group_uuid)
-        user = User.objects.filter(group=group, key=request.user).first()
+        user = User.objects.get(group=group, key=request.user)
     except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
         return HttpResponseBadRequest()
 
@@ -281,8 +281,8 @@ def accept_uome(request):
 
     try:  # check that the group exists and get it
         group = Group.objects.get(pk=request.group_uuid)
-        user = User.objects.filter(group=group, key=request.user).first()
-        uome = UOMe.objects.filter(group=group, uuid=request.uome_uuid).first()
+        user = User.objects.get(group=group, key=request.user)
+        uome = UOMe.objects.get(group=group, uuid=request.uome_uuid)
         lender = uome.lender
     except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
         return HttpResponseBadRequest()
@@ -356,7 +356,7 @@ def get_totals(request):
 
     try:  # check that the group exists and get it
         group = Group.objects.get(pk=request.group_uuid)
-        user = User.objects.filter(group=group, key=request.user).first()
+        user = User.objects.get(group=group, key=request.user)
     except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
         return HttpResponseBadRequest()
 
