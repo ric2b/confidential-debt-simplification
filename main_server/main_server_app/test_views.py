@@ -430,7 +430,7 @@ class AcceptTests(TestCase):
 
 class GetTotalsTests(TestCase):
     def setUp(self):
-        self.message_class = msg.GetTotals
+        self.message_class = msg.CheckTotals
         self.private_key, self.key = example_keys.C1_priv, example_keys.C1_pub
         self.group = Group.objects.create(name='test', key=example_keys.G1_pub)
         self.user1 = User.objects.create(group=self.group, key=example_keys.C1_pub)

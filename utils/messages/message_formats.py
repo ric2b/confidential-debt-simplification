@@ -263,7 +263,7 @@ class AcceptUOMe(Message):
     }
 
 
-class GetTotals(Message):
+class CheckTotals(Message):
     """
     Sent to the Main Server by a user to get his total debt and the suggested amounts
     he should pay to each person.

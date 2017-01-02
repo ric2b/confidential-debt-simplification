@@ -347,7 +347,7 @@ def accept_uome(request):
 
 @require_POST
 def get_totals(request):
-    message_class = msg.GetTotals
+    message_class = msg.CheckTotals
 
     try:  # convert the message into the request object
         request = message_class.load_request(request.POST['data'])
