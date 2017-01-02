@@ -377,20 +377,9 @@ def get_totals(request):
         for debt in UserDebt.objects.filter(group=group, lender=user):
             suggested_transactions[debt.borrower.key] = debt.value
 
-    # convert to json string because the dict doesn't maintain the order, so it would
-    # make the signature unreliable
-    suggested_transactions = json.dumps(suggested_transactions)
-
-    signature = message_class.sign(settings.PRIVATE_KEY, 'main',
-                                   group_uuid=str(group.uuid),
-                                   user=user.key,
-                                   user_balance=user.balance,
-                                   suggested_transactions=suggested_transactions)
-
     response = message_class.make_response(group_uuid=str(group.uuid),
                                            user=user.key,
                                            user_balance=user.balance,
-                                           suggested_transactions=suggested_transactions,
-                                           main_signature=signature)
+                                           suggested_transactions=suggested_transactions)
 
     return HttpResponse(response.dumps(), status=200)

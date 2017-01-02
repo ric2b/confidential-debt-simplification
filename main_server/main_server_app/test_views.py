@@ -453,15 +453,8 @@ class GetTotalsTests(TestCase):
         assert raw_response.status_code == 200
         response = self.message_class.load_response(raw_response.content.decode())
 
-        self.message_class.verify(settings.PUBLIC_KEY, 'main', response.main_signature,
-                                  group_uuid=str(self.group.uuid),
-                                  user=self.user1.key,
-                                  user_balance=response.user_balance,
-                                  suggested_transactions=response.suggested_transactions
-                                  )
-
         assert response.user_balance == 0
-        assert json.loads(response.suggested_transactions) == {}
+        assert response.suggested_transactions == {}
 
     def test_get_totals_one_unconfirmed_uome(self):
         UOMe.objects.create(group=self.group, lender=self.user2, borrower=self.user1,
@@ -482,15 +475,8 @@ class GetTotalsTests(TestCase):
         assert raw_response.status_code == 200
         response = self.message_class.load_response(raw_response.content.decode())
 
-        self.message_class.verify(settings.PUBLIC_KEY, 'main', response.main_signature,
-                                  group_uuid=str(self.group.uuid),
-                                  user=self.user1.key,
-                                  user_balance=response.user_balance,
-                                  suggested_transactions=response.suggested_transactions
-                                  )
-
         assert response.user_balance == 0
-        assert json.loads(response.suggested_transactions) == {}
+        assert response.suggested_transactions == {}
 
     def test_get_totals_one_confirmed_uome(self):
         uome = UserDebt.objects.create(group=self.group, lender=self.user1,
@@ -516,12 +502,5 @@ class GetTotalsTests(TestCase):
         assert raw_response.status_code == 200
         response = self.message_class.load_response(raw_response.content.decode())
 
-        self.message_class.verify(settings.PUBLIC_KEY, 'main', response.main_signature,
-                                  group_uuid=str(self.group.uuid),
-                                  user=self.user2.key,
-                                  user_balance=response.user_balance,
-                                  suggested_transactions=response.suggested_transactions
-                                  )
-
         assert response.user_balance == -uome.value
-        assert json.loads(response.suggested_transactions) == {self.user1.key: uome.value}
+        assert response.suggested_transactions == {self.user1.key: uome.value}
