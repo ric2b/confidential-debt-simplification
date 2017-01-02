@@ -5,7 +5,7 @@ from django.db import transaction
 from django.conf import settings
 from collections import defaultdict
 from django.core.mail import send_mail
-from utils.messages.connection import Connection
+from utils.messages.connection import connect, Connection
 import json
 import os
 
@@ -153,20 +153,20 @@ def confirm_join(request):
     
     group_signature = msg.MainServerJoin.sign(settings.PRIVATE_KEY, 'group', group_uuid=str(group.uuid), user=user.key)
     
-    with Connection(main_server_url) as connection:
+    with connect(main_server_url) as connection:
         request_main = msg.MainServerJoin.make_request(group_uuid=str(group.uuid), user=user.key, group_signature=group_signature)
         connection.request(request_main)
         
         try:
-            response = connection.get_response(MainServerJoin)   
+            response = connection.get_response(msg.MainServerJoin)   
 
         except DecodeError:
             raise SecurityException('Response format not correct')
             
-        try:
-            msg.MainServerJoin.verify(settings.MAIN_PUBLIC_KEY, 'main', response.main_signature, group_uuid=str(group.uuid), user=user.key)
-        except InvalidSignature:
-            raise SecurityException('Signature of the response is invalid')    
+        #try:
+        #    msg.MainServerJoin.verify(settings.MAIN_PUBLIC_KEY, 'main', response.main_signature, group_uuid=str(group.uuid), user=user.key)
+        #except InvalidSignature:
+        #    raise SecurityException('Signature of the response is invalid')    
     
     #Save user_signature
     invitation.signature_invitee = request.user_signature

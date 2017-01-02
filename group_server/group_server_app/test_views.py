@@ -1,4 +1,5 @@
 from django.test import TestCase  # TODO: check out pytest
+from unittest.mock import Mock, MagicMock, patch
 from django.urls import reverse
 from django.core import serializers
 from django.conf import settings
@@ -12,7 +13,7 @@ from .models import Group, User, Invitation
 from utils.crypto.rsa import generate_keys, sign, verify
 from utils.crypto import example_keys
 from utils.messages import message_formats as msg
-
+from group_server_app.views import confirm_join
 
 # Create your tests here.
 
@@ -95,10 +96,6 @@ class JoinGroupTests(TestCase):
         
         assert raw_response.status_code == 201
         
-        
-    
-        
-
 class ConfirmJoinTests(TestCase): 
     def setUp(self): 
         self.message_class = msg.ConfirmJoin 
@@ -108,6 +105,18 @@ class ConfirmJoinTests(TestCase):
         self.private_key1, self.key1 = example_keys.C1_priv, example_keys.C1_pub 
         self.inviter = User.objects.create(group=self.group, key=self.key1, email='c1@example.pt', confirmed=True) 
         
+        def mock_server(main_server_url):
+            mock_connection = MagicMock()
+            mock_connection.__enter__.return_value = mock_connection
+            mock_connection.__exit__.return_value = None
+            
+            return mock_connection
+            
+        def forge_request(cls):
+            return 'ciao'    
+        
+        patch('group_server_app.views.connect', mock_server).start()
+        patch('utils.messages.connection.Connection.get_response', forge_request).start()
          
     def test_correct_input(self): 
         inviter_signature = msg.UserInvite.sign(self.private_key1, 'user', group_uuid=str(self.group.uuid), user=self.inviter.key, invitee=example_keys.C2_pub, invitee_email='c2@example.pt')  
@@ -116,6 +125,9 @@ class ConfirmJoinTests(TestCase):
         invitee_signature = self.message_class.sign(self.private_key2, 'user', group_uuid=str(self.group.uuid), user=self.key2, group_server_signature=invitation.signature_group) 
          
         request = self.message_class.make_request(group_uuid=str(self.group.uuid), user=self.user.key, user_signature=invitee_signature) 
+
+        
+        
         raw_response = self.client.post(reverse('group_server_app:confirm_join'),{'data': request.dumps()}) 
         assert raw_response.status_code == 200 
         
