@@ -9,9 +9,13 @@ class UserInLine(admin.TabularInline):
 
 
 class GroupAdmin(admin.ModelAdmin):
+    list_display = ['uuid', 'name', 'key']
     inlines = [UserInLine]
     search_fields = ['name']
 
+
+class UOMeAdmin(admin.ModelAdmin):
+    list_display = ['group', 'uuid', 'lender', 'borrower', 'value', 'description']
 
 admin.site.register(Group, GroupAdmin)
 admin.site.register(User)
