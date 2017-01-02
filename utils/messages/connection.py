@@ -108,10 +108,14 @@ class Connection:
 
         :param request: request to be issued.
         """
+        headers = {"Content-type": "application/x-www-form-urlencoded",
+                   "Accept": "text/plain"}
+
         self._http_connection.request(
             method='POST',
             url='/' + request.url,
-            body=urlencode({'data': request.dumps()})
+            body=urlencode({'data': request.dumps()}),
+            headers=headers
         )
 
     def get_response(self, response_type: Message):
