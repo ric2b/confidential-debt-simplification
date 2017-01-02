@@ -2,6 +2,7 @@
 # Configuration parameters
 #
 import json
+import os
 
 
 class MissingParameterError(Exception):
@@ -22,6 +23,9 @@ class ParseError(Exception):
 
 class _Configuration:
 
+    DEFAULT_APP_DIR = "."
+    DEFAULT_PROXY_SERVER_URL = "localhost"
+
     mandatory_parameters = [
         "group_server_url",
         "proxy_server_url",
@@ -32,7 +36,13 @@ class _Configuration:
     ]
 
     def __init__(self):
-        self._parameters = {}
+        self.app_dir = self.DEFAULT_APP_DIR
+        self._parameters = {
+            "proxy_server_url": self.DEFAULT_PROXY_SERVER_URL,
+            "group_server_pubkey_path": os.path.join(self.app_dir, "group.pem"),
+            "main_server_pubkey_path": os.path.join(self.app_dir, "main.pem"),
+            "user_key_path": os.path.join(self.app_dir, "user.pem"),
+        }
 
     def __getitem__(self, item):
         return self._parameters[item]
