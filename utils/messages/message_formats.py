@@ -283,13 +283,11 @@ class CheckTotals(Message):
 
     response_params = {
         'user_balance': int,
-        'suggested_transactions': dict,
-        'main_signature': str
+        'suggested_transactions': dict
     }
 
     signature_formats = {
         'user': ['group_uuid', 'user'],
-        'main': ['group_uuid', 'user', 'user_balance', 'suggested_transactions']
     }
 
     # Sign the JSON string version of 'suggested_transactions'.
