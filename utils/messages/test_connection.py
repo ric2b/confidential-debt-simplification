@@ -14,6 +14,7 @@ class FakeMessage(Message):
     """ Fake response used in the test to load responses """
 
     message_type = 'fake'
+    url = "fake-url"
     request_params = {}
     response_params = {}
     signature_formats = {}

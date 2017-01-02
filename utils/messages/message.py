@@ -29,6 +29,7 @@ class Message:
     """
 
     message_type = None  # type: str: Only used for Message objects, not Message classes
+    url = None  # url of the request (relative to path '/')
     request_params = None  # type: {str: type}
     response_params = None  # type: {str: type}
     signature_formats = None  # type: {str: [str]}
@@ -39,7 +40,7 @@ class Message:
         Verify that the sub-class correctly implemented the abstract
         parameters of the Message class.
         """
-        if cls.request_params is None \
+        if cls.url is None or cls.request_params is None \
                 or cls.response_params is None \
                 or cls.signature_formats is None:
 
