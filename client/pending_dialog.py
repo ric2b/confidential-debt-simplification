@@ -2,6 +2,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtWidgets import QTableWidgetItem
 
+from accept_button import AcceptButton
+from cancel_button import CancelButton
 from ui_pending import Ui_PendingDialog
 
 
@@ -61,22 +63,20 @@ class PendingDialog(QDialog):
         loans, debts = self.client.pending_UOMes()
 
         # Update both tables
-        self._refresh_table(self.ui.loans_table, loans)
-        self._refresh_table(self.ui.debts_table, debts)
+        self._refresh_table(self.ui.loans_table, loans, CancelButton)
+        self._refresh_table(self.ui.debts_table, debts, AcceptButton)
 
-    @staticmethod
-    def _refresh_table(table, uomes):
+    def _refresh_table(self, table, uomes, button_type):
         # Fill the loans table with each UOMe
         table.setRowCount(len(uomes))
         for i, uome in enumerate(uomes):
             # Add a check box for each UOMe
-            item = QTableWidgetItem(uome.uuid)
-            item.setCheckState(Qt.Unchecked)
-            table.setItem(i, 0, item)
-
-            table.setItem(i, 1, QTableWidgetItem(uome.borrower))
-            table.setItem(i, 2, QTableWidgetItem(str(uome.value)))
-            table.setItem(i, 3, QTableWidgetItem(uome.description))
+            table.setIndexWidget(table.model().index(i, 0),
+                                 button_type(self.client, table, i))
+            table.setItem(i, 1, QTableWidgetItem(uome.uuid))
+            table.setItem(i, 2, QTableWidgetItem(uome.borrower))
+            table.setItem(i, 3, QTableWidgetItem(str(uome.value)))
+            table.setItem(i, 4, QTableWidgetItem(uome.description))
 
     def select_all(self):
         table = self._current_table()
