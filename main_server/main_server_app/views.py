@@ -242,10 +242,11 @@ def get_pending_uomes(request):
     except InvalidSignature:
         return HttpResponse('401 Unauthorized', status=401)
 
+    # TODO: add a test for uome's without issuer signatures
     uomes_by_user = UOMe.objects.filter(group=group, borrower_signature='',
-                                        lender=user)
+                                        lender=user).exclude(issuer_signature='')
     uomes_for_user = UOMe.objects.filter(group=group, borrower_signature='',
-                                         borrower=user)
+                                         borrower=user).exclude(issuer_signature='')
     issued_by_user = []
     for uome in uomes_by_user:
         issued_by_user.append(uome.to_array_unconfirmed())
