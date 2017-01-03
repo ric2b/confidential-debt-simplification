@@ -29,35 +29,80 @@ class _Configuration:
 
     mandatory_parameters = [
         "group_server_url",
-        "proxy_server_url",
-        "group_server_pubkey_path",
-        "main_server_pubkey_path",
-        "user_key_path",
         "user_email",
     ]
 
     def __init__(self):
         self.app_dir = self.DEFAULT_APP_DIR
-        self._parameters = {
-            "proxy_server_url": self.DEFAULT_PROXY_SERVER_URL,
-            "group_server_pubkey_path": os.path.join(self.app_dir, "group.pem"),
-            "main_server_pubkey_path": os.path.join(self.app_dir, "main.pem"),
-            "user_key_path": os.path.join(self.app_dir, "user.pem"),
-        }
+        self._parameters = {}
 
-    def __getitem__(self, item):
-        return self._parameters[item]
+    @property
+    def group_server_url(self):
+        return self._parameters["group_server_url"]
 
-    def __setitem__(self, key, value):
-        self._parameters[key] = value
+    @group_server_url.setter
+    def group_server_url(self, value):
+        self._parameters["group_server_url"] = value
+
+    @property
+    def proxy_server_url(self):
+        try:
+            return self._parameters["proxy_server_url"]
+        except KeyError:
+            return self.DEFAULT_PROXY_SERVER_URL
+
+    @proxy_server_url.setter
+    def proxy_server_url(self, value):
+        self._parameters["proxy_server_url"] = value
+
+    @property
+    def group_server_pubkey_path(self):
+        try:
+            return self._parameters["group_server_pubkey_path"]
+        except KeyError:
+            return os.path.join(self.app_dir, "group.pem")
+
+    @group_server_pubkey_path.setter
+    def group_server_pubkey_path(self, value):
+        self._parameters["group_server_pubkey_path"] = value
+
+    @property
+    def main_server_pubkey_path(self):
+        try:
+            return self._parameters["main_server_pubkey_path"]
+        except KeyError:
+            return os.path.join(self.app_dir, "main.pem")
+
+    @main_server_pubkey_path.setter
+    def main_server_pubkey_path(self, value):
+        self._parameters["main_server_pubkey_path"] = value
+
+    @property
+    def user_key_path(self):
+        try:
+            return self._parameters["user_key_path"]
+        except KeyError:
+            return os.path.join(self.app_dir, "user.pem")
+
+    @user_key_path.setter
+    def user_key_path(self, value):
+        self._parameters["user_key_path"] = value
+
+    @property
+    def user_email(self):
+        return self._parameters["user_email"]
+
+    @user_email.setter
+    def user_email(self, value):
+        self._parameters["user_email"] = value
 
     def __contains__(self, item):
         return item in self._parameters
 
-    def load(self, config_path):
+    def load(self, config_path=CONFIG_PATH):
         """ Loads configurations from a file """
         with open(config_path) as config_file:
-            self._parameters = json.load(config_file)
+            self._parameters.update(json.load(config_file))
 
             # check if the mandatory parameters were all loaded
             for parameter in self.mandatory_parameters:
