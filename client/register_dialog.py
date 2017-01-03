@@ -4,8 +4,8 @@ import sys
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtWidgets import QMessageBox
 
-from client import Client
-from client import ProtocolError
+from client_backend import Client
+from client_backend import ProtocolError
 from configuration import config
 from ui_register import Ui_RegisterDialog
 from utils.crypto import rsa

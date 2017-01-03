@@ -1,10 +1,9 @@
-import os
-
 import sys
+
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtWidgets import QMessageBox
 
-from client import Client
+from client_backend import Client
 from configuration import config
 from ui_login import Ui_LoginDialog
 from utils.crypto import rsa
