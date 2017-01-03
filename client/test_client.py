@@ -3,11 +3,11 @@ from unittest.mock import Mock, MagicMock
 from pytest import fixture
 from pytest import raises
 
-import client.client as c
+import client.client_backend as c
 import utils.messages.message as m
 import utils.messages.message_formats as msg
 import utils.crypto.rsa as rsa
-from client.client import Client
+from client.client_backend import Client
 from client.uome import UOMe
 from utils.messages.connection import ConflictError, ForbiddenError, \
     UnauthorizedError
@@ -47,6 +47,7 @@ class TestClient:
         return Client(
             group_server_url="http://register.com",
             group_server_pubkey="G",
+            proxy_server_url="P",
             main_server_pubkey="M",
             email="c1@email.com",
             keys=("pC1", "C1")
