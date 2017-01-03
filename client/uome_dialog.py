@@ -18,8 +18,8 @@ class UOMeDialog(QDialog):
         # TODO store signature
         # TODO store the UOMe-ID
 
-        borrower = self.ui.borrower_lineedit.text(),
-        value = int(self.ui.amount_spinbox.value() * 100),
+        borrower = self.ui.borrower_lineedit.text()
+        value = int(self.ui.amount_spinbox.value() * 100)
         description = self.ui.description_lineedit.text()
 
         uome_uuid, main_signature = self.client.issue_UOMe(borrower, value,
