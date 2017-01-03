@@ -93,7 +93,7 @@ class LoginDialog(QDialog):
             main_server_pubkey,
             config.proxy_server_url,
             config.user_email,
-            user_keys
+            keys=user_keys
         )
 
         # Call the accept method of the QDialog
