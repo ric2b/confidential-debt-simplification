@@ -28,10 +28,13 @@ def invite_user(request):
         request = message_class.load_request(request.POST['data'])
     except DecodeError:
         return HttpResponseBadRequest()
+
+    print("Group:", request.group_uuid)
+    print("User:", request.user)
         
     try:  # check that the inviter belonging to group exists and return it
-        user = User.objects.get(key=request.user, group_id=request.group_uuid)
         group = Group.objects.get(pk=request.group_uuid)
+        user = User.objects.get(group=group, key=request.user)
     except (ValueError, ObjectDoesNotExist):
         return HttpResponseBadRequest()
         
@@ -60,18 +63,18 @@ def invite_user(request):
     #Generate secret code
     secret_code = str(int.from_bytes(os.urandom(4), byteorder="big")) #Is it big enough?
     
-    #Set proxy URL
-    proxy_url = 'proxy.com' #TODO: change to proxy address
-    
-    # SEND EMAIL TO C2
-    
-    send_mail(
-    'MutualDebt Registration',
-    user.key + ' ' + secret_code + ' ' + proxy_url,
-    'registration@example.com',
-    [invitee.email],
-    fail_silently=False, 
-    )
+    # #Set proxy URL
+    # proxy_url = 'proxy.com' #TODO: change to proxy address
+    #
+    # # SEND EMAIL TO C2
+    #
+    # send_mail(
+    # 'MutualDebt Registration',
+    # user.key + ' ' + secret_code + ' ' + proxy_url,
+    # 'registration@example.com',
+    # [invitee.email],
+    # fail_silently=False,
+    # )
     
     #Create Invitation entry
     invitation = Invitation.objects.create(group=group, inviter=user, invitee=invitee, signature_inviter=request.user_signature, secret_code=secret_code)
@@ -91,10 +94,13 @@ def join_group(request):
         request = message_class.load_request(request.POST['data'])
     except DecodeError:
         return HttpResponseBadRequest()
-        
-    try:  
-        user = User.objects.get(key=request.user, group_id=request.group_uuid)
+
+    print("Group:", request.group_uuid)
+    print("User:", request.user)
+
+    try:  # check that the inviter belonging to group exists and return it
         group = Group.objects.get(pk=request.group_uuid)
+        user = User.objects.get(group=group, key=request.user)
     except (ValueError, ObjectDoesNotExist):
         return HttpResponseBadRequest()
         
@@ -114,7 +120,7 @@ def join_group(request):
     try:    
         invitation = Invitation.objects.get(secret_code=request.secret_code, invitee=user, group=group)
     except (ValueError, ObjectDoesNotExist):
-        return HttpResponseForbiddenRequest()  
+        return HttpResponseForbidden()
         
     # create the signature
     sig = message_class.sign(settings.PRIVATE_KEY, 'group', inviter_signature = invitation.signature_inviter)
@@ -197,7 +203,7 @@ def email_key_map(request):
         return HttpResponseBadRequest()
 
     if not user.confirmed:
-        return HttpResponseForbiddenRequest()
+        return HttpResponseForbidden()
 
     try:
         message_class.verify(user.key, 'user', request.signature,

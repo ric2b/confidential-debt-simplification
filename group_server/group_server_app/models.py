@@ -4,7 +4,7 @@ import uuid
 key_length = 400;
 
 class Group(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=True)
     name = models.CharField(max_length=80)
 
     key = models.CharField(max_length=key_length)
