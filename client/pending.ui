@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tab_widget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="loans_tab">
       <attribute name="title">
@@ -123,5 +123,74 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>button_box</sender>
+   <signal>accepted()</signal>
+   <receiver>PendingDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>426</x>
+     <y>282</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>455</x>
+     <y>306</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_box</sender>
+   <signal>rejected()</signal>
+   <receiver>PendingDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>489</x>
+     <y>278</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>520</x>
+     <y>296</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>select_none_button</sender>
+   <signal>clicked()</signal>
+   <receiver>PendingDialog</receiver>
+   <slot>select_none()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>158</x>
+     <y>277</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>154</x>
+     <y>294</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>select_all_button</sender>
+   <signal>clicked()</signal>
+   <receiver>PendingDialog</receiver>
+   <slot>select_all()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>46</x>
+     <y>277</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>23</x>
+     <y>298</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>select_none()</slot>
+  <slot>select_all()</slot>
+ </slots>
 </ui>

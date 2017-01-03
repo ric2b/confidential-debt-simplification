@@ -74,7 +74,11 @@ class Ui_PendingDialog(object):
         self.verticalLayout.addLayout(self.horizontalLayout)
 
         self.retranslateUi(PendingDialog)
-        self.tab_widget.setCurrentIndex(1)
+        self.tab_widget.setCurrentIndex(0)
+        self.button_box.accepted.connect(PendingDialog.accept)
+        self.button_box.rejected.connect(PendingDialog.reject)
+        self.select_none_button.clicked.connect(PendingDialog.select_none)
+        self.select_all_button.clicked.connect(PendingDialog.select_all)
         QtCore.QMetaObject.connectSlotsByName(PendingDialog)
 
     def retranslateUi(self, PendingDialog):
