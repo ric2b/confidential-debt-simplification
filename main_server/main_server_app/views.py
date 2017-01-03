@@ -101,8 +101,8 @@ def issue_uome(request):
 
     try:  # check that the group exists and get it
         group = Group.objects.get(pk=request.group_uuid)
-        user = User.objects.filter(group=group, key=request.user).first()
-        borrower = User.objects.filter(group=group, key=request.borrower).first()
+        user = User.objects.get(group=group, key=request.user)
+        borrower = User.objects.get(group=group, key=request.borrower)
     except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
         return HttpResponseBadRequest()
 
