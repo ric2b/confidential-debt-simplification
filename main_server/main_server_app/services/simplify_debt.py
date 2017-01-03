@@ -3,8 +3,9 @@ from collections import defaultdict
 
 def compute_totals(totals: defaultdict(int), uomes: list) -> defaultdict(int):
     """
-    Receive in input a dictionary containing previous computed totals and a list of UOMe with this form: {borrower, lender, value}.
-    The output is a dictionary that associates to each user (borrower or lender) his own total.
+    Receive in input a dictionary containing previous computed totals and a list of
+    UOMe with this form: {borrower, lender, value}. The output is a
+    dictionary that associates to each user (borrower or lender) his own total.
     """    
 
     for uome in uomes:
@@ -12,11 +13,13 @@ def compute_totals(totals: defaultdict(int), uomes: list) -> defaultdict(int):
         totals[uome[1]] += uome[2]
         
     return totals
-    
-def borrowers_and_lenders(totals_dict:dict) -> (dict, dict):
+
+
+def borrowers_and_lenders(totals_dict: dict) -> (dict, dict):
     """
     Receive input a dictionary with a total associated to each user. 
-    Outputs are two dictionaries listing borrowers and lenders with their respective total debt or credit
+    Outputs are two dictionaries listing borrowers and lenders with their
+    respective total debt or credit
     """
 
     borrowers = {} 
@@ -27,9 +30,10 @@ def borrowers_and_lenders(totals_dict:dict) -> (dict, dict):
             lenders[user] = totals_dict[user]
         elif totals_dict[user] < 0:
             borrowers[user] = abs(totals_dict[user])
-    
+
     return borrowers, lenders
-    
+
+
 def debt_simplification(borrowers: dict, lenders: dict) -> dict:
     """
     Inputs are two dictionaries containing borrowers and lenders.
@@ -53,6 +57,7 @@ def debt_simplification(borrowers: dict, lenders: dict) -> dict:
                     borrowers[borrower] -= transaction_value
         
     return dict(simplified_debt)
+
 
 def update_total_debt(current_totals: defaultdict(int), new_uomes: list) -> (defaultdict(int), dict):
     """

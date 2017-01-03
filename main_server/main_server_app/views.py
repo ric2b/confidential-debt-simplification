@@ -324,13 +324,13 @@ def accept_uome(request):
 
     totals = defaultdict(int)
     for user in group_users:
-        totals[user] = user.balance
+        totals[user.key] = user.balance
 
-    new_uome = [uome.borrower, uome.lender, uome.value]
+    new_uome = [uome.borrower.key, uome.lender.key, uome.value]
     new_totals, new_simplified_debt = simplify_debt.update_total_debt(totals, [new_uome])
 
     for user in group_users:
-        user.balance = new_totals[user]
+        user.balance = new_totals[user.key]
         user.save()
 
     # drop the previous user debt for this group, since it's now useless
@@ -340,7 +340,8 @@ def accept_uome(request):
         # debts is a dict of users this borrower owes to, like {'user1': 3, 'user2':8}
         for lender, value in user_debts.items():
             UserDebt.objects.create(group=group, value=value,
-                                    borrower=borrower, lender=lender, )
+                                    borrower=User.objects.get(key=borrower),
+                                    lender=User.objects.get(key=lender))
 
     # send the response, the status for success is 200 OK
     return HttpResponse(response.dumps(), status=200)
