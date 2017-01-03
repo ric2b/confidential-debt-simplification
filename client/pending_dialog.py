@@ -36,26 +36,26 @@ class PendingDialog(QDialog):
     def accept_uome(self):
         remove_rows = []
 
-        for row in range(self.ui.loans_table.rowCount()):
-            item = self.ui.loans_table.item(row, 0)
+        for row in range(self.ui.debts_table.rowCount()):
+            item = self.ui.debts_table.item(row, 0)
             if item.checkState() == Qt.Checked:
                 self.client.accept_UOMe(item.text())
                 remove_rows.append(row)
 
         for i, row in enumerate(remove_rows):
-            self.ui.loans_table.removeRow(row - i)
+            self.ui.debts_table.removeRow(row - i)
 
     def cancel_uome(self):
         remove_rows = []
 
-        for row in range(self.ui.debts_table.rowCount()):
-            item = self.ui.debts_table.item(row, 0)
+        for row in range(self.ui.loans_table.rowCount()):
+            item = self.ui.loans_table.item(row, 0)
             if item.checkState() == Qt.Checked:
                 self.client.cancel_UOMe(item.text())
                 remove_rows.append(row)
 
         for i, row in enumerate(remove_rows):
-            self.ui.debts_table.removeRow(row - i)
+            self.ui.loans_table.removeRow(row - i)
 
     def refresh(self):
         loans, debts = self.client.pending_UOMes()
@@ -95,6 +95,4 @@ class PendingDialog(QDialog):
         else:
             # debts tab is active
             return self.ui.debts_table
-
-
 
