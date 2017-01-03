@@ -63,9 +63,12 @@ class Ui_PendingDialog(object):
         self.verticalLayout.addWidget(self.tab_widget)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
+        self.refresh_button = QtWidgets.QPushButton(PendingDialog)
+        self.refresh_button.setObjectName("refresh_button")
+        self.horizontalLayout.addWidget(self.refresh_button)
         self.button_box = QtWidgets.QDialogButtonBox(PendingDialog)
         self.button_box.setOrientation(QtCore.Qt.Horizontal)
-        self.button_box.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.button_box.setStandardButtons(QtWidgets.QDialogButtonBox.Close)
         self.button_box.setCenterButtons(False)
         self.button_box.setObjectName("button_box")
         self.horizontalLayout.addWidget(self.button_box)
@@ -73,8 +76,9 @@ class Ui_PendingDialog(object):
 
         self.retranslateUi(PendingDialog)
         self.tab_widget.setCurrentIndex(0)
-        self.button_box.accepted.connect(PendingDialog.accept)
         self.button_box.rejected.connect(PendingDialog.reject)
+        self.button_box.accepted.connect(PendingDialog.accept)
+        self.refresh_button.clicked.connect(PendingDialog.refresh)
         QtCore.QMetaObject.connectSlotsByName(PendingDialog)
 
     def retranslateUi(self, PendingDialog):
@@ -98,4 +102,5 @@ class Ui_PendingDialog(object):
         item = self.debts_table.horizontalHeaderItem(4)
         item.setText(_translate("PendingDialog", "Description"))
         self.tab_widget.setTabText(self.tab_widget.indexOf(self.debts_tab), _translate("PendingDialog", "Debts"))
+        self.refresh_button.setText(_translate("PendingDialog", "Refresh"))
 

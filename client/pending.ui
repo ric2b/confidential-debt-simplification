@@ -102,12 +102,19 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
+      <widget class="QPushButton" name="refresh_button">
+       <property name="text">
+        <string>Refresh</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QDialogButtonBox" name="button_box">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
        <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+        <set>QDialogButtonBox::Close</set>
        </property>
        <property name="centerButtons">
         <bool>false</bool>
@@ -120,22 +127,6 @@
  </widget>
  <resources/>
  <connections>
-  <connection>
-   <sender>button_box</sender>
-   <signal>accepted()</signal>
-   <receiver>PendingDialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>426</x>
-     <y>282</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>455</x>
-     <y>306</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>button_box</sender>
    <signal>rejected()</signal>
@@ -152,9 +143,40 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>button_box</sender>
+   <signal>accepted()</signal>
+   <receiver>PendingDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>426</x>
+     <y>282</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>455</x>
+     <y>296</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>refresh_button</sender>
+   <signal>clicked()</signal>
+   <receiver>PendingDialog</receiver>
+   <slot>refresh()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>80</x>
+     <y>278</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>100</x>
+     <y>294</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
-  <slot>select_none()</slot>
-  <slot>select_all()</slot>
+  <slot>refresh()</slot>
  </slots>
 </ui>
