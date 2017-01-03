@@ -30,8 +30,14 @@ class PendingDialog(QDialog):
             # Add a check box for each UOMe
             table.setIndexWidget(table.model().index(i, 0),
                                  button_type(self.client, table, i))
+
+            if table == self.ui.loans_table:
+                other_user = uome.borrower
+            else:
+                other_user = uome.user
+
             table.setItem(i, 1, QTableWidgetItem(uome.uuid))
-            table.setItem(i, 2, QTableWidgetItem(uome.borrower))
+            table.setItem(i, 2, QTableWidgetItem(other_user))
             table.setItem(i, 3, QTableWidgetItem(str(uome.value)))
             table.setItem(i, 4, QTableWidgetItem(uome.description))
 
