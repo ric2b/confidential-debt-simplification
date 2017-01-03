@@ -24,19 +24,7 @@ class PendingDialog(QDialog):
         self.ui.select_all_button.clicked.connect(self.select_all)
         self.ui.select_none_button.clicked.connect(self.select_none)
 
-        ignored, uomes = client.pending_UOMes()
-
-        # Fill the table with each UOMe
-        self.ui.table.setRowCount(len(uomes))
-        for i, uome in enumerate(uomes):
-            # Add a check box for each UOMe
-            item = QTableWidgetItem(uome.uuid)
-            item.setCheckState(Qt.Unchecked)
-            self.ui.table.setItem(i, 0, item)
-
-            self.ui.table.setItem(i, 1, QTableWidgetItem(uome.borrower))
-            self.ui.table.setItem(i, 2, QTableWidgetItem(str(uome.value)))
-            self.ui.table.setItem(i, 3, QTableWidgetItem(uome.description))
+        self.refresh()
 
     def accept_uome(self):
         remove_rows = []
@@ -49,6 +37,21 @@ class PendingDialog(QDialog):
 
         for i, row in enumerate(remove_rows):
             self.ui.table.removeRow(row - i)
+
+    def refresh(self):
+        ignored, uomes = self.client.pending_UOMes()
+
+        # Fill the table with each UOMe
+        self.ui.table.setRowCount(len(uomes))
+        for i, uome in enumerate(uomes):
+            # Add a check box for each UOMe
+            item = QTableWidgetItem(uome.uuid)
+            item.setCheckState(Qt.Unchecked)
+            self.ui.table.setItem(i, 0, item)
+
+            self.ui.table.setItem(i, 1, QTableWidgetItem(uome.borrower))
+            self.ui.table.setItem(i, 2, QTableWidgetItem(str(uome.value)))
+            self.ui.table.setItem(i, 3, QTableWidgetItem(uome.description))
 
     def select_all(self):
         for row in range(self.ui.table.rowCount()):
