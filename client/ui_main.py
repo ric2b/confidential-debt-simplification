@@ -78,7 +78,7 @@ class Ui_MainWindow(object):
         self.info_group_box.setTitle(_translate("MainWindow", "User: c1@email.com"))
         self.balance_label.setText(_translate("MainWindow", "Balance:"))
         self.balance_value.setText(_translate("MainWindow", "0"))
-        self.label.setText(_translate("MainWindow", "Transactions:"))
+        self.label.setText(_translate("MainWindow", "Suggested Transactions:"))
         self.transactions_list.setSortingEnabled(True)
         self.uome_button.setText(_translate("MainWindow", "UOMe"))
         self.invite_button.setText(_translate("MainWindow", "Invite"))

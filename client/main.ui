@@ -67,7 +67,7 @@
           </font>
          </property>
          <property name="text">
-          <string>Transactions:</string>
+          <string>Suggested Transactions:</string>
          </property>
         </widget>
        </item>
