@@ -94,6 +94,8 @@ ENV/
 # Rope project settings
 .ropeproject
 
+.group_server/db.sqlite3
+
 # SQLite stuff
 *db.sqlite1
 *db.sqlite2
