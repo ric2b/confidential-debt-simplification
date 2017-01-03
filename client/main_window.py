@@ -16,6 +16,8 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        self.ui.info_group_box.setTitle("User: " + client.email)
+
         self._uome_dialog = None
         self._invite_dialog = None
         self._pending_dialog = None
