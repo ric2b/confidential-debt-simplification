@@ -145,8 +145,6 @@ class Client:
                     user_email=self.email,
                 )
 
-                # TODO store signature
-
             except rsa.InvalidSignature:
                 raise AuthenticationError("Inviter signature is invalid")
 
@@ -159,10 +157,10 @@ class Client:
                     inviter_signature=response.inviter_signature,
                 )
 
-                # TODO store signature
-
             except rsa.InvalidSignature:
                 raise AuthenticationError("Group server signature is invalid")
+
+            return response.inviter_signature, response.group_signature
 
     def confirm_join(self, group_signature):
         """
