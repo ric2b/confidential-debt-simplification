@@ -66,9 +66,6 @@ class Ui_MainWindow(object):
         self.pending_button = QtWidgets.QPushButton(self.centralwidget)
         self.pending_button.setObjectName("pending_button")
         self.horizontalLayout_4.addWidget(self.pending_button)
-        self.waiting_button = QtWidgets.QPushButton(self.centralwidget)
-        self.waiting_button.setObjectName("waiting_button")
-        self.horizontalLayout_4.addWidget(self.waiting_button)
         self.verticalLayout_3.addLayout(self.horizontalLayout_4)
         MainWindow.setCentralWidget(self.centralwidget)
 
@@ -87,5 +84,4 @@ class Ui_MainWindow(object):
         self.invite_button.setText(_translate("MainWindow", "Invite"))
         self.refresh_button.setText(_translate("MainWindow", "Refresh"))
         self.pending_button.setText(_translate("MainWindow", "Pending"))
-        self.waiting_button.setText(_translate("MainWindow", "Waiting"))
 

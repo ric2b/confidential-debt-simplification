@@ -4,7 +4,6 @@ from invite_dialog import InviteDialog
 from pending_dialog import PendingDialog
 from ui_main import Ui_MainWindow
 from uome_dialog import UOMeDialog
-from waiting_dialog import WaitingDialog
 
 
 class MainWindow(QMainWindow):
@@ -26,7 +25,6 @@ class MainWindow(QMainWindow):
         self.ui.invite_button.clicked.connect(self.invite)
         self.ui.refresh_button.clicked.connect(self.refresh)
         self.ui.pending_button.clicked.connect(self.pending)
-        self.ui.waiting_button.clicked.connect(self.waiting)
 
     def issue_uome(self):
         if not self._uome_dialog:
@@ -54,8 +52,3 @@ class MainWindow(QMainWindow):
         self._pending_dialog.refresh()
         self._pending_dialog.show()
 
-    def waiting(self):
-        if not self._waiting_dialog:
-            self._waiting_dialog = WaitingDialog(self.client)
-        self._waiting_dialog.refresh()
-        self._waiting_dialog.show()
