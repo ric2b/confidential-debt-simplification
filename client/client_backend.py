@@ -237,6 +237,25 @@ class Client:
 
             return response.uome_uuid, response.main_signature
 
+    def confirm_UOMe(self, uome_uuid, borrower, value, description):
+
+        request = self._make_request(
+            request_type=msg.ConfirmUOMe,
+            request_params={'uome_uuid': uome_uuid},
+            signature_params={
+                'uome_uuid': uome_uuid,
+                'borrower': borrower,
+                'value': value,
+                'description': description,
+            }
+        )
+
+        with connect(self.group_server_url) as connection:
+            connection.request(request)
+
+            # response can be ignored since it is only an acknowledgement
+            connection.get_response(msg.ConfirmUOMe)
+
     def pending_UOMes(self):
         request = self._make_request(request_type=msg.GetPendingUOMes)
 
