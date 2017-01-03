@@ -38,7 +38,7 @@ class PendingDialog(QDialog):
 
             table.setItem(i, 1, QTableWidgetItem(uome.uuid))
             table.setItem(i, 2, QTableWidgetItem(other_user))
-            table.setItem(i, 3, QTableWidgetItem(str(uome.value)))
+            table.setItem(i, 3, QTableWidgetItem("%.2f" % (uome.value / 100.0)))
             table.setItem(i, 4, QTableWidgetItem(uome.description))
 
     def _current_table(self):
