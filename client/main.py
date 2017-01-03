@@ -1,28 +1,47 @@
+import os
 import sys
+
 from PyQt5.QtWidgets import QApplication
 
-from client import Client
 from configuration import config
+from login_dialog import LoginDialog
 from main_window import MainWindow
-from utils.crypto import rsa
+from register_dialog import RegisterDialog
 
 
 def main():
     app = QApplication(sys.argv)
 
-    config_path = "client.json"
-    config.load(config_path)
+    config_path = os.path.join(config.app_dir, "client.json")
 
-    group_server_url = config["group_server_url"]
-    group_server_pubkey = rsa.load_pubkey(config["group_server_pubkey_path"])
-    proxy_server_url = config["proxy_server_url"]
-    main_server_pubkey = rsa.load_pubkey(config["main_server_pubkey_path"])
-    user_keys = rsa.load_keys(config["user_key_path"])
-    user_email = config["user_email"]
+    if os.path.exists(config_path):
+        # User is already registered
 
-    client = Client(group_server_url, group_server_pubkey,
-                    main_server_pubkey, proxy_server_url, user_email,
-                    keys=user_keys)
+        config.load(config_path)
+
+        dialog = LoginDialog()
+
+        if dialog.exec() != 1:
+            print("Error: failed to login user\n"
+                  "Will exit the program!", file=sys.stderr)
+            sys.exit(1)
+
+        # Get registered client
+        client = dialog.client
+
+    else:
+        # User needs to register first
+
+        # Present the user with the register dialog
+        dialog = RegisterDialog()
+
+        if dialog.exec() != 1:
+            print("Error: failed to register user\n"
+                  "Will exit the program!", file=sys.stderr)
+            sys.exit(1)
+
+        # Get registered client
+        client = dialog.client
 
     window = MainWindow(client)
     window.refresh()
