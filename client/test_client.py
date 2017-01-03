@@ -47,6 +47,7 @@ class TestClient:
         return Client(
             group_server_url="http://register.com",
             group_server_pubkey="G",
+            proxy_server_url="P",
             main_server_pubkey="M",
             email="c1@email.com",
             keys=("pC1", "C1")

@@ -34,7 +34,7 @@ class LoginDialog(QDialog):
 
         try:
             group_server_pubkey = rsa.load_pubkey(
-                config["group_server_pubkey_path"])
+                config.group_server_pubkey_path)
 
         except FileNotFoundError:
             QMessageBox.information(
@@ -42,13 +42,13 @@ class LoginDialog(QDialog):
                 "Missing group key file.\n"
                 "The configuration file says the file should be\n"
                 "stored at:\n"
-                "%s" % config["group_server_pubkey_path"]
+                "%s" % config.group_server_pubkey_path
             )
             sys.exit(1)
 
         try:
             main_server_pubkey = rsa.load_pubkey(
-                config["main_server_pubkey_path"])
+                config.main_server_pubkey_path)
 
         except FileNotFoundError:
             QMessageBox.information(
@@ -56,12 +56,12 @@ class LoginDialog(QDialog):
                 "Missing main key file.\n"
                 "The configuration file says the file should be\n"
                 "stored at:\n"
-                "%s" % config["main_server_pubkey_path"]
+                "%s" % config.main_server_pubkey_path
             )
             sys.exit(1)
 
         try:
-            user_keys = rsa.load_keys(config["user_key_path"],
+            user_keys = rsa.load_keys(config.user_key_path,
                                       password=self.ui.password_line.text())
 
         except FileNotFoundError:
@@ -70,7 +70,7 @@ class LoginDialog(QDialog):
                 "Missing user key file.\n"
                 "The configuration file says the file should be\n"
                 "stored at:\n"
-                "%s" % config["user_key_path"]
+                "%s" % config.user_key_path
             )
             sys.exit(1)
 
@@ -88,11 +88,11 @@ class LoginDialog(QDialog):
         #
 
         self.client = Client(
-            config["group_server_url"],
+            config.group_server_url,
             group_server_pubkey,
             main_server_pubkey,
-            config["proxy_server_url"],
-            config["user_email"],
+            config.proxy_server_url,
+            config.user_email,
             user_keys
         )
 

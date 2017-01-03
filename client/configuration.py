@@ -115,6 +115,9 @@ class _Configuration:
         with open(config_path, 'w') as config_file:
             json.dump(self._parameters, config_file, indent='\t')
 
+    def clear(self):
+        """ Clears all configurations ot default or none """
+        self._parameters.clear()
 
 config = _Configuration()
 

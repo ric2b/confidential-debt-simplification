@@ -12,12 +12,10 @@ from register_dialog import RegisterDialog
 def main():
     app = QApplication(sys.argv)
 
-    config_path = os.path.join(config.app_dir, "client.json")
-
-    if os.path.exists(config_path):
+    if os.path.exists(config.CONFIG_PATH):
         # User is already registered
 
-        config.load(config_path)
+        config.load()
 
         dialog = LoginDialog()
 

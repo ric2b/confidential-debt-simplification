@@ -22,7 +22,7 @@ class RegisterDialog(QDialog):
 
         try:
             # Load the main server public key
-            main_server_pubkey_path = config["main_server_pubkey_path"]
+            main_server_pubkey_path = config.main_server_pubkey_path
             self._main_server_pubkey = rsa.load_pubkey(main_server_pubkey_path)
 
         except FileNotFoundError:
@@ -56,7 +56,7 @@ class RegisterDialog(QDialog):
             group_server_url=self.ui.group_line.text(),
             group_server_pubkey=self.ui.group_key_line.text(),
             main_server_pubkey=self._main_server_pubkey,
-            proxy_server_url=config["proxy_server_url"],
+            proxy_server_url=config.proxy_server_url,
             email=self.ui.email_line.text(),
             keys=(self._key, self._pubkey)
         )
@@ -88,19 +88,19 @@ class RegisterDialog(QDialog):
         # Store the group server public key
         rsa.dump_pubkey(
             pubkey=self.ui.group_key_line.text(),
-            key_filepath=config["group_server_pubkey_path"]
+            key_filepath=config.group_server_pubkey_path
         )
 
         # Store the user's keys
         rsa.dump_key(
             key=self._key,
-            key_filepath=config["user_key_path"],
+            key_filepath=config.user_key_path,
             password=self.ui.password_line.text()
         )
 
         # Create the config file for this user
-        config["group_server_url"] = self.ui.group_line.text()
-        config["user_email"] = self.ui.email_line.text()
+        config.group_server_url = self.ui.group_line.text()
+        config.user_email = self.ui.email_line.text()
         config.save()
 
         # Call the accept method of the QDialog

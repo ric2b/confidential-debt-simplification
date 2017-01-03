@@ -8,6 +8,7 @@ class TestConfiguration:
 
     @fixture
     def tmp_file(self, tmpdir):
+        config.clear()
         return tmpdir.join("config.conf")
 
     def test_load_FileWithAllParameters_LoadedParametersMatchFile(
@@ -23,12 +24,12 @@ class TestConfiguration:
 
         config.load(str(tmp_file))
 
-        assert config["group_server_url"] == "group.com"
-        assert config["proxy_server_url"] == "proxy.com"
-        assert config["group_server_pubkey_path"] == "group/key"
-        assert config["main_server_pubkey_path"] == "main/key"
-        assert config["user_key_path"] == "user/key"
-        assert config["user_email"] == "user@email.com"
+        assert config.group_server_url == "group.com"
+        assert config.proxy_server_url == "proxy.com"
+        assert config.group_server_pubkey_path == "group/key"
+        assert config.main_server_pubkey_path == "main/key"
+        assert config.user_key_path == "user/key"
+        assert config.user_email == "user@email.com"
 
     def test_load_FileMissesGroupServerUrl_RaisesMissingParameterError(
             self, tmp_file):
