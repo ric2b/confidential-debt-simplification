@@ -67,6 +67,8 @@ class RegisterDialog(QDialog):
                 inviter_id=self.ui.inviter_line.text()
             )
 
+            client.confirm_join(group_signature)
+
             self.client = client
 
         except ProtocolError as error:
