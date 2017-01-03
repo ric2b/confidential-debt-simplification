@@ -235,6 +235,8 @@ class Client:
             except rsa.InvalidSignature:
                 raise AuthenticationError("Main server signature is invalid")
 
+            return response.uome_uuid, response.main_signature
+
     def pending_UOMes(self):
         request = self._make_request(request_type=msg.GetPendingUOMes)
 
