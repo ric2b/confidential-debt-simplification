@@ -24,8 +24,6 @@ class PendingDialog(QDialog):
         self.ui.select_all_button.clicked.connect(self.select_all)
         self.ui.select_none_button.clicked.connect(self.select_none)
 
-        self.refresh()
-
     def accept_uome(self):
         remove_rows = []
 
