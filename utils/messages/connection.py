@@ -1,4 +1,5 @@
 import http.client as http
+from urllib.parse import urlencode
 
 from utils.messages.message import Message
 
@@ -58,7 +59,7 @@ class Connection:
     Might seem silly, but this separation facilitates testing.
     """
 
-    def __init__(self, server_url, http_connection):
+    def __init__(self, server_url, http_connection: http.HTTPConnection):
         """
         THIS INITIALIZER SHOULD NOT BE USED - use the 'connect' function instead
 
@@ -107,10 +108,14 @@ class Connection:
 
         :param request: request to be issued.
         """
+        headers = {"Content-type": "application/x-www-form-urlencoded",
+                   "Accept": "text/plain"}
+
         self._http_connection.request(
             method='POST',
-            url='/' + request.message_type,
-            body=request.dumps()
+            url='/' + request.url,
+            body=urlencode({'data': request.dumps()}),
+            headers=headers
         )
 
     def get_response(self, response_type: Message):

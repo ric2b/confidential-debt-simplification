@@ -28,42 +28,48 @@ class TestMessageCreation:
             test_class('request')
 
     def test_init_all_class_attributes_incorrect_request_params_type(self):
-        test_class = type('TestClass', (Message,), {'request_params': 5,
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': 5,
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
         with raises(TypeError):
             test_class('request')
 
     def test_init_all_class_attributes_incorrect_response_params_type(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str},
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str},
                                                     'response_params': 'hi',
                                                     'signature_formats': {'a': ['a']}})
         with raises(TypeError):
             test_class('request')
 
     def test_init_all_class_attributes_incorrect_signature_formats_type(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str},
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str},
                                                     'response_params': {'a': str},
                                                     'signature_formats': 7})
         with raises(TypeError):
             test_class('request')
 
     def test_init_correct_class_attributes_no_parameters_given(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str},
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str},
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
         with raises(KeyError):
             test_class('request')
 
     def test_init_correct_class_attributes_parameter_given_of_incorrect_type(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str},
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str},
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
         with raises(TypeError):
             test_class('request', a=67)
 
     def test_init_correct_class_attributes_parameters_given_of_correct_type(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str,
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str,
                                                                        'b': int},
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
@@ -76,14 +82,16 @@ class TestMessageCreation:
             print(my_object.c)
 
     def test_read_message_type(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str},
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str},
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
 
         assert test_class('request', a='hi').message_type == 'request'
 
     def test_body_different_types_of_parameters(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str,
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str,
                                                                        'b': int,
                                                                        'c': list,
                                                                        'd': dict},
@@ -106,7 +114,8 @@ class TestMessageCreation:
 class TestMessageLoading:
 
     def test_load_no_parameters(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str},
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str},
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
 
@@ -114,7 +123,8 @@ class TestMessageLoading:
             test_class.load('request', fake_body({}))
 
     def test_load_missing_parameters(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str,
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str,
                                                                        'b': int},
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
@@ -123,7 +133,8 @@ class TestMessageLoading:
             test_class.load('request', fake_body({'b': 42}))
 
     def test_load_incorrect_parameter_types(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str,
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str,
                                                                        'b': int},
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
@@ -132,7 +143,8 @@ class TestMessageLoading:
             test_class.load('request', fake_body({'a': 10, 'b': 42}))
 
     def test_load_correct_parameters(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str},
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str},
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
 
@@ -145,7 +157,8 @@ class TestMessageLoading:
 class TestMessageSignatures:
 
     def test_sign_verify_everything_correct(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str},
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str},
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
 
@@ -153,7 +166,8 @@ class TestMessageSignatures:
         test_class.verify(example_pub_key, 'a', signature, a=10)
 
     def test_sign_missing_parameter(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str},
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str},
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
 
@@ -161,7 +175,8 @@ class TestMessageSignatures:
             test_class.sign(example_key, 'a')
 
     def test_verify_missing_parameter(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str},
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str},
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
 
@@ -169,7 +184,8 @@ class TestMessageSignatures:
             test_class.verify(example_pub_key, 'a', "a")
 
     def test_verify_wrong_signature(self):
-        test_class = type('TestClass', (Message,), {'request_params': {'a': str},
+        test_class = type('TestClass', (Message,), {'url': 'test',
+                                                    'request_params': {'a': str},
                                                     'response_params': {'a': str},
                                                     'signature_formats': {'a': ['a']}})
 
