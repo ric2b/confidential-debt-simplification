@@ -10,6 +10,6 @@ class CancelButton(CommitButton):
         self.client = client
         self.setText("cancel")
 
-    def operate(self, uome_uuid):
+    def operate(self, uome_uuid, other_user, value, description):
         """ Subclasses should override this method to accept or cancel """
         self.client.cancel_UOMe(uome_uuid)
