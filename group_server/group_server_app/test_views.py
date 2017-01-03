@@ -113,7 +113,8 @@ class ConfirmJoinTests(TestCase):
             return mock_connection
             
         def forge_request(cls):
-            return 'ciao'    
+            response = msg.MainServerJoin.make_response(group_uuid=str(self.group.uuid), user=self.key2, main_signature='rdfsfsdfsdfsdfsd' )
+            return response    
         
         patch('group_server_app.views.connect', mock_server).start()
         patch('utils.messages.connection.Connection.get_response', forge_request).start()

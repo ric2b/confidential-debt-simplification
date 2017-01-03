@@ -163,10 +163,10 @@ def confirm_join(request):
         except DecodeError:
             raise SecurityException('Response format not correct')
             
-        #try:
-        #    msg.MainServerJoin.verify(settings.MAIN_PUBLIC_KEY, 'main', response.main_signature, group_uuid=str(group.uuid), user=user.key)
-        #except InvalidSignature:
-        #    raise SecurityException('Signature of the response is invalid')    
+        try:
+            msg.MainServerJoin.verify(settings.MAIN_PUBLIC_KEY, 'main', response.main_signature, group_uuid=str(group.uuid), user=user.key)
+        except InvalidSignature:
+            raise SecurityException('Signature of the response is invalid')    
     
     #Save user_signature
     invitation.signature_invitee = request.user_signature
