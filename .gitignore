@@ -93,3 +93,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# SQLite stuff
+*db.sqlite1
+*db.sqlite2
+*db.sqlite3

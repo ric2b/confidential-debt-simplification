@@ -6,6 +6,8 @@ class RegisterGroup(Message):
     Message sent to the Main server to register a new group and it's signing key
     """
 
+    url = "register-group"
+
     request_params = {
         'group_name': str,
         'group_key': str,
@@ -27,6 +29,8 @@ class UserInvite(Message):
     """
     Invite request sent by a valid user to invite a new user into the group.
     """
+
+    url = "invite-user"
 
     request_params = {
         'group_uuid': str,
@@ -52,6 +56,8 @@ class GroupServerJoin(Message):
     This can only be done after the user receives his secret code by the e-mail the
     Group server sends after another user invites him.
     """
+
+    url = "join-group"
 
     request_params = {
         'group_uuid': str,
@@ -82,6 +88,8 @@ class ConfirmJoin(Message):
     Group server sends after another user invites him.
     """
 
+    url = "confirm-join"
+
     request_params = {
         'group_uuid': str,
         'user': str,
@@ -105,6 +113,8 @@ class MainServerJoin(Message):
     can get his key signed by the group server.
     """
 
+    url = "join-group"
+
     request_params = {
         'group_uuid': str,
         'user': str,
@@ -126,7 +136,12 @@ class MainServerJoin(Message):
 class IssueUOMe(Message):
     """
     Sent to the Main Server by a user to issue a new, unconfirmed, UOMe.
+    He doesn't sign it yet, since he doesn't have the uome_uuid yet.
+    This is to prevent the main server from creating multiple copies of the same UOMe,
+    which would be possible if the signature didn't include the uuid.
     """
+
+    url = "issue-uome"
 
     request_params = {
         'group_uuid': str,
@@ -143,8 +158,32 @@ class IssueUOMe(Message):
     }
 
     signature_formats = {
-        'user': ['group_uuid', 'user', 'borrower', 'value', 'description'],
+        'user': ['group_uuid', 'user'],
         'main': ['uome_uuid', 'group_uuid', 'user', 'borrower', 'value', 'description']
+    }
+
+
+class ConfirmUOMe(Message):
+    """
+    Sent to the Main Server by a user to confirm a just issued UOMe.
+    """
+
+    url = "confirm-uome"
+
+    request_params = {
+        'group_uuid': str,
+        'user': str,
+        'uome_uuid': str,
+        'user_signature': str
+    }
+
+    response_params = {
+        'group_uuid': str,
+        'user': str,
+    }
+
+    signature_formats = {
+        'user': ['group_uuid', 'user', 'borrower', 'value', 'description', 'uome_uuid']
     }
 
 
@@ -155,6 +194,8 @@ class CancelUOMe(Message):
     After the UOMe is confirmed by the user it cannot be deleted and both users should
     agree on issuing a UOMe in the opposite direction if it was indeed a mistake.
     """
+
+    url = "cancel-uome"
 
     request_params = {
         'group_uuid': str,
@@ -177,6 +218,8 @@ class GetPendingUOMes(Message):
     """
     Sent to the Main Server by a user to get all pending UOMe's associated with him.
     """
+
+    url = "get-pending-uomes"
 
     request_params = {
         'group_uuid': str,
@@ -201,6 +244,8 @@ class AcceptUOMe(Message):
     Sent to the Main Server by a user to accept a pending UOMe's associated with him.
     """
 
+    url = "accept-uome"
+
     request_params = {
         'group_uuid': str,
         'user': str,
@@ -213,7 +258,7 @@ class AcceptUOMe(Message):
     }
 
     signature_formats = {
-        'user': ['group_uuid', 'user', 'uome_uuid'],
+        'user': ['group_uuid', 'issuer', 'user', 'value', 'description', 'uome_uuid'],
         'main': ['group_uuid', 'user', 'uome_uuid']
     }
 
@@ -228,6 +273,8 @@ class CheckTotals(Message):
     # individual practicality. This of course could reveal more information about
     # all the users in the group. Probably for after the course is done.
 
+    url = "get-totals"
+
     request_params = {
         'group_uuid': str,
         'user': str,
@@ -236,13 +283,12 @@ class CheckTotals(Message):
 
     response_params = {
         'user_balance': int,
-        'suggested_transactions': dict,
-        'main_signature': str
+        'suggested_transactions': dict
     }
 
+    # TODO: Check if the signature can be abused by the Group Server, if it's the same
     signature_formats = {
         'user': ['group_uuid', 'user'],
-        'main': ['group_uuid', 'user', 'user_balance', 'suggested_transactions']
     }
 
     # Sign the JSON string version of 'suggested_transactions'.

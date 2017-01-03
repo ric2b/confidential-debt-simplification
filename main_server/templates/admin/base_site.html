@@ -1,0 +1,9 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | {{ main_server|default:_('Main server administration') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">{{ main_server|default:_('Main server administration') }}</a></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
