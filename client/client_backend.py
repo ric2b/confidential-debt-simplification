@@ -229,9 +229,6 @@ class Client:
                     description=description,
                 )
 
-                # TODO store signature
-                # TODO store the UOMe-ID
-
             except rsa.InvalidSignature:
                 raise AuthenticationError("Main server signature is invalid")
 
