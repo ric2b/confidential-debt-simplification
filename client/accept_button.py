@@ -10,6 +10,6 @@ class AcceptButton(CommitButton):
         self.client = client
         self.setText("accept")
 
-    def operate(self, uome_uuid):
+    def operate(self, uome_uuid, other_user, value, description):
         """ Subclasses should override this method to accept or cancel """
-        self.client.accept_UOMe(uome_uuid)
+        self.client.accept_UOMe(uome_uuid, other_user, value, description)

@@ -229,11 +229,29 @@ class Client:
                     description=description,
                 )
 
-                # TODO store signature
-                # TODO store the UOMe-ID
-
             except rsa.InvalidSignature:
                 raise AuthenticationError("Main server signature is invalid")
+
+            return response.uome_uuid, response.main_signature
+
+    def confirm_UOMe(self, uome_uuid, borrower, value, description):
+
+        request = self._make_request(
+            request_type=msg.ConfirmUOMe,
+            request_params={'uome_uuid': uome_uuid},
+            signature_params={
+                'uome_uuid': uome_uuid,
+                'borrower': borrower,
+                'value': value,
+                'description': description,
+            }
+        )
+
+        with connect(self.group_server_url) as connection:
+            connection.request(request)
+
+            # response can be ignored since it is only an acknowledgement
+            connection.get_response(msg.ConfirmUOMe)
 
     def pending_UOMes(self):
         request = self._make_request(request_type=msg.GetPendingUOMes)
@@ -252,14 +270,18 @@ class Client:
 
             return issued_by_user, waiting_for_user
 
-    def accept_UOMe(self, UOMe_number):
+    def accept_UOMe(self, uome_uuid, loaner: str, value: int, description: str):
         # parameters that are common to the request and user signature
-        parameters = {'uome_uuid': UOMe_number}
 
         request = self._make_request(
             request_type=msg.AcceptUOMe,
-            request_params=parameters,
-            signature_params=parameters
+            request_params={'uome_uuid': uome_uuid},
+            signature_params={
+                'uome_uuid': uome_uuid,
+                'issuer': loaner,
+                'value': value,
+                'description': description
+            }
         )
 
         with connect(self.proxy_server_url) as connection:
@@ -282,7 +304,7 @@ class Client:
                     signature=response.main_signature,
                     group_uuid=self.GROUP_ID,
                     user=self.id,
-                    uome_uuid=UOMe_number,
+                    uome_uuid=uome_uuid,
                 )
 
                 # TODO store signature
