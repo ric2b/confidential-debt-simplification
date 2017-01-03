@@ -23,6 +23,7 @@ class ParseError(Exception):
 
 class _Configuration:
 
+    CONFIG_PATH = "config.json"
     DEFAULT_APP_DIR = "."
     DEFAULT_PROXY_SERVER_URL = "localhost"
 
@@ -64,7 +65,7 @@ class _Configuration:
                     raise MissingParameterError("Configuration file is missing "
                                                 "parameter %s" % parameter)
 
-    def save(self, config_path):
+    def save(self, config_path=CONFIG_PATH):
         """ Saves the current configurations into a file """
         with open(config_path, 'w') as config_file:
             json.dump(self._parameters, config_file, indent='\t')
