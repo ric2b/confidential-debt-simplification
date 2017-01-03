@@ -15,7 +15,6 @@ class CommitButton(QPushButton):
         self.clicked.connect(self.commit)
 
     def commit(self):
-        print("clicked")
         uome_uuid_column = 1
         uome_uuid = self.table.item(self.row, uome_uuid_column).text()
 
