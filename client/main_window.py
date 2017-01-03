@@ -57,4 +57,5 @@ class MainWindow(QMainWindow):
     def waiting(self):
         if not self._waiting_dialog:
             self._waiting_dialog = WaitingDialog(self.client)
+        self._waiting_dialog.refresh()
         self._waiting_dialog.show()
