@@ -12,7 +12,7 @@ from register_dialog import RegisterDialog
 def main():
     app = QApplication(sys.argv)
 
-    if os.path.exists(config.CONFIG_PATH):
+    if os.path.exists(config.config_path):
         # User is already registered
 
         config.load()

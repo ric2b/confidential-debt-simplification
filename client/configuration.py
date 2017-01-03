@@ -23,7 +23,6 @@ class ParseError(Exception):
 
 class _Configuration:
 
-    CONFIG_PATH = "config.json"
     DEFAULT_APP_DIR = "."
     DEFAULT_PROXY_SERVER_URL = "localhost"
 
@@ -35,6 +34,17 @@ class _Configuration:
     def __init__(self):
         self.app_dir = self.DEFAULT_APP_DIR
         self._parameters = {}
+
+    @property
+    def config_path(self):
+        try:
+            return self._parameters["config_path"]
+        except KeyError:
+            return os.path.join(self.app_dir, "config.json")
+
+    @config_path.setter
+    def config_path(self, value):
+        self._parameters["config_path"] = value
 
     @property
     def group_server_url(self):
@@ -99,8 +109,11 @@ class _Configuration:
     def __contains__(self, item):
         return item in self._parameters
 
-    def load(self, config_path=CONFIG_PATH):
+    def load(self, config_path=None):
         """ Loads configurations from a file """
+        if not config_path:
+            config_path = self.config_path
+
         with open(config_path) as config_file:
             self._parameters.update(json.load(config_file))
 
@@ -110,8 +123,11 @@ class _Configuration:
                     raise MissingParameterError("Configuration file is missing "
                                                 "parameter %s" % parameter)
 
-    def save(self, config_path=CONFIG_PATH):
+    def save(self, config_path=None):
         """ Saves the current configurations into a file """
+        if not config_path:
+            config_path = self.config_path
+
         with open(config_path, 'w') as config_file:
             json.dump(self._parameters, config_file, indent='\t')
 
