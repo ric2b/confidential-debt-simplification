@@ -22,7 +22,8 @@ class WaitingDialog(QDialog):
         self.ui.select_all_button.clicked.connect(self.select_all)
         self.ui.select_none_button.clicked.connect(self.select_none)
 
-        uomes, ignored = client.pending_UOMes()
+    def refresh(self):
+        uomes, ignored = self.client.pending_UOMes()
 
         # Fill the table with each UOMe
         self.ui.table.setRowCount(len(uomes))

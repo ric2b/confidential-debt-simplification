@@ -51,9 +51,11 @@ class MainWindow(QMainWindow):
     def pending(self):
         if not self._pending_dialog:
             self._pending_dialog = PendingDialog(self.client)
+        self._pending_dialog.refresh()
         self._pending_dialog.show()
 
     def waiting(self):
         if not self._waiting_dialog:
             self._waiting_dialog = WaitingDialog(self.client)
+        self._waiting_dialog.refresh()
         self._waiting_dialog.show()
