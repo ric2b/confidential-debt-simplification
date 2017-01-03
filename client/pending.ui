@@ -102,26 +102,12 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QPushButton" name="select_all_button">
-       <property name="text">
-        <string>Select All</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="select_none_button">
-       <property name="text">
-        <string>Select None</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QDialogButtonBox" name="button_box">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
        <property name="standardButtons">
-        <set>QDialogButtonBox::Apply|QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
        </property>
        <property name="centerButtons">
         <bool>false</bool>
@@ -163,38 +149,6 @@
     <hint type="destinationlabel">
      <x>520</x>
      <y>296</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>select_none_button</sender>
-   <signal>clicked()</signal>
-   <receiver>PendingDialog</receiver>
-   <slot>select_none()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>158</x>
-     <y>277</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>154</x>
-     <y>294</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>select_all_button</sender>
-   <signal>clicked()</signal>
-   <receiver>PendingDialog</receiver>
-   <slot>select_all()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>46</x>
-     <y>277</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>23</x>
-     <y>298</y>
     </hint>
    </hints>
   </connection>

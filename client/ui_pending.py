@@ -63,15 +63,9 @@ class Ui_PendingDialog(object):
         self.verticalLayout.addWidget(self.tab_widget)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.select_all_button = QtWidgets.QPushButton(PendingDialog)
-        self.select_all_button.setObjectName("select_all_button")
-        self.horizontalLayout.addWidget(self.select_all_button)
-        self.select_none_button = QtWidgets.QPushButton(PendingDialog)
-        self.select_none_button.setObjectName("select_none_button")
-        self.horizontalLayout.addWidget(self.select_none_button)
         self.button_box = QtWidgets.QDialogButtonBox(PendingDialog)
         self.button_box.setOrientation(QtCore.Qt.Horizontal)
-        self.button_box.setStandardButtons(QtWidgets.QDialogButtonBox.Apply|QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.button_box.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.button_box.setCenterButtons(False)
         self.button_box.setObjectName("button_box")
         self.horizontalLayout.addWidget(self.button_box)
@@ -81,8 +75,6 @@ class Ui_PendingDialog(object):
         self.tab_widget.setCurrentIndex(0)
         self.button_box.accepted.connect(PendingDialog.accept)
         self.button_box.rejected.connect(PendingDialog.reject)
-        self.select_none_button.clicked.connect(PendingDialog.select_none)
-        self.select_all_button.clicked.connect(PendingDialog.select_all)
         QtCore.QMetaObject.connectSlotsByName(PendingDialog)
 
     def retranslateUi(self, PendingDialog):
@@ -106,6 +98,4 @@ class Ui_PendingDialog(object):
         item = self.debts_table.horizontalHeaderItem(4)
         item.setText(_translate("PendingDialog", "Description"))
         self.tab_widget.setTabText(self.tab_widget.indexOf(self.debts_tab), _translate("PendingDialog", "Debts"))
-        self.select_all_button.setText(_translate("PendingDialog", "Select All"))
-        self.select_none_button.setText(_translate("PendingDialog", "Select None"))
 
