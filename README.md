@@ -13,7 +13,7 @@ In the end, it is possible that nobody owes anyone anything or that everything c
 You can create a group in Group Bank with a bunch of your friends and you can start issuing loans to each other. Group Bank keeps track of all the loans and gives you the most efficient way (in number of transactions) of settling your debt within the group.
 
 Essentially, turning the mess on the left (and it is a very small example) into a manageable thing, on the right:
-![Solution example](media/MutualDebt.gv.png) ![Arrow](media/right_arrow.png) ![Solution example](media/SimplifiedMutualDebt.gv.png)
+![Solution example](media/Example.png)
 
 ### Ok, how? I don't want my transactions out in the open
 The system relies on a fundamental idea: The identities of the users should be decoupled from the transaction history, such that any one server knows, at most, just one of them. If the server managers don't collude with each other (we'll explain later why this would be unlikely), your transaction data is safe. 
