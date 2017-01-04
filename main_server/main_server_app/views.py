@@ -101,8 +101,8 @@ def issue_uome(request):
 
     try:  # check that the group exists and get it
         group = Group.objects.get(pk=request.group_uuid)
-        user = User.objects.filter(group=group, key=request.user).first()
-        borrower = User.objects.filter(group=group, key=request.borrower).first()
+        user = User.objects.get(group=group, key=request.user)
+        borrower = User.objects.get(group=group, key=request.borrower)
     except (ValueError, ObjectDoesNotExist):  # ValueError if the uuid is not valid
         return HttpResponseBadRequest()
 
@@ -242,10 +242,11 @@ def get_pending_uomes(request):
     except InvalidSignature:
         return HttpResponse('401 Unauthorized', status=401)
 
+    # TODO: add a test for uome's without issuer signatures
     uomes_by_user = UOMe.objects.filter(group=group, borrower_signature='',
-                                        lender=user)
+                                        lender=user).exclude(issuer_signature='')
     uomes_for_user = UOMe.objects.filter(group=group, borrower_signature='',
-                                         borrower=user)
+                                         borrower=user).exclude(issuer_signature='')
     issued_by_user = []
     for uome in uomes_by_user:
         issued_by_user.append(uome.to_array_unconfirmed())
@@ -323,13 +324,13 @@ def accept_uome(request):
 
     totals = defaultdict(int)
     for user in group_users:
-        totals[user] = user.balance
+        totals[user.key] = user.balance
 
-    new_uome = [uome.borrower, uome.lender, uome.value]
+    new_uome = [uome.borrower.key, uome.lender.key, uome.value]
     new_totals, new_simplified_debt = simplify_debt.update_total_debt(totals, [new_uome])
 
     for user in group_users:
-        user.balance = new_totals[user]
+        user.balance = new_totals[user.key]
         user.save()
 
     # drop the previous user debt for this group, since it's now useless
@@ -339,7 +340,8 @@ def accept_uome(request):
         # debts is a dict of users this borrower owes to, like {'user1': 3, 'user2':8}
         for lender, value in user_debts.items():
             UserDebt.objects.create(group=group, value=value,
-                                    borrower=borrower, lender=lender, )
+                                    borrower=User.objects.get(key=borrower),
+                                    lender=User.objects.get(key=lender))
 
     # send the response, the status for success is 200 OK
     return HttpResponse(response.dumps(), status=200)
