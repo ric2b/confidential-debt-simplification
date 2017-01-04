@@ -28,7 +28,7 @@ Here's a diagram of the architecture:
 
 You probably noticed a third server, the _proxy server_. It will most likely run on the same machine as the _group server_, all it has to do is mask the IP address of users that want to talk to the _main server_, by relaying their communication. It can't read/modify anything because the communication is encrypted with HTTPS
 
-As you can see on the diagram, the _main server_ should be managed by a stranger, since group members know everyone's identity. Imagine it is a public service, like GitHub. If it's large enough it won't risk it's reputation by colluding with someone only to get a single group's information (and probably won't even care enough about a single group anyway)
+As you can see on the diagram, the _main server_ should be managed by a stranger, since group members know everyone's identity. Imagine it as public service, like GitHub. If it's large enough it won't risk it's reputation by colluding with someone only to get a single group's information (it probably won't even care enough about a single group's information anyway)
 
 ### How a group works
 Assume the _main server_ is a public service that is always running.
@@ -59,9 +59,21 @@ The servers themselves also have RSA keys, so that the servers also cannot repud
 In short, every entity involved in the system will hold RSA keys and signatures are used in pretty much every action.
 
 ### This seems way too hard to use...
+Well, most of this stuff will happen behind the scenes, the client software will handle it for you.
+And while it is a bit clunky right now, the protocol allows the software to be really easy to use by updating a few things:
 
+- The user's keys can be stored encrypted on the group server, so that he can have a familiar e-mail and password login experience from wherever he wants to connect from
 
-### How complete is it? Are you planning on improving it?
+- Since the main server is supposed to be a public server, the main server can have a list of *group id* <-> *proxy url*, *group url* links, so that client the software can just ask it where to connect. These should be signed by the group owner so that the main server can't tell the client to connect to the wrong servers. The invitation e-mail now only requires: *group id*, *secret code*
+
+- If the user is willing to trust the main server, a website can be used instead of a native application, meaning no setup required by the user. This comes at the cost of security since the main server can send a different version whenever it wants, without a warning to the user.
+
+### Are you planning on improving it? How?
+What we value most is ease of use, so we want to improve it as much as possible.
+This includes things like making server setup simpler and creating binaries for the native client.
+
+We've had a few cool ideas for improvements, like changing the key type from RSA to ECDSA, which allows for much (much!) shorter keys with the same ammount of security but, most importantly, every user can then have a valid [Bitcoin](https://en.wikipedia.org/wiki/Bitcoin) address, which means we can potentially have a "pay with bitcoin" button on the client ;) 
+![Bitcoin logo](media/Bitcoin_logo.svg.png)
 
 
 ### Check out our wiki for more:
