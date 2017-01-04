@@ -73,6 +73,7 @@ What we value most is ease of use, so we want to improve it as much as possible.
 This includes things like making server setup simpler and creating binaries for the native client.
 
 We've had a few cool ideas for improvements, like changing the key type from RSA to ECDSA, which allows for much (much!) shorter keys with the same ammount of security but, most importantly, every user can then have a valid [Bitcoin](https://en.wikipedia.org/wiki/Bitcoin) address, which means we can potentially have a "pay with bitcoin" button on the client ;) 
+
 ![Bitcoin logo](media/Bitcoin_logo.svg.png)
 
 
