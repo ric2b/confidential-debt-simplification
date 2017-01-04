@@ -84,3 +84,6 @@ We've had a few cool ideas for improvements, like changing the key type from RSA
 - [How to set up the servers and what security concerns you should have if you manage them](../../wiki/Setting-up-the-group-and-main-servers-and-related-security-concerns)
 - Our Internal API, i.e. the formal description of how the client interacts with the servers
 - Planned improvements and ideas
+
+### And check out our diagrams of the protocol on LucidChart:
+https://www.lucidchart.com/documents/view/05b1039e-27e5-4b08-a8c7-19e3b0b3e155
