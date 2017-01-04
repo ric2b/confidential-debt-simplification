@@ -46,7 +46,17 @@ Invitations are signed and stored on the group server, creating a hierarchy of r
 If a user has no invitation (such as the owner), the responsability falls on the group server owner.
 
 ### About non-repudiation
+An important question to have is "Can a user claim the server forged something in his name?"
+A user that owed money might feel inclined to claim that a transaction was forged and that he doesn't owe it.
+Sure, since it's probably a group of friends this is unlikely, but the system should still prevent such claims.
 
+So what prevents a user from doing it?
+
+Remember those random numbers that identify users? They're actually 2048bit RSA public keys. RSA is a type of [asymmetric cryptography](asymmetric cryptography) that is widely used. The user holds the private key and this means users can digitally sign messages. Since only they hold the private keys the signatures prove they were the ones that created a certaing message (like asking the server to record a new loan to another user).
+
+The servers themselves also have RSA keys, so that the servers also cannot repudiate certain messages (like proving a user was accepted into the group, in case the group server owner decides to delete the user from it's records because he owes him a lot of money)
+
+In short, every entity involved in the system will hold RSA keys and signatures are used in pretty much every action.
 
 ### This seems way too hard to use...
 
