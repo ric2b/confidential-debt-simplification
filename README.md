@@ -68,7 +68,7 @@ And while it is a bit clunky right now, the protocol allows the software to be r
 
 - If the user is willing to trust the main server, a website can be used instead of a native application, meaning no setup required by the user. This comes at the cost of security since the main server can send a different version whenever it wants, without a warning to the user.
 
-### Are you planning on improving it? How?
+### Are you planning on improving it? Any cool ideas?
 What we value most is ease of use, so we want to improve it as much as possible.
 This includes things like making server setup simpler and creating binaries for the native client.
 
