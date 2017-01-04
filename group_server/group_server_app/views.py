@@ -155,7 +155,7 @@ def confirm_join(request):
         return HttpResponse('409 Conflict', status=409)
         
     #Confirm to main server successfull registration of user
-    main_server_url = 'address/join-group' #TODO: change to real address
+    main_server_url = 'localhost:8000' #TODO: change to real address
     
     group_signature = msg.MainServerJoin.sign(settings.PRIVATE_KEY, 'group', group_uuid=str(group.uuid), user=user.key)
     
