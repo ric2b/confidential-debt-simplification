@@ -28,10 +28,30 @@ Here's a diagram of the architecture:
 
 You probably noticed a third server, the _proxy server_. It will most likely run on the same machine as the _group server_, all it has to do is mask the IP address of users that want to talk to the _main server_, by relaying their communication. It can't read/modify anything because the communication is encrypted with HTTPS
 
+As you can see on the diagram, the _main server_ should be managed by a stranger, since group members know everyone's identity. Imagine it is a public service, like GitHub. If it's large enough it won't risk it's reputation by colluding with someone only to get a single group's information (and probably won't even care enough about a single group anyway)
+
+### How a group works
+Assume the _main server_ is a public service that is always running.
+
+Setting up a new group involves these steps:
+
+1. One person sets up a new group server and proxy server
+1. He creates the owner user (a user without a signed invitation)
+1. He invites users to the group through the group server
+1. Invited users get an e-mail with a link to the client software, the group id and a secret code
+1. Invited users open the client software, input the group id and secret code and join the group
+1. Each user can now invite other users as well. 
+
+Invitations are signed and stored on the group server, creating a hierarchy of responsability. This is to avoid a user, Bob, creating a fake user, Dave, that owes him money, which would simplify Dave paying whatever Bob owes. But Dave isn't a real person, so he won't be paying anyone. Well, Bob invited him, so he's responsible for contacting him or he'll be paying what Dave owes.
+If a user has no invitation (such as the owner), the responsability falls on the group server owner.
+
+### About non-repudiation
+
+
+### This seems way too hard to use...
+
 
 ### How complete is it? Are you planning on improving it?
-
-
 
 
 ### Check out our wiki for more:
