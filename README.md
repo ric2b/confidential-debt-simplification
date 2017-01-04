@@ -1,4 +1,4 @@
-# confidential-debt-simplification
+# Group Bank
 
 
 ### Check out our wiki for more:
