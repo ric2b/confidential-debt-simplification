@@ -81,6 +81,6 @@ We've had a few cool ideas for improvements, like changing the key type from RSA
 - What we are trying to do
 - How our protocol works and why we made certain decisions
 - What we used to implement it and why
-- [How to set up the servers and what security concerns you should have if you manage them](../../wiki/Setting-up-the-servers-and-related-security-concerns)
+- [How to set up the servers and what security concerns you should have if you manage them](../../wiki/Setting-up-the-group-and-main-servers-and-related-security-concerns)
 - Our Internal API, i.e. the formal description of how the client interacts with the servers
 - Planned improvements and ideas
