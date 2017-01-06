@@ -24,7 +24,7 @@ class ParseError(Exception):
 class _Configuration:
 
     DEFAULT_APP_DIR = "."
-    DEFAULT_PROXY_SERVER_URL = "localhost"
+    DEFAULT_PROXY_SERVER_URL = "localhost:8000"
 
     mandatory_parameters = [
         "group_server_url",
