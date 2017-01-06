@@ -12,6 +12,9 @@ from register_dialog import RegisterDialog
 def main():
     app = QApplication(sys.argv)
 
+    if len(sys.argv) > 1:
+        config.app_dir = sys.argv[1]
+
     if os.path.exists(config.config_path):
         # User is already registered
 
