@@ -75,6 +75,8 @@ def invite_user(request):
     # [invitee.email],
     # fail_silently=False,
     # )
+
+    print("secret code:", secret_code)
     
     #Create Invitation entry
     invitation = Invitation.objects.create(group=group, inviter=user, invitee=invitee, signature_inviter=request.user_signature, secret_code=secret_code)
