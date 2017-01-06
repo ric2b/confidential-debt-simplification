@@ -247,7 +247,7 @@ class Client:
             }
         )
 
-        with connect(self.group_server_url) as connection:
+        with connect(self.proxy_server_url) as connection:
             connection.request(request)
 
             # response can be ignored since it is only an acknowledgement
