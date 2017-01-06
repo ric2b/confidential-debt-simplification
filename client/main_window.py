@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QMainWindow
 
 from invite_dialog import InviteDialog
-from pending_dialog import PendingDialog
+from pending_dialog import PendingWidget
 from ui_main import Ui_MainWindow
 from uome_dialog import UOMeDialog
 
@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
 
         self.ui.info_group_box.setTitle("User: " + client.email)
 
-        self._uome_dialog = None
+        self._uome_dialog = UOMeDialog(self.client)
         self._invite_dialog = None
         self._pending_dialog = None
         self._waiting_dialog = None
@@ -26,12 +26,14 @@ class MainWindow(QMainWindow):
         self.ui.uome_button.clicked.connect(self.issue_uome)
         self.ui.invite_button.clicked.connect(self.invite)
         self.ui.refresh_button.clicked.connect(self.refresh)
-        self.ui.pending_button.clicked.connect(self.pending)
+
+        self._pending_widget = PendingWidget(self.client)
+        self.ui.main_layout.addWidget(self._pending_widget)
+        self._pending_widget.refresh()
 
     def issue_uome(self):
-        if not self._uome_dialog:
-            self._uome_dialog = UOMeDialog(self.client)
-        self._uome_dialog.show()
+        self._uome_dialog.exec()
+        self._pending_widget.refresh()
 
     def invite(self):
         if not self._invite_dialog:
@@ -50,7 +52,7 @@ class MainWindow(QMainWindow):
 
     def pending(self):
         if not self._pending_dialog:
-            self._pending_dialog = PendingDialog(self.client)
+            self._pending_dialog = PendingWidget(self.client)
         self._pending_dialog.refresh()
         self._pending_dialog.show()
 

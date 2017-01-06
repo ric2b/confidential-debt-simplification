@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import sys
 from PyQt5.QtWidgets import QApplication
 
-from pending_dialog import PendingDialog
+from pending_dialog import PendingWidget
 from uome import UOMe
 
 
@@ -18,7 +18,7 @@ class TestPendingDialog:
 
         app = QApplication(sys.argv)
 
-        dialog = PendingDialog(client)
+        dialog = PendingWidget(client)
         dialog.show()
 
         sys.exit(app.exec_())

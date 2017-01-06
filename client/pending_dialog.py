@@ -1,19 +1,19 @@
-from PyQt5.QtWidgets import QDialog
 from PyQt5.QtWidgets import QTableWidgetItem
+from PyQt5.QtWidgets import QWidget
 
 from accept_button import AcceptButton
 from cancel_button import CancelButton
-from ui_pending import Ui_PendingDialog
+from ui_pending import Ui_PendingWidget
 
 
-class PendingDialog(QDialog):
+class PendingWidget(QWidget):
 
     def __init__(self, client):
-        super(PendingDialog, self).__init__()
+        super(PendingWidget, self).__init__()
         self.client = client
 
         # Set up the user interface from Designer.
-        self.ui = Ui_PendingDialog()
+        self.ui = Ui_PendingWidget()
         self.ui.setupUi(self)
 
     def refresh(self):

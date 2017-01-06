@@ -17,11 +17,12 @@ class TestMainWindow:
             UOMe("1", "C1", "C2", 10, "debtC1C2", "sign1", "#1"),
             UOMe("1", "C1", "C3", 10, "debtC1C3", "sign2", "#2"),
         ]
+        client.email = "user@email.com"
 
         app = QApplication(sys.argv)
         window = MainWindow(client)
         window.refresh()
-        window.adjustSize()
+        #window.adjustSize()
         window.show()
 
         app.exec_()
