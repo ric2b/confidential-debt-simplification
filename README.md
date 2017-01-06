@@ -87,3 +87,5 @@ We've had a few cool ideas for improvements, like changing the key type from RSA
 
 ### And check out our diagrams of the protocol on LucidChart:
 https://www.lucidchart.com/documents/view/05b1039e-27e5-4b08-a8c7-19e3b0b3e155
+
+### And also [our presentation](https://docs.google.com/presentation/d/1XSB3_lZFF1ZjAyNZu6c2bmq_tUqx8GBI4DY8JDDgCrc/edit#slide=id.g1b6e943af2_0_0)
