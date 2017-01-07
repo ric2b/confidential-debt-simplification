@@ -1,5 +1,7 @@
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/9c6fb36589744b6db9261554369f98b9)](https://www.codacy.com/app/ricardo-amendoeira/confidential-debt-simplification?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ric2b/confidential-debt-simplification&amp;utm_campaign=Badge_Grade)
+
 # Group Bank
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/9c6fb36589744b6db9261554369f98b9)](https://www.codacy.com/app/ricardo-amendoeira/confidential-debt-simplification?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ric2b/confidential-debt-simplification&amp;utm_campaign=Badge_Grade)
 
 ### A Warning
 **Take all of our security claims with a big grain of salt. We're not experienced cryptographers, we're students and this was made for a cryptography course. If you want to be sure that your data is safe, please don't use this as it's not even remotely tried and tested and we are not experienced in security.**
