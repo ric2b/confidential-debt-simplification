@@ -1,3 +1,9 @@
+# Directory where some code is put with small experiments
+experiments/
+
+# PyCharm
+.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -87,3 +93,10 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+.group_server/db.sqlite3
+
+# SQLite stuff
+*db.sqlite1
+*db.sqlite2
+*db.sqlite3
